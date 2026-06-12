@@ -65,6 +65,8 @@ The OS image should boot directly into the OpenObject display with no desktop, l
 
 This is the procedure to convert a stock XXL to OpenObject. It is performed once. The unit can stay wall-mounted; the outward-facing port edge remains reachable.
 
+> **⚠️ Caution — do NOT remove the two screws above the MeLE.** On the back of the XXL, the two screws on the bracket/plate directly **above** the MeLE mini PC retain captive nuts on the *inside* of the chassis. Loosening or removing them drops those nuts inside the unit, and recovering them requires a **near-full disassembly and reassembly** of the XXL. They are **not** part of this procedure — leave them alone.
+
 **Access hardware** (the owner-supplied kit — exact models recorded in the Setup Guide, §16):
 - Right-angle USB-A extension from the single free port out to a reachable spot, then a USB hub on the end (one port can't host both the installer stick and a keyboard).
 - USB keyboard (a keyboard+touchpad combo on one dongle is ideal).
@@ -321,6 +323,12 @@ The original software is a standard Android app on Android-x86. To manually rese
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-06-12 — Bench caution: screws above the MeLE
+- **Do not remove the two screws on the bracket above the MeLE** when working at the
+  back of the XXL — they retain captive nuts inside the chassis that fall in if the
+  screws are backed out, forcing a near-full teardown to recover. Documented in §4 and
+  the Setup Guide. (Bench lesson from Matt.)
 
 ### 2026-06-11 — Branding asset approach
 - **Idle/boot-screen logo variants will be produced with Potrace → SVG**

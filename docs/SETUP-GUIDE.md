@@ -30,6 +30,11 @@ right place.
 
 > These steps are kept in sync with the real procedure as it's finalized.
 
+> **⚠️ Important — don't touch the two screws above the mini PC.** While you're working
+> at the back of the frame, leave alone the two screws on the bracket just **above** the
+> MeLE mini PC. Loosening or removing them lets nuts drop down inside the frame, and
+> getting them back means taking most of the unit apart. They aren't part of any step below.
+
 1. Plug the right-angle extension into the mini PC's free USB port; attach the hub;
    attach the keyboard and the installer flash drive.
 2. Power on and open the **BIOS** _(key: TBD — usually `DEL`, `ESC`, or `F7`)_. Set
