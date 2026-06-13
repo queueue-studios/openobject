@@ -81,13 +81,23 @@ app.get('/api/library', (_req, res) => {
   res.json(db.listLibrary());
 });
 
-// Per-clip Fit/Fill (HANDOFF §6).
+// Per-clip Fit/Fill (§6) and Rotation membership (§7). Either or both may be sent.
 app.patch('/api/library/:id', (req, res) => {
-  const { fit } = req.body || {};
-  if (!FITS.has(fit)) return res.status(400).json({ error: 'fit must be "fit" or "fill"' });
-  const row = db.setLibraryFit(Number(req.params.id), fit);
-  if (!row) return res.status(404).json({ error: 'not found' });
-  res.json(row);
+  const id = Number(req.params.id);
+  const { fit, inRotation } = req.body || {};
+  if (fit === undefined && inRotation === undefined) {
+    return res.status(400).json({ error: 'nothing to update (fit and/or inRotation)' });
+  }
+  if (fit !== undefined && !FITS.has(fit)) {
+    return res.status(400).json({ error: 'fit must be "fit" or "fill"' });
+  }
+  if (inRotation !== undefined && typeof inRotation !== 'boolean') {
+    return res.status(400).json({ error: 'inRotation must be a boolean' });
+  }
+  if (!db.getLibraryItem(id)) return res.status(404).json({ error: 'not found' });
+  if (fit !== undefined) db.setLibraryFit(id, fit);
+  if (inRotation !== undefined) db.setLibraryRotation(id, inRotation);
+  res.json(db.getLibraryItem(id));
 });
 
 app.delete('/api/library/:id', (req, res) => {
@@ -96,6 +106,19 @@ app.delete('/api/library/:id', (req, res) => {
   if (Number(db.getSetting('pinned_id', '')) === row.id) db.setSetting('pinned_id', ''); // drop a stale pin
   fs.rm(path.join(db.UPLOADS_DIR, row.filename), { force: true }, () => {}); // best-effort file removal
   res.json({ deleted: row.id });
+});
+
+// ── Rotation curation (HANDOFF §7) — membership rides on the library row; order is its own call ──
+app.get('/api/rotation', (_req, res) => {
+  res.json(db.listRotation()); // curated members in order (not pin-collapsed; that's display-only)
+});
+
+app.put('/api/rotation/order', (req, res) => {
+  const order = req.body && req.body.order;
+  if (!Array.isArray(order) || order.some((n) => !Number.isFinite(Number(n)))) {
+    return res.status(400).json({ error: 'order must be an array of library ids' });
+  }
+  res.json(db.reorderRotation(order));
 });
 
 // ── Rotation settings (global, equal-time) + Pin ────────────────────
@@ -136,9 +159,12 @@ app.delete('/api/pin', (_req, res) => {
   res.json(currentSettings());
 });
 
-// What the display page plays: the rotation (whole Library, upload order) + settings + pin.
+// What the display plays: a pinned piece overrides everything — held permanently, even if
+// it isn't in the Rotation (HANDOFF §7); otherwise the curated Rotation in order.
 app.get('/api/display', (_req, res) => {
-  res.json({ items: db.listRotation(), ...currentSettings() });
+  const settings = currentSettings();
+  const pinned = settings.pinnedId != null ? db.getLibraryItem(settings.pinnedId) : null;
+  res.json({ items: pinned ? [pinned] : db.listRotation(), ...settings });
 });
 
 // ── Pages ───────────────────────────────────────────────────────────

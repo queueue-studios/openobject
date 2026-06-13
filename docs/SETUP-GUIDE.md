@@ -63,13 +63,20 @@ upload straight to the frame. Supported types: **JPEG, PNG, GIF, AVIF, WebP, MP4
 MOV, WebM**. Anything else is simply skipped — nothing is changed or converted.
 
 **Your Library vs the Rotation.** Everything you upload stays in the **Library**. The
-**Rotation** is the set that's actually showing on the wall. You pick which Library
-items are in the Rotation — so you can keep a growing collection and still show just
-today's pick.
+**Rotation** is the set that's actually showing on the wall. The control panel has two
+tabs for this:
+- **Library** — everything you've uploaded. Tap the small circle in the top-right
+  corner of any piece to add it to (✓) or remove it from (+) the Rotation.
+- **Rotation** — just what's playing, in order. New uploads join the Rotation
+  automatically, so you can keep a growing collection and still show just today's pick by
+  removing the rest.
 
 **Order.** Choose how the Rotation plays:
-- **Sequence** — in the order you arrange them.
-- **Shuffle** — randomized, but each piece shows once before any repeats.
+- **Sequence** — in the order you arrange them. In the **Rotation** tab, drag a piece by
+  its handle, or use the **↑ / ↓** buttons, to reorder it; the **✕** takes it out of the
+  Rotation.
+- **Shuffle** — randomized, but each piece shows once before any repeats. (Your arranged
+  order is kept for whenever you switch back to Sequence.)
 
 **Pin one piece.** Want a single image up permanently? **Pin** it and it holds on the
 panel until you unpin.

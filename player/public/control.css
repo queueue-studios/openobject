@@ -68,28 +68,35 @@ body {
 .status { margin: 14px 2px 0; font-size: 14px; color: var(--muted); }
 .status.show { color: var(--text); }
 
-/* Rotation settings */
+/* Rotation settings — Option A: grouped, stepper + segmented controls */
 .settings {
   margin-top: 22px;
   display: flex;
   flex-wrap: wrap;
-  gap: 14px 28px;
+  gap: 18px 36px;
   padding: 16px 18px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
 }
-.field { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
-.field input, .field select {
-  background: var(--panel-2);
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 6px 8px;
-  font: inherit;
-}
-.field input[type="number"] { width: 50px; text-align: center; }
-.field input:focus, .field select:focus { outline: none; border-color: #4a4a52; }
+.set-group { display: flex; flex-direction: column; gap: 9px; }
+.set-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.set-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); overflow: hidden; }
+.stepper .step { appearance: none; border: 0; background: transparent; color: var(--muted); width: 30px; height: 34px; font-size: 17px; line-height: 1; cursor: pointer; }
+.stepper .step:hover { color: var(--text); background: #242428; }
+.stepper input { width: 48px; height: 34px; text-align: center; border: 0; border-left: 1px solid var(--line); border-right: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; }
+.stepper input:focus { outline: none; }
+input[type="number"] { -moz-appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { appearance: none; border: 0; background: var(--panel-2); color: var(--muted); padding: 7px 14px; font: inherit; font-size: 14px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button:hover:not(.on) { color: var(--text); background: #242428; }
+.seg button.on { background: #2c2c33; color: var(--text); }
 
 /* Library */
 .library { margin-top: 30px; }
@@ -156,11 +163,33 @@ body {
 .actions .pin:hover, .actions .fit:hover { background: #242428; color: var(--text); }
 .actions .del:hover { background: #2a1c1e; color: var(--danger); }
 
-/* Pinned indicator on the thumbnail */
-.pin-badge {
+/* Add-to-rotation toggle — top-right of each Library thumbnail */
+.rot-toggle {
   position: absolute;
   top: 8px;
   right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+.rot-toggle:hover { border-color: #fff; }
+.rot-toggle.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* Pinned indicator on the thumbnail (bottom-left; top-right holds the rotation toggle) */
+.pin-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
   padding: 2px 7px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.6);
@@ -170,3 +199,66 @@ body {
 }
 
 .empty { color: var(--muted); padding: 24px 2px; }
+
+/* Library / Rotation tabs */
+.tabs { display: flex; gap: 4px; margin-top: 30px; border-bottom: 1px solid var(--line); }
+.tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 10px 16px;
+  margin-bottom: -1px;
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.tab:hover { color: var(--text); }
+.tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--text); font-weight: 600; }
+.tab-count { color: var(--muted); font-size: 12px; font-weight: 400; }
+.panel { margin-top: 18px; }
+
+/* Rotation list — the curated, ordered subset on the panel */
+.rot-hint { color: var(--muted); font-size: 13px; margin: 0 2px 14px; }
+.rot-list { display: flex; flex-direction: column; gap: 8px; }
+.rot-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.rot-row.dragging { opacity: 0.45; }
+.rot-row.drag-over { border-color: #4a4a52; }
+.rot-grip { display: flex; flex: none; color: var(--muted); cursor: grab; touch-action: none; }
+.rot-grip:active { cursor: grabbing; }
+.rot-num { flex: none; width: 16px; text-align: center; color: var(--muted); font-size: 13px; }
+.rot-thumb { flex: none; width: 46px; height: 46px; border-radius: 8px; overflow: hidden; background: #000; }
+.rot-thumb img, .rot-thumb video { width: 100%; height: 100%; display: block; }
+.rot-thumb.fit-fit  img, .rot-thumb.fit-fit  video { object-fit: contain; } /* honor Fit/Fill — match the Library card + panel */
+.rot-thumb.fit-fill img, .rot-thumb.fit-fill video { object-fit: cover; }
+.rot-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rot-name { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rot-sub { font-size: 12px; color: var(--muted); }
+.rot-pin { color: #ffd479; }
+.rot-btns { display: flex; align-items: center; gap: 4px; flex: none; }
+.rot-btns button {
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.rot-btns button:hover:not(:disabled) { color: var(--text); border-color: #4a4a52; }
+.rot-btns button:disabled { opacity: 0.35; cursor: default; }
+.rot-btns .rm:hover:not(:disabled) { color: var(--danger); border-color: #5a2a2e; }

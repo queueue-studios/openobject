@@ -144,7 +144,7 @@ The square (1:1) panel makes this choice matter more than on a normal screen, be
     - **Shuffle** — a randomized *pass*: every clip plays once before any repeats, then reshuffles. Good coverage, no near-term repeats.
 - **Pin (a.k.a. "permanent"/"hold")** — optionally elevate **one** clip to display permanently, overriding the cycle until unpinned. Supports the workflow "upload several, then manually promote whichever one to permanent," and the degenerate case "I just want one image up forever."
 
-Uploading **adds to the library**. A "daily refresh" habit is achieved by curating which library items are in the rotation (clearing/selecting), so both mental models — daily-replace and growing-curated-library — are served by the same structure. _(**Confirmed 2026-06-11:** library+select, not hard replace-on-upload.)_
+Uploading **adds to the library**. A "daily refresh" habit is achieved by curating which library items are in the rotation (clearing/selecting), so both mental models — daily-replace and growing-curated-library — are served by the same structure. _(**Confirmed 2026-06-11:** library+select, not hard replace-on-upload. **Built 2026-06-13:** per-item add/remove toggle in the Library tab; Sequence order user-arranged by drag or ↑/↓ in the Rotation tab; §20.)_
 
 **Duration — one global, equal time for every piece (confirmed 2026-06-12).**
 
@@ -224,6 +224,8 @@ A fresh, wall-mounted box has no art and isn't on Wi-Fi yet — but the control 
 ## 13. Sleep hours (v1 feature)
 
 An **optional schedule to blank or dim the panel overnight** (configurable start/end). The panel otherwise runs 24/7; this is a longevity and preference feature (the owner dislikes it running at night). Build in v1. When asleep, the panel is blanked/dimmed; it resumes the rotation on schedule. Pairs cleanly with the display layer (no playback during the sleep window).
+
+**Sleep screen (design intent, not yet built — Matt, 2026-06-13):** the asleep state should be a **sister to the idle/boot screen** — the same OpenObject mark, but **dimmed**, and **without** the "add art at openobject.local" instruction line (just the quiet mark, no further text). A small **countdown to wake time** is a possible touch, to be weighed against implementation cost. A manual on-demand **Blank/Pause** toggle (turn the art off now, outside the schedule) is the natural companion control and will be considered alongside this.
 
 ---
 
@@ -356,6 +358,34 @@ The original software is a standard Android app on Android-x86. To manually rese
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-06-13 — Rotation curation (membership + manual order); settings bar redesign
+- **The Rotation is now a curated subset, not the whole Library** — completes the §7
+  Library/Rotation/Pin model. Two new `library` columns, `in_rotation` (default 1) and
+  `position`, added by an **idempotent PRAGMA-guarded migration** that backfills existing
+  rows to in-rotation in upload order, so prior behavior is unchanged. New uploads
+  **auto-join** at the end of the order — keeps the zero-effort "everything I upload plays"
+  default; unwanted pieces are removed in the Rotation tab. (Matt, 2026-06-13.)
+- **API:** `PATCH /api/library/:id` now also accepts `inRotation`; added `GET /api/rotation`
+  (curated members in order, *not* pin-collapsed — that's display-only) and
+  `PUT /api/rotation/order { order:[id,…] }` (renumbers members 0..n-1 in one transaction).
+- **Pin now overrides Rotation membership** (§7 "overriding the cycle"): `/api/display`
+  resolves the pinned piece from the **full Library** and collapses to it even if it isn't
+  in the Rotation — fixes the case where a pinned non-member would vanish once
+  Rotation ≠ Library. `display.js` is unchanged (its own collapse became a harmless no-op).
+- **Control panel reorganized into two tabs — Library and Rotation** (Matt's "separate page
+  you toggle to, then back" call, over reordering inside the Library grid). Library tab:
+  each card gains a corner **add/remove-from-rotation** toggle. Rotation tab: the ordered
+  list, reorderable by **drag *and* ↑/↓ arrows** (arrows are the touch-safe path on
+  iPhone/iPad, where native drag is unreliable), **✕** to remove; a hint notes the order
+  drives Sequence and is cosmetic under Shuffle. Rotation-list thumbnails **honor each
+  clip's Fit/Fill** so they match the Library cards and the panel. Control icons (grip,
+  arrows, remove) are **inline SVG — no webfont**, so the panel works on an offline frame.
+  Upload + settings stay persistent above the tabs.
+- **Settings bar redesigned (Option A of three mockups):** a −/+ **stepper** on the
+  duration, **segmented** unit (sec/min/hr) and **segmented** order (Sequence/Shuffle)
+  replacing the dropdowns. (Matt picked Option A, 2026-06-13.)
+- **Sleep-screen direction captured for §13** (design intent; Sleep Hours not built yet).
 
 ### 2026-06-12 — Display rotation engine; global equal-time duration
 - **Duration is one global, equal-time setting for every piece** — no per-clip duration

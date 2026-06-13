@@ -61,9 +61,21 @@ function initDb() {
       width         INTEGER,
       height        INTEGER,
       fit           TEXT NOT NULL DEFAULT 'fit', -- per-clip Fit/Fill (HANDOFF §6)
+      in_rotation   INTEGER NOT NULL DEFAULT 1,  -- 1 = currently in the Rotation (HANDOFF §7)
+      position      INTEGER,                     -- curated Rotation order; lower plays earlier
       created_at    TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+
+  // Curation columns (in_rotation, position) were added after the first uploads shipped.
+  // Add them in place for libraries created by the earlier schema, then seed a stable
+  // order from upload order (id) so the existing rotation is unchanged. Idempotent.
+  const cols = new Set(db.prepare('PRAGMA table_info(library)').all().map((c) => c.name));
+  if (!cols.has('in_rotation')) db.exec('ALTER TABLE library ADD COLUMN in_rotation INTEGER NOT NULL DEFAULT 1');
+  if (!cols.has('position')) {
+    db.exec('ALTER TABLE library ADD COLUMN position INTEGER');
+    db.exec('UPDATE library SET position = id WHERE position IS NULL');
+  }
 
   console.log(`SQLite ready (node:sqlite) → ${DB_PATH}`);
   return db;
@@ -89,8 +101,8 @@ function setSetting(key, value) {
 function addLibraryItem(item) {
   const info = getDb()
     .prepare(
-      `INSERT INTO library (filename, original_name, mime, format, kind, bytes, width, height)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO library (filename, original_name, mime, format, kind, bytes, width, height, in_rotation, position)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, (SELECT COALESCE(MAX(position), -1) + 1 FROM library WHERE in_rotation = 1))`
     )
     .run(
       item.filename,
@@ -105,12 +117,12 @@ function addLibraryItem(item) {
   return getLibraryItem(Number(info.lastInsertRowid));
 }
 
-// Control grid shows newest first; the display rotation plays in stable upload order.
+// Library grid shows newest first; the Rotation is the curated subset in its chosen order.
 function listLibrary() {
   return getDb().prepare('SELECT * FROM library ORDER BY id DESC').all();
 }
 function listRotation() {
-  return getDb().prepare('SELECT * FROM library ORDER BY id ASC').all();
+  return getDb().prepare('SELECT * FROM library WHERE in_rotation = 1 ORDER BY position ASC, id ASC').all();
 }
 
 function getLibraryItem(id) {
@@ -121,6 +133,40 @@ function setLibraryFit(id, fit) {
   if (!getLibraryItem(id)) return null;
   getDb().prepare('UPDATE library SET fit = ? WHERE id = ?').run(fit, id);
   return getLibraryItem(id);
+}
+
+// Add to / remove from the Rotation. Adding puts the piece at the end of the order
+// (HANDOFF §7); removing leaves its old position dormant (ignored until re-added).
+function setLibraryRotation(id, inRotation) {
+  const row = getLibraryItem(id);
+  if (!row) return null;
+  const want = inRotation ? 1 : 0;
+  if (row.in_rotation === want) return row; // already in the desired state — no reorder
+  if (want === 1) {
+    const { p } = getDb()
+      .prepare('SELECT COALESCE(MAX(position), -1) + 1 AS p FROM library WHERE in_rotation = 1')
+      .get();
+    getDb().prepare('UPDATE library SET in_rotation = 1, position = ? WHERE id = ?').run(p, id);
+  } else {
+    getDb().prepare('UPDATE library SET in_rotation = 0 WHERE id = ?').run(id);
+  }
+  return getLibraryItem(id);
+}
+
+// Persist a new Rotation order. Renumbers the given members 0..n-1 in one transaction;
+// ids that aren't current members are ignored (the WHERE guard).
+function reorderRotation(ids) {
+  const d = getDb();
+  const upd = d.prepare('UPDATE library SET position = ? WHERE id = ? AND in_rotation = 1');
+  d.exec('BEGIN');
+  try {
+    ids.forEach((id, i) => upd.run(i, Number(id)));
+    d.exec('COMMIT');
+  } catch (e) {
+    d.exec('ROLLBACK');
+    throw e;
+  }
+  return listRotation();
 }
 
 function deleteLibraryItem(id) {
@@ -140,6 +186,8 @@ module.exports = {
   listRotation,
   getLibraryItem,
   setLibraryFit,
+  setLibraryRotation,
+  reorderRotation,
   deleteLibraryItem,
   DATA_DIR,
   UPLOADS_DIR,

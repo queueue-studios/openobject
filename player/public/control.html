@@ -30,32 +30,49 @@
 
     <!-- Rotation settings — global, equal time for every piece (HANDOFF §7) -->
     <section class="settings">
-      <label class="field">
-        Each piece shows for
-        <input id="duration" type="number" min="1" step="1" inputmode="numeric">
-        <select id="durationUnit">
-          <option value="seconds">seconds</option>
-          <option value="minutes">minutes</option>
-          <option value="hours">hours</option>
-        </select>
-      </label>
-      <label class="field">
-        Order
-        <select id="mode">
-          <option value="sequence">Sequence</option>
-          <option value="shuffle">Shuffle</option>
-        </select>
-      </label>
+      <div class="set-group">
+        <span class="set-label">Each piece shows for</span>
+        <div class="set-controls">
+          <div class="stepper">
+            <button type="button" id="durDown" class="step" aria-label="Less time">−</button>
+            <input id="duration" type="number" min="1" step="1" inputmode="numeric" aria-label="Duration amount">
+            <button type="button" id="durUp" class="step" aria-label="More time">+</button>
+          </div>
+          <div class="seg" id="unitSeg" role="group" aria-label="Duration unit">
+            <button type="button" data-unit="seconds">sec</button>
+            <button type="button" data-unit="minutes">min</button>
+            <button type="button" data-unit="hours">hr</button>
+          </div>
+        </div>
+      </div>
+      <div class="set-group">
+        <span class="set-label">Order</span>
+        <div class="seg" id="modeSeg" role="group" aria-label="Rotation order">
+          <button type="button" data-mode="sequence">Sequence</button>
+          <button type="button" data-mode="shuffle">Shuffle</button>
+        </div>
+      </div>
     </section>
 
-    <!-- Library (HANDOFF §7) -->
-    <section class="library">
-      <div class="library-head">
-        <h2>Library</h2>
-        <span id="count" class="count"></span>
-      </div>
+    <!-- Library (everything uploaded) vs Rotation (the curated, ordered subset on the panel) — HANDOFF §7 -->
+    <nav class="tabs" role="tablist" aria-label="Library and Rotation">
+      <button type="button" class="tab" id="tabLibrary" role="tab" aria-selected="true" aria-controls="panelLibrary">
+        Library <span class="tab-count" id="libCount"></span>
+      </button>
+      <button type="button" class="tab" id="tabRotation" role="tab" aria-selected="false" aria-controls="panelRotation">
+        Rotation <span class="tab-count" id="rotCount"></span>
+      </button>
+    </nav>
+
+    <section class="panel" id="panelLibrary" role="tabpanel" aria-labelledby="tabLibrary">
       <div id="grid" class="grid"></div>
       <p id="empty" class="empty" hidden>Nothing here yet — add some art above.</p>
+    </section>
+
+    <section class="panel" id="panelRotation" role="tabpanel" aria-labelledby="tabRotation" hidden>
+      <p id="rotHint" class="rot-hint" hidden></p>
+      <div id="rotList" class="rot-list"></div>
+      <p id="rotEmpty" class="empty" hidden>No pieces in the rotation yet — add some from the Library tab.</p>
     </section>
   </main>
 
