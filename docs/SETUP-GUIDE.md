@@ -5,11 +5,11 @@ No engineering knowledge needed. If you've never seen the build spec, you're in 
 right place.
 
 > **Heads-up — this guide is still being written.** The everyday "add and arrange
-> art" part (further down) is real and current. The **install** part needs the
-> bootable USB installer, which is built once the project's bench hardware arrives —
-> those steps below are the plan and will be finalized (with the exact BIOS key and
-> screenshots) before anyone follows them. Nothing here is final until this note is
-> gone.
+> art" part (further down) is real and current. The **install** part still needs the
+> bootable USB installer (in progress). The hardware itself is now confirmed at the
+> bench — the BIOS key (**`Del`**) and the exact parts are filled in below — but the
+> install steps will get final screenshots and a tested USB image before anyone
+> follows them. Nothing here is final until this note is gone.
 
 ---
 
@@ -17,9 +17,12 @@ right place.
 
 - A working **Infinite Objects XXL** (the 26" square frame) with its **MeLE Quieter
   3Q** mini PC on the back.
-- **USB hub** — _[exact make/model — TBD, confirmed once it's fit-tested in the unit's clearance]_
-- **Right-angle USB-A extension** — _[exact make/model — TBD; a CableCreation L+R 2-pack was ordered; the one that fits gets recorded here]_
-- **USB keyboard** — _[exact make/model — TBD; a Logitech K400 Plus was the plan]_
+- **USB hub** — UGreen USB 3.0 Hub, 4-port (model **25946**).
+- **Left-angle USB-A extension** — CableCreation USB 3.0 Extension, Left Angle, 1 ft
+  (part **CC0516**). The **left** angle matters: it tucks the cable away from the power
+  socket that sits right next to the USB port.
+- **USB keyboard** — Logitech **K400 Plus** (a keyboard with a built-in touchpad, one
+  USB receiver — so you don't need a separate mouse).
 - **USB flash drive**, 16 GB or larger — for the installer.
 - **External USB drive**, 128 GB or larger — _only_ if you want to back up the
   original software first.
@@ -35,11 +38,12 @@ right place.
 > MeLE mini PC. Loosening or removing them lets nuts drop down inside the frame, and
 > getting them back means taking most of the unit apart. They aren't part of any step below.
 
-1. Plug the right-angle extension into the mini PC's free USB port; attach the hub;
+1. Plug the left-angle extension into the mini PC's free USB port; attach the hub;
    attach the keyboard and the installer flash drive.
-2. Power on and open the **BIOS** _(key: TBD — usually `DEL`, `ESC`, or `F7`)_. Set
-   it to boot from the USB drive, and turn on **Auto Power On** so the frame starts
-   by itself whenever it has power.
+2. Power on and open the **BIOS**: tap **`Del`** as it starts up. (The frame's logo
+   hides the prompt, so just tap `Del` a few times while the screen is still black.)
+   Set it to boot from the USB drive. _(There's no "Auto Power On" to switch on — this
+   frame already starts by itself whenever it has power.)_
 3. Boot the installer. *(Optional: back up the original software first if you have
    the external drive.)*
 4. Install OpenObject and wait for the frame to show the **OpenObject** screen.

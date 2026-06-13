@@ -22,14 +22,14 @@ The XXL's display is driven by a small **fanless mini PC mounted on the back of 
 
 ## 2. Hardware target
 
-The mini PC is a **MeLE Quieter 3Q** (confirmed from the unit's label).
+The mini PC is a **MeLE Quieter 3Q** (confirmed from the unit's label; the BIOS reports board name **`XXL`** — an Infinite Objects custom badge on the same N5105 platform).
 
 | Attribute | Value |
 |---|---|
-| Model | MeLE Quieter 3Q |
-| CPU | Intel Celeron **N5100** (Jasper Lake), **x86-64** |
-| RAM | 8 GB LPDDR4x _(typical config; confirm at bench)_ |
-| Storage | 128 GB eMMC _(typical config; confirm exact free space at bench)_ |
+| Model | MeLE Quieter 3Q (BIOS board name `XXL`) |
+| CPU | Intel Celeron **N5105** (Jasper Lake / "JasperLake ULX"), 2.00 GHz, **x86-64** — _bench-confirmed 2026-06-13; earlier "N5100" was wrong_ |
+| RAM | 8 GB LPDDR4x _(typical config; not yet confirmed at bench)_ |
+| Storage | **~256 GB eMMC** _(Android reported ~252 GB usable / ~93 GB free; UEFI device id `A3V012`; confirm exact size/path from Linux at install — earlier "128 GB" was wrong)_ |
 | Expansion | microSD slot (pressure valve for larger libraries) |
 | Networking | Onboard **Wi-Fi 5** + **Gigabit Ethernet** (RJ45) |
 | Power | 12 V / 2 A barrel jack |
@@ -41,7 +41,7 @@ The mini PC is a **MeLE Quieter 3Q** (confirmed from the unit's label).
 
 **Critical hardware facts for the build:**
 
-- This is a **normal x86 PC with a UEFI BIOS**, not an Android appliance. Infinite Objects installed Android-x86 and ran White Walls as a kiosk launcher — that is *why the original UI looks like Android* — but underneath it boots like any PC and will happily run Linux from a USB stick.
+- This is a **normal x86 PC with a UEFI BIOS**, not an Android appliance. Infinite Objects installed **Ubuntu Linux** and runs the original "White Walls" player as an **Android app inside Waydroid** — a **LineageOS Android 11** container (`lineage_waydroid_x86_64`, build `RQ3A.211001.001`) on the Linux host — which is *why the original UI looks like Android*. Underneath it boots like any PC and runs Linux from a USB stick. **Confirmed at bench (2026-06-13):** UEFI firmware (AMI Aptio `ML_JPL1 V1.0.0 x64`, core 2.22.1282), **`Del`** enters Setup, **no BIOS password**, **Secure Boot off**, boot mode **UEFI**; the factory boot entry is `ubuntu (eMMC A3V012)`.
 - The mini PC connects to the 26" panel via a captive **HDMI** lead (video) plus a **USB-C** lead (power and/or control). **This cabling is not touched.** OpenObject is a software reflash; the player↔panel wiring stays exactly as the vendor built it. After Linux is installed, video outputs over the same HDMI the panel already uses.
 - When wall-mounted, only **one USB-A port is realistically free**, and the physical power button is hard to reach. Both constraints are solved in §4 and §10.
 
@@ -59,6 +59,8 @@ The mini PC is a **MeLE Quieter 3Q** (confirmed from the unit's label).
 
 The OS image should boot directly into the OpenObject display with no desktop, login, or visible Linux chrome.
 
+> **Bench note (2026-06-13):** the factory unit already runs **Ubuntu** on this exact hardware (N5105 iGPU, the square HDMI panel, onboard Wi-Fi, the USB hub), so a Debian-based install is low-risk — graphics, panel, and networking are all known-good under mainstream Linux. The factory stack is heavier than ours (Ubuntu → Waydroid container → Android → White Walls) and boots slowly (~1 min to art); our native Node + Chromium-kiosk path should boot markedly faster.
+
 ---
 
 ## 4. Access & reflash procedure (one-time bench/in-place session)
@@ -68,7 +70,7 @@ This is the procedure to convert a stock XXL to OpenObject. It is performed once
 > **⚠️ Caution — do NOT remove the two screws above the MeLE.** On the back of the XXL, the two screws on the bracket/plate directly **above** the MeLE mini PC retain captive nuts on the *inside* of the chassis. Loosening or removing them drops those nuts inside the unit, and recovering them requires a **near-full disassembly and reassembly** of the XXL. They are **not** part of this procedure — leave them alone.
 
 **Access hardware** (the owner-supplied kit — exact models recorded in the Setup Guide, §16):
-- Right-angle USB-A extension from the single free port out to a reachable spot, then a USB hub on the end (one port can't host both the installer stick and a keyboard).
+- **Left-angle** USB-A extension from the single free port out to a reachable spot, then a USB hub on the end (one port can't host both the installer stick and a keyboard). The **left** angle is deliberate: it routes the cable clear of the frame controller's **power socket**, which sits immediately beside that USB port and must stay reachable to seat the power cord. (Confirmed part: CableCreation **CC0516** — see §16.)
 - USB keyboard (a keyboard+touchpad combo on one dongle is ideal).
 - USB flash drive (≥16 GB) for the Linux/OpenObject installer.
 - External USB drive (≥128 GB; small USB SSD ideal) for the pre-wipe backup image.
@@ -76,15 +78,15 @@ This is the procedure to convert a stock XXL to OpenObject. It is performed once
 **Procedure:**
 
 1. **Connect** the hub to the free USB-A port; attach keyboard + installer flash drive.
-2. **Enter the BIOS** at power-on (key is typically `DEL`, `ESC`, or `F7` — _confirm at bench and record_). The panel shows the BIOS screen over HDMI.
-3. **Set boot order / boot menu** to boot from the USB flash drive.
-4. **Enable "Auto Power On" / "AC Power On"** in the BIOS so the unit boots whenever it receives power — no button press needed afterward (see §10).
+2. **Enter the BIOS** at power-on by tapping **`Del`** _(confirmed 2026-06-13)_. The IO splash uses **Quiet Boot**, so no "press a key" prompt appears — tap `Del` repeatedly from the instant you power on, during the black screen (that's POST). The panel then shows the BIOS screen over HDMI. _(On a Logitech K400, `Del` is a direct key; the F-keys are Fn-shifted.)_
+3. **Set boot order / boot menu** to boot from the USB flash drive. _(With the stick inserted it appears as a new boot option; use a one-time boot menu — likely `F7` — or **Save & Exit → Boot Override**, or set Boot Option #1. Confirm the boot-menu key with the stick in hand.)_
+4. **Auto power-on — nothing to set.** _(Confirmed 2026-06-13:)_ this BIOS exposes **no** "Auto Power On / Restore AC Power Loss / State After G3" toggle (checked `Chipset → PCH-IO Configuration`), and the unit already boots on its own when power is applied — auto-on is the firmware default. So it boots whenever it receives power, no button press, nothing to enable (see §10). _(If a future unit doesn't auto-boot, the only place an ODM might hide it is `Advanced → Customer Exclusive Functions`.)_
 5. **Boot the live USB.**
-6. **BACK UP FIRST — image the existing eMMC** to the external drive (full-disk image). This preserves the original White Walls + Android-x86 install in case the owner ever wants it back *while the vendor's servers still exist*. This is the clean, ADB-free way to capture it. **Do this before any wipe.**
+6. **BACK UP FIRST — image the existing eMMC** to the external drive (full-disk image). This preserves the original **Ubuntu + Waydroid (White Walls)** install in case the owner ever wants it back *while the vendor's servers still exist*. This is the clean, ADB-free way to capture it. **Do this before any wipe.**
 7. **Install OpenObject** (Linux + the OpenObject stack) to the eMMC.
 8. **Verify on the panel** before considering it done: display comes up, Wi-Fi onboarding works, control panel reachable.
 
-> **Note for the doc maintainer:** record the confirmed BIOS-entry key, the exact "auto power on" setting label, and the eMMC device path/size in this section as they're discovered at bench.
+> **Recorded at bench (2026-06-13):** BIOS-entry key = **`Del`**; there is **no** "auto power on" setting (auto-on is the firmware default — see step 4); eMMC ≈ **256 GB**, UEFI id `A3V012` (confirm the Linux device path, e.g. `/dev/mmcblk*`, when installing).
 
 ---
 
@@ -185,7 +187,7 @@ A single **storage-mode setting** governs this: default **"full sync"**, with **
 The physical power button is hard to reach when wall-mounted. This is fully solved in software/BIOS:
 
 - **Auto Power On (BIOS):** enabled during reflash (§4). The unit boots the moment it receives power. Power control becomes the wall outlet (or an optional smart plug). Also means the frame **self-recovers after a power blip** instead of waiting for a button press.
-    - **Confirmed (Matt, 2026-06-13):** this unit **boots when the power cord is unplugged and replugged**, so cycling the outlet reliably boots it and the hard-to-reach physical power button is a **non-issue**. After a **Shut down**, you power the frame back on by replugging (or toggling a smart plug). Whether this is the BIOS default or needs the Auto-Power-On setting — and that setting's exact label — is still bench-TBD (§19).
+    - **Confirmed (Matt, 2026-06-13):** this unit **boots when the power cord is unplugged and replugged**, so cycling the outlet reliably boots it and the hard-to-reach physical power button is a **non-issue**. After a **Shut down**, you power the frame back on by replugging (or toggling a smart plug). **Resolved at bench:** there is **no Auto-Power-On toggle** in this BIOS (checked `Chipset → PCH-IO Configuration` — no "State After G3" / "Restore AC Power Loss"); auto-on is the **firmware default**, which is exactly this replug-boot behavior. Nothing to set.
 - **Soft restart / shutdown (web UI):** the control panel exposes **Restart** and **Shut down**, initiated from the owner's browser. Handles all intentional reboots without reaching behind the panel.
 - **Hard lockup (rare):** power-cycle the outlet; an optional ~$15 smart plug makes this a phone tap. Not required.
 
@@ -371,15 +373,15 @@ Maintain **two** living documents as the build proceeds — not one written once
 
 > **What you need before you start**
 > - A functioning **Infinite Objects XXL** unit (the 26" square frame) with its **MeLE Quieter 3Q** mini PC on the back.
-> - **USB hub:** _[exact make/model — TBD, confirm after Matt's hardware arrives and is verified in the unit's clearance]_
-> - **Right-angle USB-A extension:** _[exact make/model — TBD; CableCreation 2-pack (L+R) was ordered; record the one that fit]_
-> - **USB keyboard:** _[exact make/model — TBD; Logitech K400 Plus was the plan]_
+> - **USB hub:** UGreen USB 3.0 Hub, 4-port, 2 ft (model **25946**).
+> - **Left-angle USB-A extension:** CableCreation USB 3.0 Extension, Left Angle, 1 ft (part **CC0516**). _(The **left** angle is the one that fit — it clears the controller's power socket beside the USB port.)_
+> - **USB keyboard:** Logitech **K400 Plus** (keyboard + touchpad on one receiver).
 > - **USB flash drive:** ≥16 GB (for the installer).
 > - **External USB drive:** ≥128 GB (only if preserving the original White Walls backup).
 >
 > **Steps** (kept in sync with the real procedure)
 > 1. Plug the extension into the mini PC's free USB port; attach the hub; attach keyboard + installer drive.
-> 2. Power on and enter the BIOS _(key: TBD)_; set USB boot; enable Auto Power On.
+> 2. Power on and enter the BIOS by tapping **`Del`** (the splash hides the prompt — tap from the black screen); set USB boot. _(No "Auto Power On" to enable — the frame already powers on by itself when it has power.)_
 > 3. Boot the installer. (Optional: back up the original software first.)
 > 4. Install OpenObject; wait for the panel to show the OpenObject screen.
 > 5. Join the temporary **OpenObject-Setup** Wi-Fi from your phone; pick your home Wi-Fi; enter the password.
@@ -432,7 +434,7 @@ Maintain **two** living documents as the build proceeds — not one written once
 
 Preserved from the vendor's tutorial so a future owner can re-register the **original** Android software *while the vendor's servers still exist*. Not part of OpenObject; offered as a courtesy in the repo.
 
-The original software is a standard Android app on Android-x86. To manually reset its account registration:
+The original software is a standard Android app running in **Waydroid** (a LineageOS Android 11 container) on **Ubuntu Linux**. To manually reset its account registration (all within the Android container's UI):
 
 1. Connect a USB-A mouse to the mini PC.
 2. Reveal the system menu: click-and-drag **downward from the very top** of the screen (this is the Android notification shade; "begin click at top and drag down" — it's fiddly).
@@ -446,9 +448,9 @@ The original software is a standard Android app on Android-x86. To manually rese
 
 ## 19. Open items for Matt to confirm/supply
 
-- [ ] **Hardware models** (hub, right-angle extension, keyboard) — confirm after delivery + fit-test; fill into §16.
+- [x] **Hardware models** (2026-06-13) — UGreen 4-port USB 3.0 hub (**25946**); CableCreation **left-angle** USB 3.0 extension (**CC0516**); Logitech **K400 Plus**. Filled into §16 / Setup Guide.
 - [x] **Logo / OpenObject mark** — supplied by Matt; optimized marks in `assets/branding/` (source masters in `Logo/`, gitignored). Transparent / white-on-dark variants derived in Phase 1.
-- [ ] **Bench-verified specs** — exact eMMC free space, Wi-Fi module/driver status, BIOS-entry key, Auto-Power-On label.
+- [~] **Bench-verified specs** (2026-06-13) — **BIOS-entry key `Del`** ✓; **Auto-Power-On = none / firmware auto-on** ✓ (no toggle exists); **eMMC ≈ 256 GB** (id `A3V012`) ✓; **CPU N5105** ✓; **UEFI + Secure-Boot-off** ✓. **Still TBD:** Wi-Fi module/driver under Linux (FCC TX ID `PD99560D2`), RAM, exact eMMC free space + Linux path.
 - [x] **GitHub repo** — created **private** (2026-06-11); goes public later.
 - [x] **Content model confirmed** (2026-06-11) — library+select, not replace-on-upload.
 
@@ -457,6 +459,17 @@ The original software is a standard Android app on Android-x86. To manually rese
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-06-13 — Hardware bench identification (Phase 2 kickoff)
+First hands-on session with the actual XXL unit (original OS reachable). Identity **confirmed**; several prior assumptions **corrected**:
+- **CPU = Intel Celeron N5105** (Jasper Lake / "JasperLake ULX"), 2.00 GHz — **§2 corrected from the wrong "N5100."** BIOS board name is **`XXL`** (IO custom badge; same N5105 platform as the MeLE Quieter 3Q label).
+- **Original OS is Ubuntu + Waydroid, not "Android-x86."** Host = **Ubuntu Linux**; "White Walls" runs as an **Android app inside Waydroid** (a **LineageOS Android 11** container, `lineage_waydroid_x86_64`, `RQ3A.211001.001`). The Android-looking UI is the container. **§2, §4, §18 corrected.** (§18's notification-shade / Settings→Apps reset steps still apply — that's the container's UI.)
+- **Firmware:** AMI Aptio `ML_JPL1 V1.0.0 x64` (core 2.22.1282, 12/2023). **`Del`** enters Setup (Quiet Boot hides the prompt — tap from the black screen). **No BIOS password** (Administrator access). **Secure Boot off.** **UEFI.** Boot entry `ubuntu (eMMC A3V012)`. → the **UEFI USB installer** path is clear, no signing/Secure-Boot hurdle.
+- **Storage = ~256 GB eMMC** (id `A3V012`) — **§2 corrected from "128 GB."**
+- **Auto-Power-On: no BIOS toggle exists** (checked `PCH-IO Configuration`; no "State After G3" / "Restore AC Power Loss"). Auto-on is the firmware default — matches the confirmed replug-boot (§10). The §19 "Auto-Power-On label" item resolves to *there isn't one*. **§4, §10, §19 updated.**
+- **Access kit / BOM confirmed:** UGreen 4-port USB 3.0 hub (**25946**); CableCreation **left-angle** USB 3.0 extension (**CC0516**) — the **left** angle clears the controller's power socket beside the USB port; Logitech **K400 Plus**. Insert trick: slide the MeLE up to free the HDMI/USB-C, seat the extender, reseat, slide back down. **§4, §16, §19 + Setup Guide updated** ("right-angle" → "left-angle").
+- **Reference:** factory stack boots slowly (~1 min to art) → our native Node + Chromium-kiosk should beat it easily; Ubuntu already drives the N5105 iGPU + square panel + Wi-Fi, so **Debian** is low-risk (§3).
+- **Still TBD:** Wi-Fi module/driver under Linux (FCC TX ID `PD99560D2`), RAM, exact eMMC Linux path/free space — all gettable once our OS boots.
 
 ### 2026-06-13 — Shut down / Restart countdown-cancel; power-cycle boots confirmed
 - **Power actions now arm a countdown the owner can cancel** (Matt): **Shut down** counts down
