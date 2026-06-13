@@ -58,9 +58,9 @@ That's it. From here on you control everything from that web page.
 Everything happens at **http://openobject.local** — the control panel. Open it from
 your Mac, iPhone, iPad, or PC.
 
-**Add art.** Drag image or video files onto the page, or tap to choose them. They
-upload straight to the frame. Supported types: **JPEG, PNG, GIF, AVIF, WebP, MP4,
-MOV, WebM**. Anything else is simply skipped — nothing is changed or converted.
+**Add art.** On the **Library** tab, drag image or video files onto the page, or tap to
+choose them. They upload straight to the frame. Supported types: **JPEG, PNG, GIF, AVIF,
+WebP, MP4, MOV, WebM**. Anything else is simply skipped — nothing is changed or converted.
 
 **Your Library vs the Rotation.** Everything you upload stays in the **Library**. The
 **Rotation** is the set that's actually showing on the wall. The control panel has three
@@ -70,7 +70,7 @@ tabs:
 - **Rotation** — just what's playing, in order, plus how long each piece shows and
   Sequence/Shuffle. New uploads join the Rotation automatically, so you can keep a growing
   collection and still show just today's pick by removing the rest.
-- **Settings** — sleep hours (below), with more to come.
+- **Settings** — sleep hours and software updates (below).
 
 **Order.** Choose how the Rotation plays:
 - **Sequence** — in the order you arrange them. In the **Rotation** tab, drag a piece by
@@ -110,11 +110,19 @@ art goes dark until you tap it again.
 
 ## Keeping OpenObject up to date
 
-OpenObject can update itself — no cables, no reinstalling. In the control panel, tap
-**Check for updates**. If a newer version is available you'll see it; tap **Update &
-restart**. The panel briefly shows the OpenObject screen and comes back on the new
-version. **Your art and settings are kept**, and updates only happen when you ask —
-nothing changes on its own. (The frame just needs to be online to check.)
+OpenObject can update itself — no cables, no reinstalling. It lives in the **Settings**
+tab of the control panel, under **Software Update**, which shows the version you're
+running (a version number and the date it's from).
+
+Tap **Check for updates**. If a newer version is available you'll see a short list of
+what's in it (plus a **What's new** link for the full details); tap **Update & Restart**.
+The panel briefly shows the OpenObject screen and comes back on the new version — **your
+art and settings are kept**. Updates only happen when you ask; nothing changes on its own,
+and the frame just needs to be online to check. Not ready? **Not now** dismisses it.
+
+- If the frame ever says it has **local changes** and can't update automatically, that's a
+  safety stop so nothing of yours gets overwritten — your art keeps playing either way, and
+  you can ask whoever set the frame up about it.
 
 ---
 

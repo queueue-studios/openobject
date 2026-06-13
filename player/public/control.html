@@ -22,16 +22,7 @@
   </header>
 
   <main class="wrap">
-    <!-- Web upload — the default source, pinned above the tabs (HANDOFF §8) -->
-    <section id="drop" class="dropzone" tabindex="0" role="button" aria-label="Add art">
-      <input id="file" type="file" multiple accept="image/*,video/*" hidden>
-      <p class="drop-title">Drag art here, or <span class="link">choose files</span></p>
-      <p class="drop-sub">JPEG · PNG · GIF · AVIF · WebP · MP4 · MOV · WebM</p>
-    </section>
-
-    <p id="status" class="status" hidden></p>
-
-    <!-- Library (everything uploaded) · Rotation (curated subset + how it cycles) · Settings -->
+    <!-- Tabs first: Library (everything uploaded) · Rotation (curated subset + how it cycles) · Settings -->
     <nav class="tabs" role="tablist" aria-label="Sections">
       <button type="button" class="tab" id="tabLibrary" role="tab" aria-selected="true" aria-controls="panelLibrary">
         Library <span class="tab-count" id="libCount"></span>
@@ -45,6 +36,13 @@
     </nav>
 
     <section class="panel" id="panelLibrary" role="tabpanel" aria-labelledby="tabLibrary">
+      <!-- Web upload — the default source (HANDOFF §8). Lives in the Library tab: uploading IS a Library action. -->
+      <section id="drop" class="dropzone" tabindex="0" role="button" aria-label="Add art">
+        <input id="file" type="file" multiple accept="image/*,video/*" hidden>
+        <p class="drop-title">Drag art here, or <span class="link">choose files</span></p>
+        <p class="drop-sub">JPEG · PNG · GIF · AVIF · WebP · MP4 · MOV · WebM</p>
+      </section>
+      <p id="status" class="status" hidden></p>
       <div id="grid" class="grid"></div>
       <p id="empty" class="empty" hidden>Nothing here yet — add some art above.</p>
     </section>
@@ -82,13 +80,30 @@
     </section>
 
     <section class="panel" id="panelSettings" role="tabpanel" aria-labelledby="tabSettings" hidden>
-      <!-- Sleep hours — optional overnight/away blanking, up to two daily windows (HANDOFF §13) -->
+      <!-- Sleep Hours — optional overnight/away blanking, up to two daily windows (HANDOFF §13) -->
       <section class="sleep">
         <div class="sleep-head">
-          <span class="set-label">Sleep hours</span>
+          <span class="section-title">Sleep Hours</span>
           <span class="sleep-status" id="sleepStatus"></span>
         </div>
         <div class="sleep-ranges" id="sleepRanges"></div>
+      </section>
+
+      <!-- Software Update — pull the latest OpenObject from GitHub, all from the browser (HANDOFF §15) -->
+      <section class="update">
+        <div class="section-title">Software Update</div>
+        <div class="update-version">
+          <span class="uv-label">Current version</span>
+          <span class="uv-value" id="updVersion">—</span>
+        </div>
+        <div class="update-actions">
+          <button type="button" id="checkUpdateBtn" class="update-btn">Check for updates</button>
+        </div>
+        <div class="update-status" id="updStatus" hidden></div>
+        <div class="update-apply" id="updApply" hidden>
+          <button type="button" id="applyUpdateBtn" class="update-btn primary">Update &amp; Restart</button>
+          <button type="button" id="dismissUpdateBtn" class="update-dismiss">Not now</button>
+        </div>
       </section>
     </section>
   </main>

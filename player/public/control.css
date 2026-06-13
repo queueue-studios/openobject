@@ -169,6 +169,52 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
   letter-spacing: 0.02em;
 }
 
+/* Shared section header for the Settings-tab cards (Sleep Hours, Software Update) */
+.section-title { color: var(--text); font-size: 15px; font-weight: 600; }
+
+/* Software Update (HANDOFF §15) — lives in the Settings tab, below Sleep Hours */
+.update {
+  margin-top: 16px;
+  padding: 14px 18px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.update-version { display: flex; align-items: baseline; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.uv-label { color: var(--muted); font-size: 13px; }
+.uv-value { color: var(--text); font-size: 14px; }
+.uv-commit { color: var(--muted); text-decoration: none; }          /* small, unlabeled commit fingerprint */
+.uv-commit:hover { color: var(--text); text-decoration: underline; }
+.update-actions { margin-top: 14px; }
+.update-btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.update-btn:hover:not(:disabled) { background: #242428; border-color: #4a4a52; }
+.update-btn:disabled { opacity: 0.5; cursor: default; }
+.update-btn.primary { background: #1c3a26; border-color: #2f5a3c; color: #b6f0c2; }
+.update-btn.primary:hover:not(:disabled) { background: #224a2f; border-color: #3a6e49; }
+.update-status { margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--text); }
+.upd-headline { color: var(--text); font-size: 14px; }
+.upd-ok { color: #7fcf9b; }
+.upd-whats { color: var(--muted); font-size: 12px; margin: 12px 0 6px; }
+.upd-list { margin: 0; padding-left: 18px; color: #c9c9cd; font-size: 13px; line-height: 1.7; }
+.upd-list li { margin: 2px 0; }
+.upd-link { display: inline-block; margin-top: 10px; color: var(--muted); font-size: 13px; text-decoration: underline; }
+.upd-link:hover { color: var(--text); }
+.upd-warn { margin-top: 8px; color: #ffd479; font-size: 12px; }
+.update-apply { align-items: center; gap: 16px; margin-top: 16px; }
+.update-apply:not([hidden]) { display: flex; }   /* gate display so the `hidden` attribute still hides the row */
+.update-dismiss { appearance: none; background: transparent; border: 0; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer; padding: 8px 6px; }
+.update-dismiss:hover { color: var(--text); }
+
 /* Library */
 .library { margin-top: 30px; }
 .library-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
@@ -271,8 +317,8 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 
 .empty { color: var(--muted); padding: 24px 2px; }
 
-/* Library / Rotation tabs */
-.tabs { display: flex; gap: 4px; margin-top: 30px; border-bottom: 1px solid var(--line); }
+/* Library / Rotation / Settings tabs — sit at the top, directly under the header */
+.tabs { display: flex; gap: 4px; margin-top: 8px; border-bottom: 1px solid var(--line); }
 .tab {
   appearance: none;
   border: 0;
@@ -289,8 +335,9 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--text); font-weight: 600; }
 .tab-count { color: var(--muted); font-size: 12px; font-weight: 400; }
 .panel { margin-top: 18px; }
-.panel .settings { margin: 0 0 18px; }  /* duration/order now lives inside the Rotation tab */
-.panel .sleep { margin-top: 0; }         /* sleep hours now lives inside the Settings tab */
+.panel .settings { margin: 0 0 18px; }   /* duration/order now lives inside the Rotation tab */
+.panel .sleep { margin-top: 0; }          /* sleep hours now lives inside the Settings tab */
+.panel .dropzone { margin-bottom: 18px; } /* upload now lives inside the Library tab */
 
 /* Rotation list — the curated, ordered subset on the panel */
 .rot-hint { color: var(--muted); font-size: 13px; margin: 0 2px 14px; }

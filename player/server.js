@@ -15,6 +15,19 @@ const multer = require('multer');
 
 const db = require('./src/db');
 const { classify } = require('./src/formats');
+const updater = require('./src/updater');
+const RESTART_CODE = require('./src/restart-code');
+
+// Set by the supervisor (HANDOFF §15). When supervised, the player may exit to auto-relaunch
+// after a self-update; run directly (start:direct) it asks for a manual restart instead.
+const SUPERVISED = process.env.OO_SUPERVISED === '1';
+
+// Express 4 doesn't catch errors thrown from async handlers — wrap them so a rejected promise
+// becomes a clean 500 instead of an unhandled rejection.
+const ah = (fn) => (req, res) => fn(req, res).catch((err) => {
+  console.error(err);
+  if (!res.headersSent) res.status(500).json({ error: err.message });
+});
 
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || '0.0.0.0'; // reachable on the LAN (open it from a phone too)
@@ -217,6 +230,41 @@ app.get('/api/display', (_req, res) => {
   });
 });
 
+// ── Self-update from GitHub (HANDOFF §15) ───────────────────────────
+// Owner-initiated, never automatic, never in the playback path. All git logic lives in
+// src/updater.js; these routes are the thin control-panel surface.
+
+// Instant status for page load — no network, so it's offline-safe and never blocks.
+app.get('/api/update', ah(async (_req, res) => {
+  res.json({ ...(await updater.localStatus()), supervised: SUPERVISED });
+}));
+
+// Check for updates: fetch + compare to the channel's target. A network failure → offline.
+app.post('/api/update/check', ah(async (_req, res) => {
+  res.json(await updater.check());
+}));
+
+// Update channel: track `main` (default) or tagged releases only (HANDOFF §12, §15).
+app.put('/api/update/channel', ah(async (req, res) => {
+  try {
+    updater.setChannel((req.body || {}).channel);
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+  res.json(await updater.localStatus());
+}));
+
+// Update & restart: fast-forward + (deps if changed), then — only if that succeeded and we're
+// supervised — exit with the restart code so the supervisor relaunches us on the new code.
+// Not supervised → we report `needsManualRestart` and keep running the old code until restarted.
+app.post('/api/update/apply', ah(async (_req, res) => {
+  const result = await updater.apply();
+  const canRestart = result.ok && result.updated && (!result.depsChanged || result.installed);
+  const willRestart = canRestart && SUPERVISED;
+  res.json({ ...result, restarting: willRestart, needsManualRestart: canRestart && !SUPERVISED });
+  if (willRestart) setTimeout(() => process.exit(RESTART_CODE), 350); // let the response flush first
+}));
+
 // ── Pages ───────────────────────────────────────────────────────────
 // The kiosk display surface (HANDOFF §6). In Phase 2 Chromium boots straight to this.
 app.get('/display', (_req, res) => {
@@ -228,10 +276,11 @@ app.get('/', (_req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'control.html'));
 });
 
-// Liveness probe — also how the Phase-1 self-update flow confirms the player came back
-// up after restarting itself.
+// Liveness probe — also how the Phase-1 self-update flow confirms the player came back up
+// after restarting itself: `commit` is this checkout's HEAD, so the control panel can tell a
+// new version is live (HANDOFF §15).
 app.get('/healthz', (_req, res) => {
-  res.json({ ok: true, app: 'openobject', version: require('./package.json').version });
+  res.json({ ok: true, app: 'openobject', version: require('./package.json').version, commit: updater.cachedCommitSync() });
 });
 
 // JSON error responses for the API (e.g. multer rejections) instead of HTML stack traces.
@@ -240,8 +289,12 @@ app.use((err, _req, res, _next) => {
   res.status(400).json({ error: err.message });
 });
 
-app.listen(PORT, HOST, () => {
-  console.log(`OpenObject player listening on http://localhost:${PORT}`);
-  console.log(`  • control  →  http://localhost:${PORT}/`);
-  console.log(`  • display  →  http://localhost:${PORT}/display`);
+// Cache the running commit for /healthz (HANDOFF §15) before serving; never block boot on it.
+updater.refreshCommitCache().finally(() => {
+  app.listen(PORT, HOST, () => {
+    console.log(`OpenObject player listening on http://localhost:${PORT}`);
+    console.log(`  • control  →  http://localhost:${PORT}/`);
+    console.log(`  • display  →  http://localhost:${PORT}/display`);
+    console.log(`  • version  →  ${require('./package.json').version} (commit ${updater.cachedCommitSync() || '—'})${SUPERVISED ? ' · supervised' : ''}`);
+  });
 });

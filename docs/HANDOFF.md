@@ -300,6 +300,21 @@ panel**, since the UI lives there. Phase 2 only swaps the restart for the OS ser
 manager (a systemd unit restarts the player on the device); the mechanism above is
 unchanged.
 
+**Built 2026-06-13.** Lives in the control panel's **Settings** tab. `npm start` runs a tiny
+**supervisor** (`player/supervisor.js`) that relaunches `node server.js` when the player exits
+with restart code 75 after an update; `npm run start:direct` runs the server without it (manual
+restart). Routes: `GET /api/update` (no-network status for page load), `POST /api/update/check`
+(fetch + compare to the channel's target), `POST /api/update/apply` (fast-forward + deps-if-changed
++ restart), `PUT /api/update/channel`. `/healthz` returns `{version, commit}` so the panel can
+confirm the relaunched version. All git runs via `execFile` against the **repo root**; the player
+app and its `package.json`/lockfile live in `player/`, so a dependency reinstall runs there. The
+card shows `version · build date · commit` (no jargon); the update channel is a backend setting
+(`update_channel`: `main` | `releases`) but v1 surfaces no toggle and tracks `main` (§20). Verified on macOS against a
+throwaway bare-clone "fake origin" (no real upstream commits, never touches GitHub): check →
+fast-forward + restart (commit flips on `/healthz`) → divergence refusal, plus the offline and
+not-a-git-checkout paths. Phase 2 swaps the supervisor for a systemd unit; the mechanism is
+unchanged.
+
 ---
 
 ## 16. Documentation requirement (two audiences, kept in lockstep)
@@ -401,6 +416,57 @@ The original software is a standard Android app on Android-x86. To manually rese
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-06-13 — Self-update UI redesign + control-panel layout
+- **Software Update card decluttered to the traditional shape** (Matt's review): a clear
+  **Current version** line — `version · date · commit` (e.g. `0.1.0 · June 13, 2026 · a1b2c3d`,
+  the commit a small unlabeled link to GitHub) — then **Check for updates**, and on an available
+  update a plain-English recap of what's in it, a **What's new ↗** link to the GitHub diff, and
+  **Update & Restart** / **Not now**. The version number alone doesn't change every update, so the
+  **build date** is the human "it updated" signal and the short **commit** the precise one (covers
+  two-updates-in-a-day); the jargon (`commit`, `tracking main`, raw hashes in the body) is gone.
+  New backend fields feed it: commit `date` (`git %cs`) and `repoUrl`/`compareUrl` derived from the
+  origin remote (suppressed for non-web remotes).
+- **Update channel toggle removed from the UI** — track the latest on `main` only. The channel
+  machinery stays in the backend (`update_channel`, `PUT /api/update/channel`), so a plain "vetted
+  releases" choice can return if/when we publish tagged releases (pairs with going public).
+  "Stable releases" was dropped from the UI because we have none yet — it would only read "no
+  releases yet."
+- **Section headers Title-Cased** (Sleep Hours, Software Update) via a shared `.section-title`.
+- **Control-panel layout: tabs moved to the top; the upload dropzone now lives inside the Library
+  tab** (no longer pinned above all tabs). Uploading is a Library action, so seeing it from
+  Rotation/Settings was odd. **This reverses the earlier "upload pinned above the tabs" call** (see
+  the Rotation-curation entry below). A "drop a file anywhere → Library" convenience was considered
+  and declined — keep it simple. (Matt, 2026-06-13.)
+
+### 2026-06-13 — Self-update from GitHub built (§15)
+- **Self-update shipped, browser-driven end to end (§15).** The **Settings** tab gains a
+  **Software update** card: it shows the running version + commit + tracked branch, a **Check
+  for updates** button (git fetch + compare to the channel's target), and — when a newer,
+  fast-forwardable version exists — an **Update & restart** button that pulls
+  (`git merge --ff-only`), reinstalls dependencies **only if the manifest changed**, and
+  relaunches. `/healthz` now also reports the running **commit**, which the panel polls to
+  confirm the new version came back up. Everything happens over the browser — **no hardware
+  access** — which is the whole point of building it now.
+- **Restart mechanism = a tiny supervisor (`player/supervisor.js`).** `npm start` now runs the
+  supervisor; it spawns `node server.js` and relaunches it when the player exits with restart
+  code **75** after an update. `npm run start:direct` runs the server alone (no auto-relaunch —
+  self-update then asks for a manual restart). This is the Phase-1 stand-in for the device's
+  service manager; **Phase 2 swaps it for a systemd unit** (`Restart=always`), the player side
+  unchanged. The launch config now points at the supervisor.
+- **Guardrails (all verified):** **fast-forward only** — a diverged checkout (local commits)
+  refuses with a clear message and changes nothing, never a force-reset; **runtime data
+  untouched** — `player/data/` + uploads are gitignored, invisible to the pull; **offline-safe**
+  — a failed fetch reports gracefully and never touches playback; **owner-initiated only**,
+  never automatic, never in the playback path. Art still never touches the repo (§8).
+- **Channel setting** (`update_channel`): track **`main`** (default) or **tagged releases**
+  only (§12). New routes: `GET /api/update` (instant, no-network status), `POST /api/update/check`,
+  `POST /api/update/apply`, `PUT /api/update/channel`.
+- **Tested end-to-end on macOS without real upstream commits** via a throwaway bare-clone
+  "fake origin" sandbox (snapshot the working tree → bare repo → work checkout → push synthetic
+  commits): proved no-update → update → fast-forward + restart (`/healthz` commit flips) →
+  divergence refusal, plus the offline and not-a-git-checkout paths. The sandbox is disposable
+  and never touches the real repo or GitHub. (Matt, 2026-06-13.)
 
 ### 2026-06-13 — Sleep hours built (+ manual Blank)
 - **Sleep hours shipped (§13):** up to **two daily blank windows**, each with an **enable

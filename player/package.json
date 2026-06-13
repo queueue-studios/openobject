@@ -9,7 +9,8 @@
     "node": ">=22.5.0"
   },
   "scripts": {
-    "start": "node server.js",
+    "start": "node supervisor.js",
+    "start:direct": "node server.js",
     "dev": "node --watch server.js"
   },
   "dependencies": {
