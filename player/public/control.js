@@ -43,7 +43,8 @@ const restartBtn = document.getElementById('restartBtn');
 const shutdownBtn = document.getElementById('shutdownBtn');
 const powerStatus = document.getElementById('powerStatus');
 const reachEl = document.getElementById('reach');
-const reachList = document.getElementById('reachList');
+const frameAddr = document.getElementById('frameAddr');
+const frameMdns = document.getElementById('frameMdns');
 
 const UNIT_MS = { seconds: 1000, minutes: 60000, hours: 3600000 };
 
@@ -582,7 +583,7 @@ function cancelPowerAction() {
 // Real soft-restart via the supervisor — the same exit→relaunch as self-update. The version is
 // unchanged, so we watch the boot id (not the commit) to confirm the player actually bounced.
 async function doRestart() {
-  setPowerStatus('Restarting… the frame will be back in a moment.');
+  setPowerStatus('Restarting… the control panel will be back in a moment.');
   let before = null;
   try { before = (await fetch('/healthz', { cache: 'no-store' }).then((r) => r.json())).boot; } catch {}
   let res = null;
@@ -594,10 +595,10 @@ async function doRestart() {
   const h = await pollHealthz((x) => x.boot && x.boot !== before);
   restartBtn.disabled = false; shutdownBtn.disabled = false;
   if (h) {
-    setPowerStatus('<span class="upd-ok">✓</span> Restarted — the frame is back.');
+    setPowerStatus('<span class="upd-ok">✓</span> Restarted — the control panel is back.');
     await refresh();
   } else {
-    setPowerStatus('The frame is taking longer than expected. It should come back on its own — reload this page in a moment.');
+    setPowerStatus('The control panel is taking longer than expected. It should come back on its own — reload this page in a moment.');
   }
 }
 
@@ -613,14 +614,14 @@ async function doShutdown() {
 async function loadSystem() {
   const s = await fetch('/api/system').then((r) => r.json()).catch(() => null);
   if (!s) return;
-  const items = (s.addresses || []).map((ip) => {
+  const addrs = (s.addresses || []).map((ip) => {
     // Omit the port for plain http (:80) so the frame shows a clean http://<ip> (HANDOFF §11).
     const url = `http://${ip}${s.port && Number(s.port) !== 80 ? ':' + s.port : ''}`;
     return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a>`;
   });
-  if (s.mdns) items.push(`<span class="reach-mdns">${escapeHtml(s.mdns)} — on the installed frame</span>`);
-  reachList.innerHTML = items.join('');
-  reachEl.hidden = items.length === 0;
+  frameAddr.innerHTML = addrs.join(' or ') || '—';
+  if (s.mdns) { frameMdns.textContent = s.mdns; frameMdns.href = `http://${s.mdns}`; }
+  reachEl.hidden = addrs.length === 0 && !s.mdns;
 }
 
 // Poll /healthz until the player is back up and a predicate holds (a new commit after an update,
@@ -666,6 +667,12 @@ const TABS = {
   settings: [tabSettings, panelSettings],
 };
 function switchTab(name) {
+  // Don't carry a transient power message (countdown, "Restarted…", "Cancelled") across tabs,
+  // and never leave a power countdown ticking on a hidden tab.
+  clearCountdown();
+  restartBtn.disabled = false;
+  shutdownBtn.disabled = false;
+  setPowerStatus('');
   for (const [key, [tab, panel]] of Object.entries(TABS)) {
     const on = key === name;
     tab.setAttribute('aria-selected', String(on));

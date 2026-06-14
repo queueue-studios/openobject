@@ -111,9 +111,10 @@ shows the OpenObject logo dimmed and stops playing, then picks the rotation back
 own. **Want it off right now?** Tap **Blank screen** at the top of the control panel — the
 art goes dark until you tap it again.
 
-**Restart or shut down** *(Settings tab)*. **Restart** restarts the frame — handy if
-something seems stuck. **Shut down** turns off the frame (this works once OpenObject is
-installed on the frame). Neither needs you to reach behind it.
+**Restart or shut down** *(Settings tab)*. **Restart** restarts the OpenObject software —
+handy if the app seems stuck. (It doesn't reboot the frame's hardware; for that, power-cycle
+the outlet.) **Shut down** turns off the frame (this works once OpenObject is installed on the
+frame). Neither needs you to reach behind it.
 
 **Reaching the frame** *(Settings → Wi-Fi)*. The frame sets up its own Wi-Fi on first
 boot so you can put it on your home network. The Wi-Fi section also lists the addresses

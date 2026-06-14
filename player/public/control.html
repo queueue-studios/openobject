@@ -111,7 +111,7 @@
         <div class="section-title">Power</div>
         <div class="device-row">
           <button type="button" id="restartBtn" class="update-btn">Restart</button>
-          <span class="device-note">Restarts the frame.</span>
+          <span class="device-note">Restarts the control panel.</span>
         </div>
         <div class="device-row">
           <button type="button" id="shutdownBtn" class="update-btn danger">Shut down</button>
@@ -123,14 +123,9 @@
       <!-- Wi-Fi — first-run onboarding runs on the device (Phase 2); show how to reach the control panel now (HANDOFF §11) -->
       <section class="device">
         <div class="section-title">Wi-Fi</div>
-        <p class="device-note device-note-block">
-          On first boot, the frame creates its own <strong>OpenObject-Setup</strong> network. You join it from
-          your phone, pick your home Wi-Fi, and it switches over to your network. This runs on the frame itself
-          and becomes active once OpenObject is installed.
-        </p>
         <div class="reach" id="reach" hidden>
-          <span class="reach-label">Reach the control panel</span>
-          <div class="reach-list" id="reachList"></div>
+          <p class="device-note">Your frame is located at <span id="frameAddr">—</span></p>
+          <p class="device-note">Reach the control panel at <a id="frameMdns" href="http://openobject.local" target="_blank" rel="noopener">openobject.local</a></p>
         </div>
       </section>
     </section>
