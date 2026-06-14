@@ -496,6 +496,23 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-06-14 — License chosen + repo prepped to go public (source available, noncommercial)
+- **License = PolyForm Noncommercial License 1.0.0** (Matt's call): the source is **available for
+  noncommercial use** — anyone may use, modify, and share OpenObject to revive and run their *own*
+  frame (personal/hobby), but **may not** sell it, charge for it, or build it into a product or other
+  commercial/revenue venture. Deliberately **not** "open source" (the noncommercial limit) — call it
+  *"source available, noncommercial"* everywhere. **Copyright holder = The Museum of Digital Art
+  (@mymoda_io)** (Matt's established X handle/brand).
+- Added a root `LICENSE` (verbatim official PolyForm text + a `Required Notice:` copyright line);
+  set `player/package.json` `license` → `PolyForm-Noncommercial-1.0.0` + `author` (kept
+  `"private": true` — that only blocks an accidental npm publish, unrelated to GitHub visibility).
+- **README refreshed for a public front page** and corrected stale facts: CPU **N5100 → N5105**,
+  added **WebM**, dropped the removed **Random** order (Sequence/Shuffle only), status now "working
+  on real hardware," `installer/` described, added a Get-started section + the 1920×1920 panel spec.
+- **The visibility flip itself is Matt's manual step** (GitHub → Settings → Change visibility →
+  Public); the repo *content* is ready. Once public, the frame's self-update can finally pull
+  (resolves the repo-public/license trigger). (Matt, 2026-06-14.)
+
 ### 2026-06-14 — Phase 2B VERIFIED on hardware: the frame runs OpenObject
 Bench bring-up of the installer succeeded **end-to-end on the real MeLE frame, first run.**
 - Flashed Debian 13.5 netinst (balenaEtcher) → wiped the eMMC → minimal Debian (no desktop) →
