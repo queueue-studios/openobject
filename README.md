@@ -77,3 +77,15 @@ In plain terms: you may use, modify, and share OpenObject to revive and run **yo
 frame — personal and hobby use is welcome. You **may not** sell it, charge for it, or build
 it into a product, service, or other commercial/revenue venture. Because of that noncommercial
 limit it is deliberately **not** "open source" in the OSI sense — it is *source available*.
+
+## Independence and trademarks
+
+OpenObject is an independent project, written from scratch. It contains no source code, assets,
+or data from the device's original manufacturer or any original software provider, and
+incorporates none of it. Installing OpenObject erases the device's storage, removing all
+original software and data before OpenObject is installed.
+
+OpenObject is not affiliated with, authorized by, or endorsed by the device's original
+manufacturer or any original software provider. Product and company names that appear elsewhere
+in this project are the property of their respective owners and are used only to identify the
+hardware and the original software OpenObject replaces.
