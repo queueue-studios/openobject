@@ -31,7 +31,8 @@ The mini PC is a **MeLE Quieter 3Q** (confirmed from the unit's label; the BIOS 
 | RAM | 8 GB LPDDR4x _(typical config; not yet confirmed at bench)_ |
 | Storage | **~128 GB eMMC** — confirmed from Linux as **116.5 GiB** at `/dev/mmcblk0` (2026-06-13): EFI `p1` 512 MB + ext4 `p2` 116 GB, plus 4 MB `mmcblk0boot0/1`. UEFI device id `A3V012`. _(The earlier "~256 GB" came from the Android storage screen and was wrong — `lsblk` is authoritative; the original "128 GB" was right.)_ |
 | Expansion | microSD slot (pressure valve for larger libraries) |
-| Networking | Onboard **Wi-Fi 5** + **Gigabit Ethernet** (RJ45) |
+| Networking | Onboard Wi-Fi — Intel Jasper Lake **CNVi** `[8086:4df0]` (`iwlwifi`) + **Gigabit Ethernet** Realtek RTL8111/8168 `[10ec:0123]` (`r8169`) — _both confirmed 2026-06-14_ |
+| Display panel | 26" **square (1:1)**, **1920×1920** native, over HDMI (Intel JasperLake UHD / `i915`; the iGPU also advertises 1920×1080 fallback modes) — _confirmed 2026-06-14_ |
 | Power | 12 V / 2 A barrel jack |
 | FCC TX ID | PD99560D2 _(use to confirm Wi-Fi module / Linux driver at bench)_ |
 | Serial | 8ICH4F310P530467 |
@@ -296,7 +297,7 @@ AM/PM toggle** and may cross midnight (an auto **"overnight"** tag flags a windo
 A manual **"Blank panel"** toggle in the control-panel header turns the art off on demand,
 independent of the schedule — the companion to scheduled sleep, and the answer to "how do I
 stop the display right now?". While asleep, **playback stops** and the panel shows the **sleep
-screen**: the same boot/idle mark at the **same size and placement, dimmed (~0.2 opacity) and
+screen**: the same boot/idle mark at the **same size and placement, dimmed (~0.1 opacity) and
 with no caption** underneath. To rest the panel it does a slow, imperceptible **pixel-shift**
 every ~90 s (the standard anti-burn-in technique — chosen over a periodic fade as sufficient on
 its own; on this LCD it's belt-and-suspenders anyway). The server computes `asleep` (schedule
@@ -485,7 +486,7 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 - [x] **Hardware models** (2026-06-13) — UGreen 4-port USB 3.0 hub (**25946**); CableCreation **left-angle** USB 3.0 extension (**CC0516**); Logitech **K400 Plus**. Filled into §16 / Setup Guide.
 - [x] **Logo / OpenObject mark** — supplied by Matt; optimized marks in `assets/branding/` (source masters in `Logo/`, gitignored). Transparent / white-on-dark variants derived in Phase 1.
-- [~] **Bench-verified specs** — **BIOS-entry key `Del`** ✓; **Auto-Power-On = none / firmware auto-on** ✓ (no toggle exists); **CPU N5105** ✓; **UEFI + Secure-Boot-off** ✓; **eMMC = ~128 GB** (116.5 GiB at `/dev/mmcblk0`; corrected 2026-06-13 from the wrong "~256 GB") ✓; **onboard Wi-Fi works under Ubuntu 26.04 live** ✓ (2026-06-13 smoke test). **Still TBD (placeholder — to fill from the bench):** exact Wi-Fi module/driver name (FCC TX ID `PD99560D2`) — captured via `lspci -nnk` as **step 0** of the installer runbook (`installer/README.md`), before any wipe, to confirm Debian's in-box firmware covers it (USB Wi-Fi dongle is the §3 fallback); RAM.
+- [~] **Bench-verified specs** — **BIOS-entry key `Del`** ✓; **Auto-Power-On = none / firmware auto-on** ✓ (no toggle exists); **CPU N5105** ✓; **UEFI + Secure-Boot-off** ✓; **eMMC = ~128 GB** (116.5 GiB at `/dev/mmcblk0`; corrected 2026-06-13 from the wrong "~256 GB") ✓; **onboard Wi-Fi works under Ubuntu 26.04 live** ✓ (2026-06-13 smoke test). **Wi-Fi module CONFIRMED at the bench (2026-06-14, `lspci -nnk` on installed Debian 13.5 / kernel 6.12.90):** **Intel Jasper Lake PCH CNVi Wi-Fi `[8086:4df0]`**, driver **`iwlwifi`** (this is the FCC TX ID `PD99560D2` part). **Debian's in-box `firmware-iwlwifi` drives it — Wi-Fi joined in the installer, no dongle needed**, closing the §3 Wi-Fi risk. Also captured: iGPU **Intel JasperLake UHD Graphics `[8086:4e61]`** driver **`i915`**; wired NIC **Realtek RTL8111/8168 `[10ec:0123]`** driver **`r8169`**. **Panel resolution CONFIRMED 2026-06-14: 1920×1920** (running framebuffer + native DRM mode; the iGPU also advertises 1920×1080 fallback modes). **Still TBD:** RAM.
 - [x] **GitHub repo** — created **private** (2026-06-11); goes public later.
 - [x] **Content model confirmed** (2026-06-11) — library+select, not replace-on-upload.
 
@@ -494,6 +495,27 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-06-14 — Phase 2B VERIFIED on hardware: the frame runs OpenObject
+Bench bring-up of the installer succeeded **end-to-end on the real MeLE frame, first run.**
+- Flashed Debian 13.5 netinst (balenaEtcher) → wiped the eMMC → minimal Debian (no desktop) →
+  `installer/install.sh` provisioned Node 22, Chromium + cage, Avahi, NetworkManager, the systemd
+  units, and **passed its self-test** (`/healthz` on :80). After `reboot` the panel came up
+  **edge-to-edge on `/display`** (cage + Chromium kiosk) with the branded idle screen — the single
+  riskiest piece, working on the first boot.
+- **Verified:** `http://openobject.local` reachable from a phone over Wi-Fi; uploads work
+  (incl. a **285 MB video** looping); rotation cycles; the cursor is gone once the setup keyboard's
+  USB receiver is unplugged (the wall-mounted state — so no `cursor: none` code was needed).
+- **Hardware confirmed (`lspci`):** Wi-Fi **Intel Jasper Lake CNVi `[8086:4df0]` / `iwlwifi`**
+  (Debian in-box firmware — no dongle), iGPU **`[8086:4e61]` / i915**, NIC **Realtek / r8169**,
+  panel **1920×1920** square. Filled the §19 Wi-Fi placeholder + the §2 table.
+- **NM Wi-Fi handoff** no-ops on this ifupdown-managed install (skipped, non-fatal, by design);
+  Wi-Fi + Avahi work regardless. Full NM ownership stays with the later setup-AP milestone.
+- **Polish from the bench test:** video Library cards now show a first-frame poster (`#t=0.1`
+  media fragment — no transcode); the blank/sleep mark dimmed **0.2 → 0.1** (Matt).
+- **Deployment note:** code fixes reach the installed frame only via self-update (needs the repo
+  public) or a re-seed — the first concrete case of the repo-public/license trigger. Running bench
+  log: `installer/INSTALL-NOTES.md`. (Matt, 2026-06-14.)
 
 ### 2026-06-14 — Phase 2B: UEFI Debian + Chromium-kiosk installer built (Mac side)
 Built the installer that turns a minimal Debian into an OpenObject appliance; bench test pending.

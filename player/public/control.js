@@ -87,9 +87,11 @@ function setStatus(msg, sticky) {
   statusEl.classList.toggle('show', !!sticky);
 }
 
+// A video card shows its first frame as a poster: the `#t=0.1` media fragment makes the
+// browser seek ~0.1s in and paint that frame — no server-side thumbnail or transcode (§6).
 const mediaTag = (item) =>
   item.kind === 'video'
-    ? `<video src="/uploads/${item.filename}" muted playsinline preload="metadata"></video>`
+    ? `<video src="/uploads/${item.filename}#t=0.1" muted playsinline preload="metadata"></video>`
     : `<img src="/uploads/${item.filename}" alt="" loading="lazy">`;
 
 // ── Library tab ─────────────────────────────────────────────────────

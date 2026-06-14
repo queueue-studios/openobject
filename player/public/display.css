@@ -87,5 +87,5 @@ body {
    with a slow pixel-shift drift (transform set in JS) so a static mark can't sit on the panel.
    Same size and placement as the idle screen — only the dim and the missing caption differ. */
 .idle.asleep { transition: transform 4s ease-in-out; }
-.idle.asleep .mark { opacity: 0.2; }
+.idle.asleep .mark { opacity: 0.1; }
 .idle.asleep .hint { display: none; }

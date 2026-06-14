@@ -30,5 +30,11 @@
 - [✓] **Finish → "Installation complete":** safe to **unplug the Debian stick before clicking Continue** (all writing is done). Reboots to a **text console login** (no desktop). **Password is invisible while typing** at the console login — warn users it's not a dead keyboard.
 - [ ] If it does NOT boot to Debian (lands in BIOS / "no bootable device"): Boot Override → the **debian / eMMC** UEFI entry, or set it first in boot order. (Stale factory "ubuntu (A3V012)" NVRAM entry may linger but is harmless.)
 
+## Hardware confirmed at the bench (2026-06-14, `lspci -nnk` on Debian 13.5 / kernel 6.12.90)
+- **Wi-Fi (fills §19):** Intel **Jasper Lake PCH CNVi Wi-Fi `[8086:4df0]`**, driver **`iwlwifi`** (FCC TX ID `PD99560D2`). Driven by Debian's in-box `firmware-iwlwifi` — joined Wi-Fi in the installer, **no dongle needed**. The biggest Phase-2 risk is now fully closed.
+- **iGPU:** Intel **JasperLake UHD Graphics `[8086:4e61]`**, driver **`i915`** (good for cage + Chromium).
+- **Wired NIC:** Realtek **RTL8111/8168 `[10ec:0123]`**, driver **`r8169`**.
+- **Panel resolution:** **1920×1920** confirmed 2026-06-14 (`fb0/virtual_size` = running; native DRM mode = 1920×1920; 1920×1080 also advertised as a non-square fallback). Square 1:1, matches the app's resolution-independent `100vw×100vh` stage. **Still TBD:** RAM.
+
 ## Phase 3 (after Debian boots) — pending
 - [ ] Plug in the **OPENOBJECT** seed stick now; mount it; `git clone …bundle /opt/openobject`; `sudo bash …/installer/install.sh`.
