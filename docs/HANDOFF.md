@@ -297,7 +297,7 @@ AM/PM toggle** and may cross midnight (an auto **"overnight"** tag flags a windo
 A manual **"Blank panel"** toggle in the control-panel header turns the art off on demand,
 independent of the schedule, the companion to scheduled sleep, and the answer to "how do I
 stop the display right now?". While asleep, **playback stops** and the panel shows the **sleep
-screen**: the same boot/idle mark at the **same size and placement, dimmed (~0.1 opacity) and
+screen**: the same boot/idle mark at the **same size and placement, dimmed (~0.05 opacity) and
 with no caption** underneath. To rest the panel it does a slow, imperceptible **pixel-shift**
 every ~90 s (the standard anti-burn-in technique, chosen over a periodic fade as sufficient on
 its own; on this LCD it's belt-and-suspenders anyway). The server computes `asleep` (schedule
@@ -464,6 +464,7 @@ Maintain **two** living documents as the build proceeds, not one written once an
 - **Global "allow audio" toggle.** v1 is muted-always.
 - **Smart-plug integration** for hard-lockout recovery.
 - **Real device power-off and reboot.** Today the control panel's **Restart** is an app-level soft-restart (the player exits and systemd relaunches it), and **Shut down** is still an inert stub on the device that only returns a message. Wire **Shut down to `systemctl poweroff`** and add a true **device reboot (`systemctl reboot`)** for OS-level issues, both through a one-time privilege grant (a polkit rule) in `installer/install.sh`. Small and self-contained. Logged 2026-06-14, after the first bench self-update made the dead Shut down button on the real frame obvious.
+- **Reliable kiosk cursor hide.** `cursor: none` on `/display` does not hide the pointer under cage: the CSS loads (the sleep-mark dim from the same file applies) but the Wayland compositor still draws its default cursor, so a pointer sits on the art when an input receiver stays attached. Needs a compositor-level fix (a blank cursor theme, a pointer warp at startup, or a cage option), not just CSS. First diagnostic: does it vanish when the touchpad is nudged? Found 2026-06-14 on the first booted frame.
 
 ---
 
@@ -501,7 +502,7 @@ Living record of decisions taken during the build (newest first). When any of th
 The repo went **public** under the **PolyForm Noncommercial License 1.0.0** (source available for noncommercial use), and over-the-air self-update was **verified end to end on the actual frame**: from the control panel the frame fetched the now-public repo, fast-forwarded `5b69400` to `da15978` (nine commits), reinstalled dependencies, and restarted the player, with the commit on the Software Update card flipping to confirm it. The version stays `0.1.0` and the date stays today because every commit landed in one day, so the **commit hash is the precise "it updated" indicator**, which is exactly what that field exists for.
 - **Public-facing copy pass:** README and SETUP-GUIDE rewritten in a casual, human voice. The original decay is described generically, with the **White Walls app credited as the stranded hero** (the cloud services it relied on going away was not its fault). Added a **No warranty** section and an **Independence / not-affiliated** notice. SETUP-GUIDE gained a frank "So you want to try this?" preface, and its install steps now point to the real `installer/` runbook instead of promising the unbuilt one-tap image and setup-AP Wi-Fi.
 - **Em dashes removed from all repo copy** (README, SETUP-GUIDE, HANDOFF, both appendixes, the installer runbook, INSTALL-NOTES, CLAUDE.md, the player README): Matt considers heavy em-dash use an AI tell. Headers take a colon, body text a comma. `LICENSE` left verbatim; code comments left for now.
-- **Kiosk cursor hidden** (`cursor: none` on `/display`) so the setup keyboard's receiver can stay attached for local console access without a pointer sitting on the art.
+- **Attempted to hide the kiosk cursor** (`cursor: none` on `/display`) so the setup keyboard's receiver can stay attached for local access. On the first booted frame it does NOT take effect: the CSS loads (the sleep-mark dim from the same file applies) but cage still draws a pointer on the art. Logged in §17 for a proper compositor-level fix.
 - **Logged in §17:** wire a real device power-off and a true device reboot, since the bench self-update exposed Shut down as a still-inert stub on the real frame. (Matt, 2026-06-14.)
 
 ### 2026-06-14: License chosen + repo prepped to go public (source available, noncommercial)
