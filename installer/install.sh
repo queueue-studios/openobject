@@ -56,9 +56,16 @@ apt-get install -y \
   libgl1-mesa-dri mesa-va-drivers intel-media-va-driver libavcodec-extra \
   avahi-daemon libnss-mdns \
   network-manager \
+  openssh-server \
   fonts-dejavu-core fonts-liberation \
   || die "apt-get install failed — is the network up?"
 ok "packages installed"
+
+# SSH is installed for servicing but left OFF by default: a shipped frame opens no port until
+# its owner turns it on with `sudo systemctl enable --now ssh`. (Documented in the Setup Guide.)
+systemctl disable --now ssh.socket  >/dev/null 2>&1 || true
+systemctl disable --now ssh.service >/dev/null 2>&1 || true
+ok "openssh-server installed but disabled (enable: sudo systemctl enable --now ssh)"
 
 # ── 2. Node 22 (NodeSource) ─────────────────────────────────────────────────────────
 log "Ensuring Node.js >= 22 (node:sqlite needs >= 22.5)"
