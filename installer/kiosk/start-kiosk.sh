@@ -22,5 +22,14 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 
+# Hide the mouse pointer on the kiosk. Point cage's cursor theme at the blank (transparent)
+# cursor shipped next to this script, so the pointer is invisible from boot. (The display's
+# `cursor: none` CSS only takes effect after the pointer first moves under cage, so cage's
+# default cursor would otherwise sit on the art when the setup keyboard's receiver stays
+# attached.) These files live in the git checkout, so this fix ships via normal self-update.
+export XCURSOR_PATH="$HERE/cursors"
+export XCURSOR_THEME=blank
+export XCURSOR_SIZE=24
+
 # cage runs a single client fullscreen and exits when it exits (systemd then relaunches us).
 exec cage -- "$HERE/chromium-kiosk.sh"
