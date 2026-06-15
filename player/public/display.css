@@ -14,6 +14,7 @@ html, body {
   margin: 0;
   height: 100%;
   background: var(--stage-bg);
+  cursor: none;                     /* kiosk hides the pointer; the input receiver stays attached for local access, so a cursor would otherwise sit on the art. The control panel keeps its own cursor. */
 }
 
 body {
