@@ -22,16 +22,18 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 
-# Hide the mouse pointer on the kiosk. Point cage's cursor theme at the blank (transparent)
-# cursor shipped next to this script, so the pointer is invisible from boot. (The display's
-# `cursor: none` CSS only takes effect after the pointer first moves under cage, so cage's
-# default cursor would otherwise sit on the art when the setup keyboard's receiver stays
-# attached.) These files live in the git checkout, so this fix ships via normal self-update.
+# Hide the mouse pointer on the kiosk. cage takes its pointer from the cursor theme named
+# "default" and ignores XCURSOR_THEME (confirmed at the bench), so expose our transparent
+# cursors under that name: a "default" symlink to the shipped "blank" theme, rebuilt each start
+# so it self-heals and a fresh install picks it up. Never fatal: a cursor glitch must not stop
+# the kiosk. (The display's `cursor: none` only takes over once the pointer first moves.)
+{ rm -rf "$HERE/cursors/default" && ln -s blank "$HERE/cursors/default"; } || true
 export XCURSOR_PATH="$HERE/cursors"
-export XCURSOR_THEME=blank
+export XCURSOR_THEME=default
 export XCURSOR_SIZE=24
 
 # cage runs a single client fullscreen and exits when it exits (systemd then relaunches us).
-# -s allows VT switching, so Ctrl+Alt+F2 reaches a Debian console for servicing. Without it cage
-# locks the VT and there is no way off the kiosk with a keyboard. Physical access only, fine here.
+# -s allows VT switching, so Ctrl+Alt+F2 reaches a Debian console for servicing (on the bench
+# keyboard the top-row keys are media keys, so in practice it is Ctrl+Alt+Fn+F2). Without -s cage
+# locks the VT and there is no way off the kiosk with a keyboard. Physical access only.
 exec cage -s -- "$HERE/chromium-kiosk.sh"
