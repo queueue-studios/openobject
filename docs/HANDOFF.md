@@ -4,6 +4,7 @@
 > **Status:** Build in progress (Phase 0–1). The web app is built and tested on macOS first; hardware/Linux work (Phase 2) is deferred until bench access. See §20 for the decision log.
 > **Local project root:** `/Users/mattlhx/Code/OpenObject`
 > **GitHub repo:** Created **private** during development (2026-06-11); intended to go public later. Claude drives all git operations on Matt's approval.
+> **Website:** https://openobject.io
 
 ---
 

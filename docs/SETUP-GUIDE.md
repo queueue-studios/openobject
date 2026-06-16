@@ -3,6 +3,8 @@
 A plain-English guide for reviving an **Infinite Objects XXL** frame with OpenObject. No
 engineering knowledge needed. If you've never seen the build spec, you're in the right place.
 
+**Home base:** [openobject.io](https://openobject.io)
+
 ## So you want to try this?
 
 A frank word, friend to friend, before you start.
