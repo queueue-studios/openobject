@@ -56,6 +56,12 @@ const CHEV_DOWN = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" s
 const X_MARK = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 const CHECK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-11"/></svg>';
 
+// Escape user-controlled text before it goes into innerHTML (notably an uploaded
+// filename, which is stored byte-for-byte and is attacker-controlled). Without this a
+// crafted name like `"><img src=x onerror=...>` would run script in the control panel.
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
 let pinnedId = null;
 let mode = 'sequence';
 let durationUnit = 'seconds';
@@ -113,7 +119,7 @@ function card(item) {
       ${isPinned ? '<span class="pin-badge">📌 Pinned</span>' : ''}
     </div>
     <div class="meta">
-      <span class="name" title="${item.original_name}">${item.original_name}</span>
+      <span class="name" title="${esc(item.original_name)}">${esc(item.original_name)}</span>
       <span class="sub">${fmtBytes(item.bytes)}</span>
     </div>
     <div class="actions">
@@ -147,7 +153,7 @@ function rotRow(item, idx, total) {
     <span class="rot-num">${idx + 1}</span>
     <span class="rot-thumb fit-${item.fit === 'fill' ? 'fill' : 'fit'}">${mediaTag(item)}</span>
     <span class="rot-meta">
-      <span class="rot-name">${isPinned ? '<span class="rot-pin" title="Pinned">📌</span> ' : ''}${item.original_name}</span>
+      <span class="rot-name">${isPinned ? '<span class="rot-pin" title="Pinned">📌</span> ' : ''}${esc(item.original_name)}</span>
       <span class="rot-sub">${item.format}${item.fit === 'fill' ? ' · fill' : ''}</span>
     </span>
     <span class="rot-btns">

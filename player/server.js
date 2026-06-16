@@ -62,6 +62,17 @@ db.initDb(); // ensure the SQLite store + uploads dir exist before serving
 
 const app = express();
 app.disable('x-powered-by');
+
+// Content-Security-Policy: defense-in-depth for the control panel. Scripts and styles are
+// external same-origin files and media is served from /uploads and /assets, so a strict
+// policy costs nothing here and blocks injected inline script (e.g. via an uploaded filename).
+app.use((_req, res, next) => {
+  res.setHeader('Content-Security-Policy',
+    "default-src 'self'; img-src 'self' data:; media-src 'self'; script-src 'self'; " +
+    "style-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+  next();
+});
+
 app.use(express.json());
 
 // Static front-end, brand assets, and the uploaded art itself.
