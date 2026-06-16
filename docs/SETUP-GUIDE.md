@@ -104,7 +104,7 @@ is the set that's actually showing on the wall. The control panel has three tabs
 - **Rotation:** just what's playing, in order, plus how long each piece shows and Sequence or
   Shuffle. New uploads join the Rotation automatically, so you can keep a growing collection and
   still show just today's pick by removing the rest.
-- **Settings:** sleep hours, software updates, an optional password, and frame controls (restart, shut down, Wi-Fi),
+- **Settings:** sleep hours, software updates, frame controls (restart, shut down), an optional password, how to reach the frame over Wi-Fi, and an About section,
   described below.
 
 **Order.** Choose how the Rotation plays:
@@ -149,6 +149,10 @@ the frame.
 
 **Reaching the frame** *(Settings, Wi-Fi)*. You set the frame's Wi-Fi while installing it. The
 Wi-Fi section of the control panel lists the addresses you can open it at from another device.
+
+**About** *(Settings tab, at the bottom)*. A small card with the OpenObject name, a link to the
+project home at openobject.io, a link to the source code on GitHub, and the license. If you ever
+inherit this frame and want to understand or rebuild what it runs, that source link is where to start.
 
 ---
 

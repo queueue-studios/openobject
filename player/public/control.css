@@ -233,11 +233,13 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .update-btn.danger { color: #ffb4b4; }
 .update-btn.danger:hover:not(:disabled) { background: #2a1c1e; border-color: #5a2a2e; color: var(--danger); }
 .reach { margin-top: 14px; }
-.reach-label { color: var(--muted); font-size: 12px; }
-.reach-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
-.reach-list a { color: var(--text); text-decoration: none; font-size: 14px; }
-.reach-list a:hover { text-decoration: underline; }
-.reach-list .reach-mdns { color: var(--muted); font-size: 13px; }
+.reach a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
+.reach a:hover { color: #fff; }
+.about-links { margin: 12px 0 0; font-size: 14px; }
+.about-links a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
+.about-links a:hover { color: #fff; }
+.about-sep { color: var(--muted); margin: 0 8px; }
+.about-legal { margin: 14px 0 0; color: var(--muted); font-size: 13px; }
 
 /* Library */
 .library { margin-top: 30px; }
@@ -441,6 +443,6 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .auth-input:focus { outline: none; border-color: #4a4a52; }
 .login-box .update-btn { width: 100%; margin-top: 12px; }
 .auth-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
-.auth-row .auth-input { flex: 1; min-width: 160px; width: auto; }
+.auth-fields { display: flex; flex-direction: column; gap: 10px; max-width: 360px; margin-top: 12px; }
 .auth-msg { margin-top: 12px; font-size: 13px; color: var(--muted); }
 .login-box .auth-msg { color: var(--danger); }

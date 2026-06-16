@@ -106,9 +106,6 @@
         </div>
       </section>
 
-      <!-- Password: optional control-panel lock (HANDOFF §10), off by default; filled by control.js. -->
-      <section class="device" id="authCard"></section>
-
       <!-- Power — Restart (real soft-restart via the supervisor) + Shut down (hardware stub) (HANDOFF §10) -->
       <section class="device">
         <div class="section-title">Power</div>
@@ -127,6 +124,9 @@
         <div class="device-status" id="powerStatus" hidden></div>
       </section>
 
+      <!-- Password: optional control-panel lock (HANDOFF §10), off by default; filled by control.js. Sits below Power as an opt-in, uncommon feature. -->
+      <section class="device" id="authCard"></section>
+
       <!-- Wi-Fi — first-run onboarding runs on the device (Phase 2); show how to reach the control panel now (HANDOFF §11) -->
       <section class="device">
         <div class="section-title">Wi-Fi</div>
@@ -134,6 +134,18 @@
           <p class="device-note">Your frame is located at <span id="frameAddr">—</span></p>
           <p class="device-note">Reach the control panel at <a id="frameMdns" href="http://openobject.local" target="_blank" rel="noopener">openobject.local</a></p>
         </div>
+      </section>
+
+      <!-- About: name, links (project home + source), license. Reference info, lowest interaction, sits last. -->
+      <section class="device" id="aboutCard">
+        <div class="section-title">About</div>
+        <p class="device-note device-note-block">OpenObject, a self-hosted player for the Infinite Objects XXL frame.</p>
+        <p class="about-links">
+          <a href="https://openobject.io" target="_blank" rel="noopener">openobject.io</a>
+          <span class="about-sep" aria-hidden="true">·</span>
+          <a href="https://github.com/mattonchain/openobject" target="_blank" rel="noopener">Source code</a>
+        </p>
+        <p class="about-legal">© 2026 OpenObject · Free for noncommercial use.</p>
       </section>
     </section>
   </main>

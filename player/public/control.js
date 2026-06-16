@@ -788,13 +788,13 @@ function renderAuthCard() {
   if (!authState.required) {
     authCard.innerHTML = `
       <div class="section-title">Password</div>
-      <p class="device-note device-note-block">The control panel is open to anyone on your network. Set a password to require it before any changes. Your art and the display are never affected.</p>
-      <div class="auth-row">
+      <p class="device-note device-note-block">The control panel is open to anyone on your network. Optionally set a password. This will not affect the display of art.</p>
+      <div class="auth-fields">
         <input id="setPw" class="auth-input" type="password" autocomplete="new-password" placeholder="New password">
         <input id="setPwConfirm" class="auth-input" type="password" autocomplete="new-password" placeholder="Confirm password">
       </div>
       <div class="auth-row">
-        <button type="button" id="setPwBtn" class="update-btn">Turn on password</button>
+        <button type="button" id="setPwBtn" class="update-btn">Set password</button>
       </div>
       <div class="auth-msg" hidden></div>`;
     authCard.querySelector('#setPwBtn').addEventListener('click', () =>
@@ -803,7 +803,7 @@ function renderAuthCard() {
     authCard.innerHTML = `
       <div class="section-title">Password</div>
       <p class="device-note device-note-block">Password protection is <strong>on</strong>. The control panel asks for it before any changes; the display is unaffected.</p>
-      <div class="auth-row">
+      <div class="auth-fields">
         <input id="newPw" class="auth-input" type="password" autocomplete="new-password" placeholder="New password">
         <input id="newPwConfirm" class="auth-input" type="password" autocomplete="new-password" placeholder="Confirm password">
       </div>

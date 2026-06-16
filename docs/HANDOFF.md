@@ -501,6 +501,16 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-06-16: Settings tab pass (reorder, password copy, stacked fields, About card, Wi-Fi link color)
+A pass over the Settings tab for the next owner: clearer ordering, tighter copy, and consistent link styling. No behavior changes. Order is now Sleep Hours, Software Update, Power, Password, Wi-Fi, About (matches the Setup Guide walkthrough).
+- **Password card moved beneath Power.** It's opt-in and off by default, so it now sits below the everyday frame controls instead of above them.
+- **Enable button relabeled** from "Turn on password" to "Set password". The New and Confirm fields sit right in the card, so the click saves a value you've already typed (a "Set" action, not a toggle that prompts afterward); it also matches the card's own wording ("set a password") and pairs with the existing "Change password". The red "Turn off password" control is unchanged.
+- **Entry fields stacked.** The New and Confirm password inputs were side by side and stretched the full card width, which looked odd; they now stack vertically at a normal field width (capped to match the login box) in both the set and change states.
+- **Password copy tightened**, keeping the "open to anyone" preface (its value is the "why" you'd want a password): "The control panel is open to anyone on your network. Optionally set a password. This will not affect the display of art."
+- **New About card** at the bottom (after Wi-Fi, the lowest-interaction spot): the OpenObject name and one-line description, a link to the project home (openobject.io) and to the source on GitHub, and a license line ("© 2026 OpenObject · Free for noncommercial use."). The source link is deliberate: it points the next owner of a stranded frame back to the project so they can revive it. Static HTML in control.html.
+- **Wi-Fi link color fixed.** The Wi-Fi card's addresses and the openobject.local link were falling back to the browser's default blue: a refactor had moved the card to inline paragraphs and left the old `.reach-list` link CSS unmatched. Gave them the house near-white + underline treatment (matching the About links) and removed the five dead `.reach-list` rules that caused the gap.
+- **Settings stays single-column.** A two-column / half-width layout was considered and declined: the panel is mostly phone-driven (columns collapse on a narrow screen anyway) and the two tallest cards (Sleep Hours, Password) already use the full width, so halving them would just wrap their controls. If Settings grows, the cleaner lever is grouping, not columns.
+
 ### 2026-06-16: Security follow-ups (filename XSS, CSP, upload/disk guards, path scrub)
 A read-only security review (private home-network deployment) found no committed secrets; the items it flagged were fixed this session.
 - **Stored XSS fixed.** The control panel rendered an uploaded filename (`original_name`, attacker-controlled) into `innerHTML` unescaped. Added an `esc()` helper, used for `original_name` in the Library and Rotation views. Verified in-browser: a `"><img onerror=...>` filename now renders as literal text, no script runs.
