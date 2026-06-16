@@ -501,6 +501,10 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-06-16: Tab title separator + real favicon on openobject.io
+- **Control-panel tab title** is now "OpenObject · Control Panel". It previously showed "Control" with an em-dash separator; the clearer name plus the middot match the house separator used across the app and the landing page (the em dash also broke the no-em-dash rule for committed text).
+- **Landing-page favicon fixed.** openobject.io was shipping a placeholder inline-SVG mark, not the brand. It now uses the real favicon (favicon-32.png) inlined as a base64 data URI, so site/index.html stays one self-contained file (matching how its favicon and OG image were already inlined/linked). It is the same icon already served on openobject.local. Goes live via a gh-pages republish.
+
 ### 2026-06-16: Settings tab pass (reorder, password copy, stacked fields, About card, Wi-Fi link color)
 A pass over the Settings tab for the next owner: clearer ordering, tighter copy, and consistent link styling. No behavior changes. Order is now Sleep Hours, Software Update, Power, Password, Wi-Fi, About (matches the Setup Guide walkthrough).
 - **Password card moved beneath Power.** It's opt-in and off by default, so it now sits below the everyday frame controls instead of above them.
