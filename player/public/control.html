@@ -106,6 +106,9 @@
         </div>
       </section>
 
+      <!-- Password: optional control-panel lock (HANDOFF §10), off by default; filled by control.js. -->
+      <section class="device" id="authCard"></section>
+
       <!-- Power — Restart (real soft-restart via the supervisor) + Shut down (hardware stub) (HANDOFF §10) -->
       <section class="device">
         <div class="section-title">Power</div>
@@ -134,6 +137,17 @@
       </section>
     </section>
   </main>
+
+  <!-- Optional password (HANDOFF §10): shown only when a password is set and this browser isn't logged in. -->
+  <div id="loginOverlay" class="login-overlay" hidden>
+    <form class="login-box" id="loginForm">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <p class="login-title">Enter your password</p>
+      <input id="authPw" class="auth-input" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password">
+      <button type="submit" class="update-btn primary" id="loginBtn">Unlock</button>
+      <div class="auth-msg" id="authMsg" hidden></div>
+    </form>
+  </div>
 
   <script src="/control.js"></script>
 </body>

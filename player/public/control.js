@@ -47,6 +47,12 @@ const reachEl = document.getElementById('reach');
 const frameAddr = document.getElementById('frameAddr');
 const frameMdns = document.getElementById('frameMdns');
 
+const loginOverlay = document.getElementById('loginOverlay');
+const loginForm = document.getElementById('loginForm');
+const authPw = document.getElementById('authPw');
+const authMsg = document.getElementById('authMsg');
+const authCard = document.getElementById('authCard');
+
 const UNIT_MS = { seconds: 1000, minutes: 60000, hours: 3600000 };
 
 // Inline icons (no webfont dependency — the frame runs offline).
@@ -55,12 +61,6 @@ const CHEV_UP = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" str
 const CHEV_DOWN = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 const X_MARK = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 const CHECK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-11"/></svg>';
-
-// Escape user-controlled text before it goes into innerHTML (notably an uploaded
-// filename, which is stored byte-for-byte and is attacker-controlled). Without this a
-// crafted name like `"><img src=x onerror=...>` would run script in the control panel.
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
-  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 let pinnedId = null;
 let mode = 'sequence';
@@ -119,7 +119,7 @@ function card(item) {
       ${isPinned ? '<span class="pin-badge">📌 Pinned</span>' : ''}
     </div>
     <div class="meta">
-      <span class="name" title="${esc(item.original_name)}">${esc(item.original_name)}</span>
+      <span class="name" title="${escapeHtml(item.original_name)}">${escapeHtml(item.original_name)}</span>
       <span class="sub">${fmtBytes(item.bytes)}</span>
     </div>
     <div class="actions">
@@ -153,7 +153,7 @@ function rotRow(item, idx, total) {
     <span class="rot-num">${idx + 1}</span>
     <span class="rot-thumb fit-${item.fit === 'fill' ? 'fill' : 'fit'}">${mediaTag(item)}</span>
     <span class="rot-meta">
-      <span class="rot-name">${isPinned ? '<span class="rot-pin" title="Pinned">📌</span> ' : ''}${esc(item.original_name)}</span>
+      <span class="rot-name">${isPinned ? '<span class="rot-pin" title="Pinned">📌</span> ' : ''}${escapeHtml(item.original_name)}</span>
       <span class="rot-sub">${item.format}${item.fit === 'fill' ? ' · fill' : ''}</span>
     </span>
     <span class="rot-btns">
@@ -765,6 +765,117 @@ fileInput.addEventListener('change', () => { send(fileInput.files); fileInput.va
 );
 drop.addEventListener('drop', (e) => send(e.dataTransfer.files));
 
-refresh();
-loadUpdate(); // self-update status is independent of the library/rotation refresh
-loadSystem(); // power/Wi-Fi card: reachable addresses
+// ── Optional password (HANDOFF §10) ─────────────────────────────────
+// Off by default. /api/auth/status reports whether a password is set and whether this browser is
+// logged in; when it's required and we're not, show the login overlay and load nothing protected
+// until the owner logs in. The kiosk/display is unaffected (its routes stay open server-side).
+let authState = { required: false, authed: true };
+
+async function loadAuth() {
+  authState = await fetch('/api/auth/status').then((r) => r.json()).catch(() => ({ required: false, authed: true }));
+  renderAuthCard();
+  return authState;
+}
+
+function authCardMsg(text) {
+  const m = authCard.querySelector('.auth-msg');
+  if (m) { m.textContent = text || ''; m.hidden = !text; }
+}
+
+// Settings → Password card: reflects the current state and offers the matching actions.
+// Set/change asks for the password twice (it's masked, so a typo would otherwise lock the owner out).
+function renderAuthCard() {
+  if (!authState.required) {
+    authCard.innerHTML = `
+      <div class="section-title">Password</div>
+      <p class="device-note device-note-block">The control panel is open to anyone on your network. Set a password to require it before any changes. Your art and the display are never affected.</p>
+      <div class="auth-row">
+        <input id="setPw" class="auth-input" type="password" autocomplete="new-password" placeholder="New password">
+        <input id="setPwConfirm" class="auth-input" type="password" autocomplete="new-password" placeholder="Confirm password">
+      </div>
+      <div class="auth-row">
+        <button type="button" id="setPwBtn" class="update-btn">Turn on password</button>
+      </div>
+      <div class="auth-msg" hidden></div>`;
+    authCard.querySelector('#setPwBtn').addEventListener('click', () =>
+      setOrChangePassword(authCard.querySelector('#setPw'), authCard.querySelector('#setPwConfirm'), 'Password protection is on.'));
+  } else {
+    authCard.innerHTML = `
+      <div class="section-title">Password</div>
+      <p class="device-note device-note-block">Password protection is <strong>on</strong>. The control panel asks for it before any changes; the display is unaffected.</p>
+      <div class="auth-row">
+        <input id="newPw" class="auth-input" type="password" autocomplete="new-password" placeholder="New password">
+        <input id="newPwConfirm" class="auth-input" type="password" autocomplete="new-password" placeholder="Confirm password">
+      </div>
+      <div class="device-row">
+        <button type="button" id="changePwBtn" class="update-btn">Change password</button>
+        <button type="button" id="logoutBtn" class="update-btn">Log out</button>
+        <button type="button" id="offPwBtn" class="update-btn danger">Turn off password</button>
+      </div>
+      <div class="auth-msg" hidden></div>`;
+    authCard.querySelector('#changePwBtn').addEventListener('click', () =>
+      setOrChangePassword(authCard.querySelector('#newPw'), authCard.querySelector('#newPwConfirm'), 'Password changed.'));
+    authCard.querySelector('#logoutBtn').addEventListener('click', logout);
+    authCard.querySelector('#offPwBtn').addEventListener('click', turnOffPassword);
+  }
+}
+
+async function setOrChangePassword(pwInput, confirmInput, okMsg) {
+  if (pwInput.value !== confirmInput.value) return authCardMsg("Those passwords don't match.");
+  const r = await fetch('/api/auth/password', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pwInput.value }),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) return authCardMsg(j.error || 'Could not save the password.');
+  pwInput.value = ''; confirmInput.value = '';
+  await loadAuth();   // re-render in the new state (a fresh cookie keeps us logged in)
+  authCardMsg(okMsg);
+}
+
+async function turnOffPassword() {
+  if (!confirm('Turn off the password? Anyone on your network will be able to control the frame again.')) return;
+  const r = await fetch('/api/auth/password', { method: 'DELETE' });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) return authCardMsg(j.error || 'Could not turn it off.');
+  await loadAuth();
+  authCardMsg('Password protection is off.');
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+  location.reload(); // comes back to the login overlay
+}
+
+function showLogin(show) {
+  loginOverlay.hidden = !show;
+  if (show) setTimeout(() => authPw.focus(), 0);
+}
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  authMsg.hidden = true;
+  const r = await fetch('/api/auth/login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: authPw.value }),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { authMsg.textContent = j.error || 'Wrong password.'; authMsg.hidden = false; authPw.select(); return; }
+  authPw.value = '';
+  showLogin(false);
+  loadPanel();
+});
+
+// Everything behind the gate: run once we know we're authed (or on a frame with no password).
+function loadPanel() {
+  refresh();
+  loadUpdate(); // self-update status is independent of the library/rotation refresh
+  loadSystem(); // power/Wi-Fi card: reachable addresses
+}
+
+// Boot: check auth first, then either show the login overlay or load the panel.
+async function init() {
+  await loadAuth();
+  if (authState.required && !authState.authed) return showLogin(true);
+  showLogin(false);
+  loadPanel();
+}
+init();

@@ -104,7 +104,7 @@ is the set that's actually showing on the wall. The control panel has three tabs
 - **Rotation:** just what's playing, in order, plus how long each piece shows and Sequence or
   Shuffle. New uploads join the Rotation automatically, so you can keep a growing collection and
   still show just today's pick by removing the rest.
-- **Settings:** sleep hours, software updates, and frame controls (restart, shut down, Wi-Fi),
+- **Settings:** sleep hours, software updates, an optional password, and frame controls (restart, shut down, Wi-Fi),
   described below.
 
 **Order.** Choose how the Rotation plays:
@@ -144,6 +144,8 @@ tap it again.
 stuck. **Reboot** restarts the whole frame, and **Shut down** turns it off. If a control ever
 doesn't take, you can always **power-cycle at the outlet**. None of them need you to reach behind
 the frame.
+
+**Password** *(Settings tab)*. The control panel is open to anyone on your home network by default, which is usually fine at home. If you'd like to lock it, set a password under Settings: after that, this device and any other will ask for it before making changes. The art on the wall keeps playing either way, and you can turn the password back off any time.
 
 **Reaching the frame** *(Settings, Wi-Fi)*. You set the frame's Wi-Fi while installing it. The
 Wi-Fi section of the control panel lists the addresses you can open it at from another device.

@@ -278,7 +278,7 @@ photos never enter the repo, §8). Build none of this in Phase 1.
 | Setting | v1 default | Notes |
 |---|---|---|
 | Audio | **Muted, always** | Silent art on a wall. Future: optional global "allow audio" toggle. |
-| Control-panel access | **Open on LAN**, optional password | No login friction by default; password available for those who want it. |
+| Control-panel access | **Open on LAN**, optional password (built 2026-06-16) | Off by default (no login friction). When set in Settings it gates the control panel + every mutating API; the kiosk display stays open. HMAC-signed httpOnly cookie session, scrypt-hashed password, no new dependency. |
 | Idle / empty screen | **Branded card**, not black | Shows OpenObject mark + "add art at openobject.local". Takes a **logo asset** (Matt-supplied) so the mark drops in without redesign. |
 | Display name / mDNS | `openobject.local` | IP fallback shown on setup page. |
 | Fit/Fill default | **Fit** (original aspect ratio); settable | Applies to new clips; per-clip override always available. |
@@ -507,7 +507,7 @@ A read-only security review (private home-network deployment) found no committed
 - **Content-Security-Policy added** (defense in depth): a strict header (`script-src 'self'`, no inline, etc.). All scripts and styles are external same-origin files, so it broke nothing; the control panel and display both load clean.
 - **Upload + disk guards (§8).** Per-file size cap (`OO_MAX_UPLOAD_MB`, default 512 MB) and a per-request file count (`OO_MAX_UPLOAD_FILES`, default 50); an oversize file is refused (HTTP 413) with no orphan left on disk. A pre-flight free-space check (`OO_MIN_FREE_MB`, default 2048 MB) refuses uploads (HTTP 507) before the eMMC can fill and wedge the frame. The control panel surfaces the server's message on a failed upload.
 - **Privacy.** Scrubbed the local macOS home path from this doc (now `~/Code/OpenObject`); future commits use a GitHub noreply email (past commits keep the old address).
-- **Deferred (to discuss):** the control panel has no auth and binds `0.0.0.0` (open on the LAN, §10). With IoT devices on the network this is worth an optional password; tracked separately, not built yet.
+- **Optional control-panel password (built, §12).** Was deferred; now implemented, still OFF by default so an open frame is unchanged. When the owner sets a password in Settings, the control panel and every mutating API require a session (login overlay); the kiosk surface (`/display`, `/api/display`, `/healthz`, `/assets`, `/uploads`) stays open so the display never needs a credential. Stateless HMAC-signed httpOnly cookie, scrypt-hashed password in the settings table, no new dependency. Verified in-browser: off, turn on, logout, wrong password, login, and the kiosk reachable while locked. Folded in a small cleanup: control.js now reuses the existing escapeHtml helper instead of a duplicate.
 
 ### 2026-06-15: Reboot / Shut down made real on the frame (§17 closed)
 The Reboot and Shut down buttons were inert stubs; they now actually reboot / power off the installed frame, closing the §17 "real device power-off and reboot" item.

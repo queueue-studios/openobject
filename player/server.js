@@ -80,6 +80,114 @@ app.use(express.static(PUBLIC_DIR));
 app.use('/assets', express.static(ASSETS_DIR));
 app.use('/uploads', express.static(db.UPLOADS_DIR));
 
+// ── Optional control-panel password (HANDOFF §10) ───────────────────
+// OFF BY DEFAULT: with no password set, authRequired() is false and authGate is a no-op, so the
+// panel behaves exactly like an open-on-LAN frame, zero friction. When the owner sets a password
+// (Settings), the control surface and every mutating API require a session; the kiosk surface
+// stays open so the display and Chromium never need a credential. Stateless HMAC-signed cookie,
+// no session store and no new dependency (built-in crypto only), in keeping with revivability.
+const SESSION_COOKIE = 'oo_session';
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const SESSION_OPTS = { httpOnly: true, sameSite: 'lax', maxAge: SESSION_TTL_MS, path: '/' };
+
+const authRequired = () => !!db.getSetting('auth_password_hash', '');
+
+// One server secret signs session cookies; rotating it (which we do on every password set/clear)
+// invalidates all existing sessions. Generated lazily on first use.
+function authSecret() {
+  let s = db.getSetting('auth_secret', '');
+  if (!s) { s = crypto.randomBytes(32).toString('hex'); db.setSetting('auth_secret', s); }
+  return s;
+}
+function setPassword(password) {
+  const salt = crypto.randomBytes(16);
+  const hash = crypto.scryptSync(String(password), salt, 64);
+  db.setSetting('auth_password_hash', `${salt.toString('hex')}:${hash.toString('hex')}`);
+  db.setSetting('auth_secret', crypto.randomBytes(32).toString('hex')); // log out old sessions
+}
+function clearPassword() {
+  db.setSetting('auth_password_hash', '');
+  db.setSetting('auth_secret', crypto.randomBytes(32).toString('hex')); // invalidate sessions
+}
+function verifyPassword(password) {
+  const stored = db.getSetting('auth_password_hash', '');
+  const [saltHex, hashHex] = (stored || '').split(':');
+  if (!saltHex || !hashHex) return false;
+  const expected = Buffer.from(hashHex, 'hex');
+  const actual = crypto.scryptSync(String(password), Buffer.from(saltHex, 'hex'), expected.length);
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+// Signed session token "<expiry>.<hmac>": verified without any server-side store.
+function makeToken() {
+  const exp = String(Date.now() + SESSION_TTL_MS);
+  return `${exp}.${crypto.createHmac('sha256', authSecret()).update(exp).digest('hex')}`;
+}
+function validToken(tok) {
+  const i = tok ? tok.indexOf('.') : -1;
+  if (i < 0) return false;
+  const exp = tok.slice(0, i), sig = tok.slice(i + 1);
+  if (!/^\d+$/.test(exp) || Number(exp) < Date.now()) return false;
+  const want = crypto.createHmac('sha256', authSecret()).update(exp).digest('hex');
+  return sig.length === want.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(want));
+}
+function cookies(req) {
+  const out = {};
+  (req.headers.cookie || '').split(';').forEach((c) => {
+    const i = c.indexOf('=');
+    if (i > 0) out[c.slice(0, i).trim()] = decodeURIComponent(c.slice(i + 1).trim());
+  });
+  return out;
+}
+const isAuthed = (req) => validToken(cookies(req)[SESSION_COOKIE]);
+
+// Gate: when a password is set, every /api/* call needs a session EXCEPT the kiosk read
+// (/api/display), the liveness probe (/healthz, not under /api/), and the auth endpoints needed
+// to log in. Pages, brand assets, and uploaded media stay open so the kiosk and the login screen
+// work with no credential. With no password set this returns immediately (open frame).
+const AUTH_OPEN = new Set(['/api/display', '/api/auth/status', '/api/auth/login', '/api/auth/logout']);
+function authGate(req, res, next) {
+  if (!authRequired()) return next();
+  if (!req.path.startsWith('/api/')) return next();
+  if (AUTH_OPEN.has(req.path)) return next();
+  if (isAuthed(req)) return next();
+  return res.status(401).json({ error: 'auth required' });
+}
+app.use(authGate);
+
+// Auth status drives the control panel: whether a password is required and whether this browser
+// is logged in. Always open (the panel calls it on load to decide if it must show the login box).
+app.get('/api/auth/status', (req, res) => {
+  res.json({ required: authRequired(), authed: !authRequired() || isAuthed(req) });
+});
+app.post('/api/auth/login', (req, res) => {
+  if (!authRequired()) return res.json({ ok: true, authed: true }); // nothing to log into
+  if (!verifyPassword((req.body || {}).password)) return res.status(401).json({ error: 'Wrong password.' });
+  res.cookie(SESSION_COOKIE, makeToken(), SESSION_OPTS);
+  res.json({ ok: true, authed: true });
+});
+app.post('/api/auth/logout', (_req, res) => {
+  res.clearCookie(SESSION_COOKIE, { path: '/' });
+  res.json({ ok: true });
+});
+// Set or change the password. Turning it ON the first time works because the gate is open while
+// no password exists; once set, this route is gated (it lives under /api/), so a change needs a
+// session. We keep the setter logged in with a fresh cookie.
+app.put('/api/auth/password', (req, res) => {
+  const password = (req.body || {}).password;
+  if (typeof password !== 'string' || password.length < 4) {
+    return res.status(400).json({ error: 'Password must be at least 4 characters.' });
+  }
+  setPassword(password);
+  res.cookie(SESSION_COOKIE, makeToken(), SESSION_OPTS);
+  res.json({ ok: true, required: true, authed: true });
+});
+// Turn protection off (gated: only a logged-in session reaches here).
+app.delete('/api/auth/password', (_req, res) => {
+  clearPassword();
+  res.clearCookie(SESSION_COOKIE, { path: '/' });
+  res.json({ ok: true, required: false });
+});
+
 // ── Uploads — the default web-upload source (HANDOFF §8) ─────────────
 // Files are stored byte-for-byte. Unsupported types are skipped silently (§6): the
 // filter drops them (never written) and records the name so the response can report it.

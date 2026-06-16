@@ -406,3 +406,41 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .rot-btns button:hover:not(:disabled) { color: var(--text); border-color: #4a4a52; }
 .rot-btns button:disabled { opacity: 0.35; cursor: default; }
 .rot-btns .rm:hover:not(:disabled) { color: var(--danger); border-color: #5a2a2e; }
+
+/* Optional password (HANDOFF §10): login overlay + Settings password card */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 22px;
+}
+.login-overlay:not([hidden]) { display: flex; }   /* gate display so the `hidden` attribute still hides it */
+.login-box {
+  width: min(360px, 100%);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 30px 26px;
+  text-align: center;
+}
+.login-box .brand-mark { width: 40px; height: 40px; margin: 0 auto 16px; display: block; }
+.login-title { margin: 0 0 16px; font-size: 16px; color: var(--text); }
+.auth-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+}
+.auth-input:focus { outline: none; border-color: #4a4a52; }
+.login-box .update-btn { width: 100%; margin-top: 12px; }
+.auth-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.auth-row .auth-input { flex: 1; min-width: 160px; width: auto; }
+.auth-msg { margin-top: 12px; font-size: 13px; color: var(--muted); }
+.login-box .auth-msg { color: var(--danger); }
