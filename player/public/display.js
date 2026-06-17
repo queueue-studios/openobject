@@ -82,7 +82,13 @@ function render(layer, item, onReady) {
     el.src = '/uploads/' + item.filename;
   }
   layer.replaceChildren(el);
-  setTimeout(onReady, 500); // fallback if the media event never fires
+  // Safety net so the loop can't wedge if the readiness event never fires. Stills and video settle
+  // in well under 500ms, so a short fallback is fine. A connected piece is different: it becomes
+  // ready only when its synchronous generate() finishes (which is also when the iframe 'load' event
+  // fires, measured), and that can take several seconds, varying by seed and CPU. A 500ms fallback
+  // would win the race on a slow frame and start the duration clock mid-generate, so connected waits
+  // for its 'load' event with only a long backstop here (HANDOFF §7).
+  setTimeout(onReady, item.kind === 'connected' ? 30000 : 500);
 }
 
 // Render + crossfade to a specific piece.
@@ -95,6 +101,9 @@ function show(item) {
     layers[back].classList.add('show');
     layers[front].classList.remove('show');
     front = back;
+    // Hide the idle mark as the piece crossfades in, not before: a slow connected generate then
+    // keeps the mark on screen instead of leaving a black gap until the art is ready.
+    idle.classList.add('hidden');
     // Start the piece's duration clock when it actually becomes visible, not when advance() kicked
     // off the render. A connected piece's iframe runs a heavy synchronous generate() that blocks the
     // shared main thread (it is same-origin), so its reveal can land seconds after advance(): long
@@ -103,7 +112,6 @@ function show(item) {
     armAdvance();
   });
   render(layers[back], item, reveal);
-  idle.classList.add('hidden');
   started = true;
 }
 
