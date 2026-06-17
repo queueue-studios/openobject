@@ -157,6 +157,8 @@ The display, control panel, and display-page are all **web-based and served by t
 
 The square (1:1) panel makes this choice matter more than on a normal screen, because almost nothing displayed is square, hence per-clip control. **v1 uses center-crop only**; adjustable crop position (e.g. bias toward the top to preserve faces) is a documented future enhancement (§17).
 
+**Connected pieces (experimental, built 2026-06-16).** Beyond files, OpenObject can also show **connected artwork**: generative or hosted pieces from a curated collection (§8), rendered as a **`connected` kind** in a **sandboxed, same-origin `<iframe>`** that fills the stage. The render bundle is mirrored locally first, so it plays offline like any file. Fit/Fill does not apply (the page sizes itself; the first collection, Azulejo Galo, renders a centered square that fills the 1:1 panel). An optional per-collection **Animate** engages the piece's own motion on load. See §8 and §17.
+
 ---
 
 ## 7. Content model
@@ -188,6 +190,8 @@ Design the source layer as a **clean interface**: *a source provides files to th
 - **Web upload (default).** Open the control panel in a browser → drag art onto the page, or tap to choose files → it lands in the library. Works identically from Mac, iPhone, iPad, Windows. **No mounting, no credentials.** This is the everyday path.
   - **Upload guards (added 2026-06-16).** Each file is size-capped (default **512 MB**, env `OO_MAX_UPLOAD_MB`), with up to `OO_MAX_UPLOAD_FILES` (default 50) per request; an oversize file is refused with a clear message (HTTP 413) and no partial file is left on disk. Before accepting any upload the player checks free space and refuses when the disk would fall below a safety margin (env `OO_MIN_FREE_MB`, default **2048 MB**, HTTP 507), so no client on the LAN can fill the eMMC and wedge the frame.
 - **Pull from a network share (optional).** For power users who'd rather point at an existing folder on their machine. Player connects to an SMB share (Samba speaks both macOS and Windows file sharing) and syncs from it. Requires address + credentials in the control panel.
+
+**Connected Collections (experimental, built 2026-06-16; §17, §20).** A curated way to show art that has no downloadable file: generative or hosted pieces (web/on-chain), starting with Bryan Brinkman's *"Azulejo Galo"* (a p5.js sketch on Arweave). OpenObject ships a **built-in registry of supported collections** (code, not user-authored); the owner picks one and enters the piece's **Token ID**. Resolution uses the official on-chain path: the player reads the token's **`tokenURI`** (a free `eth_call` to a public Ethereum node), follows it to the canonical metadata, and stores the **official `animation_url` verbatim** (never a marketplace render). The shared render bundle is **mirrored locally** and served same-origin, so the piece plays fully offline after it is added; the title and a cached thumbnail are derived from the metadata. From then on it is a normal library row (Rotation, Pin, duration as usual), shown as a **`connected` render kind** in a sandboxed iframe (§6). Per-collection **Animate** (auto-engages the piece's own motion, e.g. Azulejo's "Toggle Rotation") and **Hide/Unhide** curation live in Settings (§12). Opt-in and off the default path; normal uploads and playback are unchanged.
 
 **Not a source / explicitly out of scope:** Git/GitHub is **not** part of the content path in any form. GitHub is used solely for **source-code management and distribution** of OpenObject itself (§15). Art never touches the repo.
 
@@ -286,6 +290,7 @@ photos never enter the repo, §8). Build none of this in Phase 1.
 | Rotation order | **Sequence** | Sequence / Shuffle (§7); settable. |
 | Sleep hours | **Off** (no windows enabled) | Up to two daily blank windows (12h clock) + manual "Blank panel"; dimmed-logo sleep screen (§13). |
 | Updates | **Manual check; track `main`** | Self-update from GitHub via the control panel (§15). Owner-initiated; fast-forward only. |
+| Connected Collections | **Supported list; Animate on, none hidden** | Curated web/on-chain collections, added by Token ID (§8). Per-collection Animate (auto-motion) + Hide/Unhide. Experimental. |
 
 ---
 
@@ -433,8 +438,7 @@ Maintain **two** living documents as the build proceeds, not one written once an
 ## 17. Future enhancements (documented seams, not built in v1)
 
 - **On-chain / NFT source.** The marquee future feature. Reading on-chain art is a **resolution problem, not a display problem**: an NFT is a pointer (contract address + token ID) whose `tokenURI` → metadata → media URL resolves to a file, and that file is a **JPEG/PNG/GIF/MP4/AVIF the v1 display engine already handles**. Intended approach: a **resolver/connector API** (e.g. Alchemy, QuickNode, Reservoir, OpenSea) so the player does *not* run nodes, RPC endpoints, or IPFS gateways itself, connect once, the service returns a media URL, the player downloads it. This slots in as a **third source type** alongside web upload and pull-from-share; everything downstream (sync, library, rotation, pin, fit/fill, loop) is unchanged. **v1 action:** keep the source layer a clean interface so this is a plug-in later, not a teardown. Build none of it now.
-- **Web / HTML art pieces (interactive & generative).** *(Working name: "HTML" content, to be
-  renamed as we learn the space.)* Some art is not a still or a clip but a **live web page**,
+- **Web / HTML art pieces (interactive & generative). BUILT 2026-06-16 as "Connected Collections" (§8, §20); experimental.** Some art is not a still or a clip but a **live web page**,
   a generative/interactive `index.html` (often Arweave/IPFS-hosted) that renders on a canvas
   and may expose its own controls. **First target use case:** Bryan Brinkman's *"Azulejo Galo"*
   (an Arweave `index.html` carrying query params for token/wallet/etc.), where clicking the
@@ -463,7 +467,7 @@ Maintain **two** living documents as the build proceeds, not one written once an
   Slots into the **pluggable source layer (§8)** as another way a piece enters the library;
   everything downstream (Rotation, Pin, duration) is unchanged. Related to but **distinct from the
   on-chain/NFT source** above (that resolves a pointer to a *media file* the v1 engine already
-  plays; this renders a *live page*). **v1 action: log it; build none of it now.**
+  plays; this renders a *live page*). **Status: BUILT 2026-06-16** as Connected Collections (§8, §20). What shipped: the curated registry, add-by-Token-ID with on-chain `tokenURI` resolution to the official URL, a local mirror, the `connected` render kind in a sandboxed same-origin iframe, and per-collection Animate + Hide/Unhide. The earlier cross-origin / kiosk-only concern was solved by **mirroring + serving same-origin and injecting the animate hook**, so it runs in Phase 1, not only on the kiosk. **Still future:** a general "paste any hosted URL and name it yourself" path for non-registry pieces (the data model already allows it, with the collection left empty).
 - **Adjustable crop position** for Fill (e.g. keep the top of portraits). v1 is center-crop only.
 - **SVG support.** Trivial to add under the browser-render approach if wanted later; deferred because it renders unpredictably at arbitrary sizes.
 - **Global "allow audio" toggle.** v1 is muted-always.
@@ -500,6 +504,16 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-06-16: Connected Collections (experimental web/on-chain art) built and verified on the frame
+Realizes the §17 "web / HTML art pieces" seam, opt-in and off the default path (normal uploads, rotation, and display are unchanged). First supported collection: Bryan Brinkman's *"Azulejo Galo"* (a p5.js sketch on Arweave).
+- **Model.** A built-in registry of supported collections (code, not user-authored). The owner picks a collection and enters the piece's **Token ID**.
+- **Resolution is on-chain and official.** The player reads the token's `tokenURI` via a free `eth_call` to a public Ethereum node, follows it to the canonical metadata, and stores the **official `animation_url` verbatim**, never a marketplace-rendered copy. (Confirmed the OpenSea/Highlight web pages bury the real URL among their own proxy copies; the contract's `tokenURI` is the source of truth, reachable from any Ethereum node.)
+- **Plays offline.** The shared render bundle is mirrored to `player/data/collections/<slug>/` and served same-origin; the network is touched only once, at add time. A `connected` render kind shows it in a sandboxed same-origin iframe, and an injected hook auto-engages the collection's motion when **Animate** is on.
+- **UI.** "Add connected artwork" in the Library (pick collection, enter Token ID, see a derived preview, Add); a "Connected" library card (badge + cached thumbnail, no Fit/Fill); a Settings "Connected Collections" card (per-collection Animate, Hide / Unhide all) placed directly under Sleep Hours.
+- **CSP.** `/collections/*` gets its own policy (`script-src 'self' 'unsafe-inline'`, `frame-ancestors 'self'`) so the mirrored art runs and the display can frame it; the rest of the panel keeps the strict policy.
+- **Verified on hardware (after a cold power-cycle).** The earlier wrong render was the **stale kiosk**: self-update restarts the player but not the kiosk Chromium, which kept running the pre-feature `/display`. A power-cycle loaded the new display code and Azulejo #101 renders and animates correctly. Separately observed: the control-panel **Reboot** button hung on the firmware boot splash on this unit (warm `systemctl reboot` stuck at POST; a cold unplug/replug recovered) (to revisit).
+- Docs: this section, plus §6, §8, §12, §17.
 
 ### 2026-06-16: Tab title separator + real favicon on openobject.io
 - **Control-panel tab title** is now "OpenObject · Control Panel". It previously showed "Control" with an em-dash separator; the clearer name plus the middot match the house separator used across the app and the landing page (the em dash also broke the no-em-dash rule for committed text).

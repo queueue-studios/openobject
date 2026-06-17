@@ -29,8 +29,9 @@ A few honest caveats:
   of the work went into smoothing the path so you hit fewer walls than I did.
 
 What you get today: OpenObject makes the XXL a **highly effective, accessible digital frame**.
-Your own images and video, edge to edge, run from your phone. It is **not** a fancy blockchain or
-NFT reader. Maybe more lands later, maybe not. **No promises.**
+Your own images and video, edge to edge, run from your phone. It is **not** a general blockchain or
+NFT reader, though it now has **experimental, curated support for a few specific collections** (see
+"Connected Collections" below). Beyond that, maybe more lands later, maybe not. **No promises.**
 
 > **No warranty.** OpenObject is provided as is, with no warranty of any kind. Installing it wipes
 > your device and there is no supported way back. You take that risk yourself. The full notice is
@@ -104,7 +105,7 @@ is the set that's actually showing on the wall. The control panel has three tabs
 - **Rotation:** just what's playing, in order, plus how long each piece shows and Sequence or
   Shuffle. New uploads join the Rotation automatically, so you can keep a growing collection and
   still show just today's pick by removing the rest.
-- **Settings:** sleep hours, software updates, frame controls (restart, shut down), an optional password, how to reach the frame over Wi-Fi, and an About section,
+- **Settings:** sleep hours, connected collections, software updates, frame controls (restart, shut down), an optional password, how to reach the frame over Wi-Fi, and an About section,
   described below.
 
 **Order.** Choose how the Rotation plays:
@@ -132,6 +133,16 @@ the first frame: a shorter one repeats to fill the time, and a clip longer than 
 moves on when it's up.
 
 **Sound.** Always off. It's silent art on a wall.
+
+**Connected Collections** *(experimental)*. Some digital art isn't a file you can download, it's a
+generative or web-hosted piece. OpenObject can show a few **specific, supported collections** of this
+kind. On the **Library** tab, tap **Add connected artwork**, pick the collection, and enter your
+piece's **Token ID** (the number on the piece's page, for example OpenSea shows it as "Token #101").
+OpenObject looks up the real artwork, downloads it to the frame so it plays offline, and adds it as a
+normal piece you can put in the Rotation or Pin like any other. The supported collections live in the
+**Settings** tab, under **Connected Collections**, where you can turn a collection's motion on or off
+(**Animate**) and hide ones you don't own. This is new and **curated**: only collections that have
+been specifically added will work, so it won't read just any link yet.
 
 **Sleep hours** *(in the **Settings** tab)*. Optionally have the screen rest on a schedule. You get
 **two time ranges**, each with its own on/off checkbox, so you can cover both "while I'm at work"
