@@ -95,10 +95,23 @@ function show(item) {
     layers[back].classList.add('show');
     layers[front].classList.remove('show');
     front = back;
+    // Start the piece's duration clock when it actually becomes visible, not when advance() kicked
+    // off the render. A connected piece's iframe runs a heavy synchronous generate() that blocks the
+    // shared main thread (it is same-origin), so its reveal can land seconds after advance(): long
+    // enough that, timed from advance(), the piece is on screen for only (duration minus generate
+    // time). Arming the next advance here gives every piece its full visible duration (HANDOFF §7).
+    armAdvance();
   });
   render(layers[back], item, reveal);
   idle.classList.add('hidden');
   started = true;
+}
+
+// (Re)arm the timer that advances to the next piece, one global duration from now. A lone piece
+// holds forever (no timer). Called from a piece's reveal so the duration counts visible time.
+function armAdvance() {
+  clearTimeout(timer);
+  timer = items.length > 1 ? setTimeout(advance, durationMs) : null;
 }
 
 function advance() {
@@ -107,8 +120,9 @@ function advance() {
   if (items.length === 0) return showIdle();
   pos = pickNext();
   const item = items[pos];
-  if (item.id !== currentId) show(item); // same single piece → keep showing, no reload/flicker
-  if (items.length > 1) timer = setTimeout(advance, durationMs);
+  // show() re-arms the next advance from its reveal (so a slow connected piece still gets its full
+  // time). When the pick is the same lone piece, we keep showing it: no reload, no new timer.
+  if (item.id !== currentId) show(item);
 }
 
 function showIdle() {
@@ -169,7 +183,7 @@ function apply(state) {
   if (currentId != null) pos = items.findIndex((i) => i.id === currentId);
   if (!started || pos < 0) return advance();             // (re)start, or skip a deleted current
   if (sig(items[pos]) !== currentSig) show(items[pos]);  // current piece restyled (Fit/Fill) → re-render
-  if (items.length > 1 && timer === null) timer = setTimeout(advance, durationMs); // 1→many: resume cadence
+  if (items.length > 1 && timer === null) armAdvance(); // 1→many: resume cadence (a lone piece had none)
 }
 
 async function tick() {
