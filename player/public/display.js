@@ -12,10 +12,18 @@
 const idle = document.getElementById('idle');
 const layers = [document.getElementById('layer0'), document.getElementById('layer1')];
 
-// The idle hint shows the address this page was opened at, so it matches how the viewer reaches the
-// control panel: localhost:3000 when the Mac is the display, openobject.local on the frame (§6).
+// The idle hint shows the address to reach the control panel: the host this page was opened at
+// (localhost:3000 when the Mac is the display). The frame's kiosk opens localhost though, where the
+// owner reaches it at the advertised name instead, so on a loopback host fall back to the server's
+// mDNS name (openobject.local on the frame; none on a Mac/standalone, where the host already reads
+// right). See §6.
 const hintHost = document.querySelector('.hint .host');
-if (hintHost) hintHost.textContent = location.host;
+if (hintHost) {
+  hintHost.textContent = location.host;
+  if (location.hostname === 'localhost' || location.hostname.startsWith('127.')) {
+    fetch('/api/system').then((r) => r.json()).then((s) => { if (s && s.mdns) hintHost.textContent = s.mdns; }).catch(() => {});
+  }
+}
 
 let items = [];
 let durationMs = 8000;
