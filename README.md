@@ -18,7 +18,7 @@ depends on no outside service, and nothing expires. No cloud, no accounts, no su
 
 ## Why
 
-The XXL is a normal x86 mini PC (a MeLE Quieter 3Q) behind a square panel, not a sealed
+The Infinite Objects XXL is a normal x86 mini PC (a MeLE Quieter 3Q) behind a square panel, not a sealed
 appliance. The original solution decayed over time and left good hardware stuck. Full credit
 to the White Walls app that powered it, the real hero of the whole setup. OpenObject is a
 software reflash that brings the hardware back under your control, with two commitments:
@@ -29,7 +29,7 @@ software reflash that brings the hardware back under your control, with two comm
 2. **Revivable by the next owner.** This is meant as a shareable kit, so anyone with a stranded
    XXL can follow along and bring their own unit back.
 
-## What it does (v1)
+## What it does
 
 - Displays **JPEG, PNG, GIF, AVIF, WebP, SVG, MP4, MOV, WebM**, edge to edge on the square panel,
   with no frame and no border.
@@ -41,6 +41,10 @@ software reflash that brings the hardware back under your control, with two comm
   frame. Silent by design.
 - **Sleep hours** to blank the panel overnight.
 - Add art by **dragging files onto the control panel** from any device. No accounts, no cloud.
+- **Connected Collections.** Beyond your own files, show a curated handful of generative and
+  on-chain artworks, like a p5.js sketch that renders itself live in the frame rather than a saved
+  image. Added by token ID and mirrored to the device, so they play offline too. Curated, not a
+  general NFT reader.
 - **Updates itself** from this repo (control panel, then *Check for updates*). No reflash.
 
 ## Hardware target
