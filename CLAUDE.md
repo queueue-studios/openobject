@@ -25,8 +25,8 @@ builder-only convenience.
   supplied, see Branding.)
 - **Art never touches the repo.** Uploaded images/videos and the local library are
   gitignored runtime data, never committed (HANDOFF §8, §15).
-- **Repo is PRIVATE for now**, intended to go public later when it makes sense. The
-  next-owner mission still drives design; going public is a one-step change.
+- **Repo is PUBLIC** (source available for noncommercial use under PolyForm
+  Noncommercial; not "open source"). The next-owner mission still drives design.
 
 ## Git workflow
 - Claude runs **all** `git`/`gh` commands; Matt never types them.
