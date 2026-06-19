@@ -522,7 +522,9 @@ app.get('/api/system', (_req, res) => {
   res.json({
     supervised: SUPERVISED,
     port: PORT,
-    mdns: 'openobject.local',  // resolves on the installed frame (Phase 2 mDNS), not on the dev Mac
+    // openobject.local resolves only where mDNS is configured (the installed frame, which is Linux),
+    // not on a Mac/standalone, so only advertise it there; the control panel hides the line otherwise.
+    mdns: process.platform === 'linux' ? 'openobject.local' : null,
     addresses: lanAddresses(), // reachable now from another device on the same network
   });
 });

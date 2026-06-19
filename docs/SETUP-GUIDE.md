@@ -5,6 +5,8 @@ engineering knowledge needed. If you've never seen the build spec, you're in the
 
 **Home base:** [openobject.io](https://openobject.io)
 
+> **No Infinite Objects frame?** This guide is specifically for reviving the XXL hardware. If you just want to run OpenObject on a Mac (no frame, your Mac as the display), follow **[No Frame? Use Your Mac as the Display](MAC-DISPLAY-SETUP.md)** instead.
+
 ## So you want to try this?
 
 A frank word, friend to friend, before you start.

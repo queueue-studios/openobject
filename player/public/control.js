@@ -718,7 +718,9 @@ async function loadSystem() {
     return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a>`;
   });
   frameAddr.innerHTML = addrs.join(' or ') || '—';
-  if (s.mdns) { frameMdns.textContent = s.mdns; frameMdns.href = `http://${s.mdns}`; }
+  const reachMdns = document.getElementById('reachMdns');
+  if (s.mdns) { frameMdns.textContent = s.mdns; frameMdns.href = `http://${s.mdns}`; reachMdns.hidden = false; }
+  else reachMdns.hidden = true;
   reachEl.hidden = addrs.length === 0 && !s.mdns;
 }
 

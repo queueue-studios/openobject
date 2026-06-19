@@ -12,6 +12,11 @@
 const idle = document.getElementById('idle');
 const layers = [document.getElementById('layer0'), document.getElementById('layer1')];
 
+// The idle hint shows the address this page was opened at, so it matches how the viewer reaches the
+// control panel: localhost:3000 when the Mac is the display, openobject.local on the frame (§6).
+const hintHost = document.querySelector('.hint .host');
+if (hintHost) hintHost.textContent = location.host;
+
 let items = [];
 let durationMs = 8000;
 let mode = 'sequence';
