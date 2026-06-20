@@ -161,9 +161,13 @@ const REGISTRY = [
     animateDefault: false,
     animateHook: 'easterEgg',
     // The photos are square (3840^2 / 2500^2) drawn object-fit: contain, so on the 1:1 stage they fill edge
-    // to edge (no crop, no aspect). Token 1 ("Desert Steel") is a static landscape image with no
-    // animation_url and is intentionally NOT supported here (it resolves with a clear "no artwork URL"
-    // error); it can be added as a normal upload if ever wanted.
+    // to edge (no crop, no aspect).
+    // Of the contract's live tokens, 3/4/5/6 carry an animation_url and render here; token 1 ("Desert Steel")
+    // and token 7 ("Resolute") are static images with no animation_url and are intentionally NOT supported
+    // (each resolves with a clear "no artwork URL" error and can be a normal upload instead). supportedTokens
+    // drives the add modal's "Supported Token IDs" hint; it is display-only (the resolver still decides what
+    // actually loads), so it is the one collection that lists a subset rather than a single fixedToken.
+    supportedTokens: [3, 4, 5, 6],
   },
   {
     slug: 'perfect-circles',
@@ -697,6 +701,9 @@ function list() {
         // A choice collection: the control descriptor (label + options) plus the current value, for the dropdown.
         choice: c.choice ? { label: c.choice.label, options: c.choice.options, value: st.choice } : null,
         fixedToken: c.fixedToken || null,    // single-piece collection: no Token-ID prompt
+        // IDs for the add modal's "Supported Token IDs" hint: a fixedToken collection's one id, an explicit
+        // supportedTokens subset (e.g. Lost in Moffat County's 3,4,5,6), or null for open collections (no hint).
+        supportedTokens: c.supportedTokens ? c.supportedTokens.map(String) : (c.fixedToken ? [String(c.fixedToken)] : null),
         crop: c.crop || null, aspect: c.aspect || null,
         pieces: db.countConnected(c.slug),
       };

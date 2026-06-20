@@ -140,6 +140,8 @@ moves on when it's up.
 generative or web-hosted piece. OpenObject can show a few **specific, supported collections** of this
 kind. On the **Library** tab, tap **Add connected artwork**, pick the collection, and enter your
 piece's **Token ID** (the number on the piece's page, for example OpenSea shows it as "Token #101").
+For collections that only cover certain pieces, the add screen lists the **Supported Token IDs**, so you
+know which numbers will work before you type one.
 OpenObject looks up the real artwork, downloads it to the frame so it plays offline, and adds it as a
 normal piece you can put in the Rotation or Pin like any other. Some connected pieces even change
 through the day on their own, for example one shifts from daytime colors to moonlit tones at night,

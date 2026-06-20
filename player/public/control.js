@@ -60,6 +60,7 @@ const cxClose = document.getElementById('cxClose');
 const cxCollections = document.getElementById('cxCollections');
 const cxToken = document.getElementById('cxToken');
 const cxTokenLabel = document.getElementById('cxTokenLabel');
+const cxSupported = document.getElementById('cxSupported');
 const cxResult = document.getElementById('cxResult');
 const cxMsg = document.getElementById('cxMsg');
 const cxAdd = document.getElementById('cxAdd');
@@ -880,12 +881,25 @@ function renderPicker() {
   syncTokenInput();
 }
 
+// Small info glyph for the "Supported Token IDs" hint (recolored via CSS, like the other panel icons).
+const INFO_ICON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>';
+
 // A fixedToken collection supports a single piece, so the Token ID field is hidden and the piece is
 // resolved automatically; every other collection shows the field and waits for a Token ID.
 function syncTokenInput() {
-  const fixed = !!(collectionsBySlug[cxSlug] || {}).fixedToken;
+  const c = collectionsBySlug[cxSlug] || {};
+  const fixed = !!c.fixedToken;
   cxTokenLabel.hidden = fixed;
   cxToken.hidden = fixed;
+  // Always-visible "Supported Token IDs" hint for collections restricted to specific IDs (a fixedToken's one
+  // id, or a curated subset like Lost in Moffat County's 3,4,5,6). Open collections list nothing, so no hint.
+  const ids = c.supportedTokens;
+  if (ids && ids.length) {
+    cxSupported.innerHTML = `${INFO_ICON}<span>Supported Token IDs: <span class="cx-supported-ids">${ids.map(escapeHtml).join(', ')}</span></span>`;
+    cxSupported.hidden = false;
+  } else {
+    cxSupported.hidden = true;
+  }
 }
 function maybeAutoPreview() {
   if ((collectionsBySlug[cxSlug] || {}).fixedToken) previewToken();
