@@ -191,7 +191,13 @@ async function ethCallTokenURI(c, tokenId) {
   });
   if (!r.ok) throw new Error(`Ethereum node returned ${r.status}.`);
   const j = await r.json();
-  if (j.error) throw new Error(j.error.message || 'Ethereum read failed.');
+  if (j.error) {
+    // A reverting tokenURI/uri(id) means the token doesn't exist (ERC-721/1155 revert on an unknown id).
+    // Surface the same plain message as an empty result, not the node's raw "execution reverted"; keep
+    // genuine node errors (timeouts, rate limits) honest so a network hiccup isn't mislabeled "no such token".
+    const reverted = j.error.code === 3 || /revert/i.test(j.error.message || '');
+    throw new Error(reverted ? 'No such token (check the Token ID).' : (j.error.message || 'Ethereum read failed.'));
+  }
   const hex = (j.result || '').replace(/^0x/, '');
   if (hex.length < 128) throw new Error("No such token (check the Token ID).");
   const len = parseInt(hex.slice(64, 128), 16);            // ABI string: [offset][length][bytes]
