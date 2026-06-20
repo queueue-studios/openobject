@@ -781,11 +781,20 @@ function renderConnectedCard() {
   connectedList.replaceChildren(...collectionsList.map((c) => {
     const row = document.createElement('div');
     row.className = 'cc-row' + (c.hidden ? ' is-hidden' : '');
-    // The motion control depends on the collection: a speedControl piece (one we auto-animate at a
-    // chosen pace) gets a 0–10 slider, 0 = still; an Animate-on-load piece gets the on/off switch; a
-    // collection with no motion to engage (a time-aware still, animatable:false) gets neither.
+    // The motion control depends on the collection: a choice piece (one with a curated set of modes)
+    // gets a dropdown; a speedControl piece (one we auto-animate at a chosen pace) gets a 0–10 slider,
+    // 0 = still; an Animate-on-load piece gets the on/off switch; a collection with no motion to engage
+    // (a time-aware still, animatable:false) gets none.
     let motionCtl = '';
-    if (c.speedControl) {
+    if (c.choice) {
+      const opts = c.choice.options
+        .map((o) => `<option value="${escapeHtml(o.value)}"${String(o.value) === String(c.choice.value) ? ' selected' : ''}>${escapeHtml(o.label)}</option>`)
+        .join('');
+      motionCtl = `<span class="cc-choice">
+        <span class="cc-choice-label">${escapeHtml(c.choice.label)}</span>
+        <select class="cc-choice-select" aria-label="${escapeHtml(c.choice.label)} for ${escapeHtml(c.name)}">${opts}</select>
+      </span>`;
+    } else if (c.speedControl) {
       const v = c.speed == null ? 0 : c.speed;
       motionCtl = `<span class="cc-speed">
         <span class="cc-speed-label">Motion <span class="cc-speed-val">${v === 0 ? 'Off' : v}</span></span>
@@ -803,6 +812,8 @@ function renderConnectedCard() {
       <button class="cc-hide">${c.hidden ? 'Unhide' : 'Hide'}</button>`;
     const sw = row.querySelector('.cc-switch');
     if (sw) sw.addEventListener('click', () => patchCollection(c.slug, { animate: !c.animate }));
+    const sel = row.querySelector('.cc-choice-select');
+    if (sel) sel.addEventListener('change', () => patchCollection(c.slug, { choice: sel.value }));
     const range = row.querySelector('.cc-speed-range');
     if (range) {
       const valEl = row.querySelector('.cc-speed-val');

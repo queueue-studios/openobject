@@ -212,6 +212,47 @@ const REGISTRY = [
     animatable: false,
     animateHook: 'bloom',
   },
+  {
+    slug: 'code-art',
+    artist: 'NFTman76',
+    name: 'Code art',
+    chain: 'Ethereum',
+    contract: '0xe2fe3818c305dfc2d2b9b4646bee95c050b0baf3',
+    rpc: 'https://ethereum-rpc.publicnode.com',
+    // "Code art" is the artist's general contract where every token is a DIFFERENT artwork, so (like
+    // Golden Lining within "Dune Reveries" and "The Bloom" within "Chazstract") we support just the one
+    // vetted piece, token 17, "Binary Mountains" — a three.js wireframe-mountains scene with falling
+    // snow. fixedToken skips the Token-ID prompt (still resolved on-chain via tokenURI for faithfulness).
+    fixedToken: '17',
+    // The scene is otherwise a single self-contained HTML file but loads three.js by ABSOLUTE URL
+    // (cdnjs), so localize that one script into the bundle and rewrite the ref for offline play (the
+    // Golden Lining / Lost in Moffat County mechanism).
+    localizeAbsolute: true,
+    // The camera orbits and the snow falls on their own (the piece has its own requestAnimationFrame
+    // loop), so there is nothing to engage on load: no Animate control. What it DOES expose is snowfall
+    // intensity — a global snowLevel (0..3) the artist cycles by tap. We surface that as the first
+    // CHOICE control (a curated dropdown) instead: the display passes the chosen value as ?oochoice=N,
+    // and the snow hook reaches that level by calling the artwork's own onClick() N times (snowLevel
+    // starts at 0, so N taps land on level N — the faithful equivalent of the artist's tap). Values are
+    // the artist's level indices; we expose the artist's full set (Light/Moderate/Heavy/Blizzard). The
+    // choice plumbing (db column, API field, ?oochoice, this dropdown) is a reusable seam; only the
+    // per-collection hook below is piece-specific.
+    animateDefault: false,
+    animatable: false,
+    choice: {
+      label: 'Snow',
+      default: '0',
+      options: [
+        { value: '0', label: 'Light Snow' },
+        { value: '1', label: 'Moderate Snow' },
+        { value: '2', label: 'Heavy Snow' },
+        { value: '3', label: 'Blizzard' },
+      ],
+    },
+    choiceHook: 'snow',
+    // The three.js canvas sizes to the full viewport (camera aspect adapts), so it fills the 1:1 stage
+    // edge to edge — no crop, no aspect.
+  },
 ];
 
 const bySlug = (slug) => REGISTRY.find((c) => c.slug === slug) || null;
@@ -416,6 +457,33 @@ const BLOOM_HOOK = `
 })();
 </script>`;
 
+// Injected into NFTman76's "Binary Mountains" (Code art #17): the scene self-animates (orbiting camera,
+// falling snow), but its snowfall intensity is a tap-cycled global snowLevel (0..3) applied by the
+// artist's own onClick() (snowLevel = (snowLevel+1) % 4; updateSnowLevel()). We honor the owner's chosen
+// level from ?oochoice=N by calling that same onClick() N times once it exists — snowLevel starts at 0,
+// so N taps land on level N, the faithful equivalent of the artist's tap (snowLevel is a lexical `let`,
+// not a window property, so it can't be assigned directly; onClick is a global function, so it can be
+// called). We also hide the two on-screen overlays (the "tap to snow" prompt and the level pill): a
+// passive frame can't tap, and the stage shows zero chrome (HANDOFF §6). Always injected; with no
+// ?oochoice (or 0) only the overlays are hidden and the artwork keeps its Light Snow default.
+const SNOW_HOOK = `
+<script>
+(function(){
+  var s = document.createElement('style');
+  s.textContent = '.info,.snow-level{display:none!important}';
+  (document.head || document.documentElement).appendChild(s);
+  var n = parseInt(new URLSearchParams(location.search).get('oochoice'), 10);
+  if (!(n > 0)) return;                                   // 0 / absent → the artwork's Light Snow default
+  var tries = 0;
+  var iv = setInterval(function(){
+    if (++tries > 300) { clearInterval(iv); return; }     // ~30s safety
+    if (typeof onClick !== 'function') return;            // wait until the artwork's script has run
+    clearInterval(iv);
+    for (var i = 0; i < n; i++) { try { onClick(); } catch (e) {} }
+  }, 100);
+})();
+</script>`;
+
 async function fetchBuf(url) {
   const r = await fetch(toHttp(url));
   if (!r.ok) throw new Error(`fetch ${url} → ${r.status}`);
@@ -505,10 +573,12 @@ async function mirrorBundle(slug, sourceUrl, tokenId) {
     html = html.replace(/\s+(?:integrity|crossorigin|referrerpolicy)=("[^"]*"|'[^']*')/gi, '');
   }
 
-  // Inject the matching hook (engaged by ?ooanim / ?oospeed at display time): an easterEgg collection
+  // Inject the matching hook (engaged by ?oochoice / ?ooanim / ?oospeed at display time): a choice
+  // collection gets its own control hook (snow → set the level + hide overlays); an easterEgg collection
   // gets the overlay-toggle hook; a speedControl collection gets the cosine sweep; other Animate-control
   // pieces get the fire-once hook. Self-animating / still pieces (Kittoe, send/receive) get none, verbatim.
-  const hook = c && c.animateHook === 'bloom' ? BLOOM_HOOK
+  const hook = c && c.choiceHook === 'snow' ? SNOW_HOOK
+    : c && c.animateHook === 'bloom' ? BLOOM_HOOK
     : c && c.animateHook === 'easterEgg' ? EASTER_HOOK
     : c && c.speedControl ? SPEED_HOOK
     : (c && c.animatable !== false ? ANIMATE_HOOK : '');
@@ -558,6 +628,8 @@ function getState(slug) {
     animate: st && st.animate != null ? !!st.animate : c.animateDefault,
     // Speed-controlled collections carry a 0..10 motion speed (0 = static); others have none.
     speed: c.speedControl ? (st && st.speed != null ? st.speed : c.speedDefault) : null,
+    // Choice collections carry a selected option value (a string from the registry options); others none.
+    choice: c.choice ? (st && st.choice != null ? st.choice : c.choice.default) : null,
   };
 }
 function setState(slug, patch) {
@@ -575,9 +647,12 @@ function list() {
       return {
         slug: c.slug, artist: c.artist, name: c.name, chain: c.chain,
         hidden: st.hidden, animate: st.animate,
-        // A speedControl collection shows a 0..10 slider instead of the on/off Animate switch.
-        animatable: c.animatable !== false && !c.speedControl,
+        // A speedControl collection shows a 0..10 slider, a choice collection shows a dropdown, and an
+        // animatable collection shows the on/off Animate switch — the three are mutually exclusive.
+        animatable: c.animatable !== false && !c.speedControl && !c.choice,
         speedControl: !!c.speedControl, speed: st.speed, speedMax: 10,
+        // A choice collection: the control descriptor (label + options) plus the current value, for the dropdown.
+        choice: c.choice ? { label: c.choice.label, options: c.choice.options, value: st.choice } : null,
         fixedToken: c.fixedToken || null,    // single-piece collection: no Token-ID prompt
         crop: c.crop || null, aspect: c.aspect || null,
         pieces: db.countConnected(c.slug),

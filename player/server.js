@@ -312,16 +312,25 @@ app.delete('/api/library/:id', (req, res) => {
 app.get('/api/collections', (_req, res) => res.json(collections.list()));
 
 app.patch('/api/collections/:slug', (req, res) => {
-  const { hidden, animate, speed } = req.body || {};
-  if (hidden === undefined && animate === undefined && speed === undefined) return res.status(400).json({ error: 'nothing to update' });
+  const { hidden, animate, speed, choice } = req.body || {};
+  if (hidden === undefined && animate === undefined && speed === undefined && choice === undefined) {
+    return res.status(400).json({ error: 'nothing to update' });
+  }
   if ((hidden !== undefined && typeof hidden !== 'boolean') || (animate !== undefined && typeof animate !== 'boolean')) {
     return res.status(400).json({ error: 'hidden/animate must be booleans' });
   }
   if (speed !== undefined && (typeof speed !== 'number' || !Number.isFinite(speed) || speed < 0 || speed > 10)) {
     return res.status(400).json({ error: 'speed must be a number from 0 to 10' });
   }
-  if (!collections.bySlug(req.params.slug)) return res.status(404).json({ error: 'unknown collection' });
-  res.json(collections.setState(req.params.slug, { hidden, animate, speed }));
+  const c = collections.bySlug(req.params.slug);
+  if (!c) return res.status(404).json({ error: 'unknown collection' });
+  // A choice control accepts only one of its declared option values (a collection without a choice
+  // control accepts none).
+  if (choice !== undefined) {
+    const allowed = c.choice ? c.choice.options.map((o) => String(o.value)) : [];
+    if (!allowed.includes(String(choice))) return res.status(400).json({ error: 'invalid choice' });
+  }
+  res.json(collections.setState(req.params.slug, { hidden, animate, speed, choice }));
 });
 
 // Resolve a Token ID to its title + preview WITHOUT adding (drives the add-flow preview).
@@ -451,6 +460,7 @@ const withConnectedFlags = (item) => {
     // A speedControl collection is driven by `speed` (the cosine sweep), not the on/off animate hook.
     animate: st && !(c && c.speedControl) ? st.animate : false,
     speed: c && c.speedControl ? (st ? st.speed : c.speedDefault) : null, // 0..10 motion (0 = static)
+    choice: c && c.choice ? (st ? st.choice : c.choice.default) : null, // selected option value → ?oochoice
     perToken: !!(c && c.perToken),
     rpcUrl: c && c.liveRpc ? c.rpc : null,
     crop: c && c.crop ? c.crop : null, // art occupies this centered fraction; display zooms it edge to edge

@@ -154,9 +154,12 @@ generative study of motion: a chain of colored orbs swings like a pendulum, trac
 whole panel. And Jeremy Booth's *Lost in Moffat County* is a series of painterly Western scenes that shift from day to
 night on their own with your local time; switch on Animate for that piece (in Settings) to reveal a hand-drawn animated
 easter egg. And Chaz Wesley's *The Bloom* is a hand-drawn flower garden that blooms at sunset, with a little
-spaceship drifting through the sky above it. The supported collections live in the **Settings** tab, under
-**Connected Collections**, where you can hide ones you don't own and, for collections that move, turn
-their motion on or off, or set how fast it moves. This is new and **curated**: only collections that have been
+spaceship drifting through the sky above it. And NFTman76's *Binary Mountains* is a glowing wireframe
+mountain range under a starry sky, with snow drifting down as the view slowly circles it; a **Snow**
+setting (in Settings) lets you choose how heavy the snowfall is, from Light Snow to a full Blizzard.
+The supported collections live in the **Settings** tab, under
+**Connected Collections**, where you can hide ones you don't own and, for collections that have something to
+adjust, turn their motion on or off, set how fast it moves, or choose a setting like the snowfall. This is new and **curated**: only collections that have been
 specifically added will work, so it won't read just any link yet.
 
 **Sleep hours** *(in the **Settings** tab)*. Optionally have the screen rest on a schedule. You get

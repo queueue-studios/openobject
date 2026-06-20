@@ -85,6 +85,7 @@ function render(layer, item, onReady) {
     if (item.rpcUrl) params.push('rpc_url=' + encodeURIComponent(item.rpcUrl)); // live RPC override
     if (item.animate) params.push('ooanim=1');                          // fire the bundle's animate hook
     if (item.speed != null) params.push('oospeed=' + encodeURIComponent(item.speed)); // 0..10 cosine sweep speed
+    if (item.choice != null) params.push('oochoice=' + encodeURIComponent(item.choice)); // single-choice control value
     const tokenSeg = item.perToken && item.token_id != null ? '/' + encodeURIComponent(item.token_id) : '';
     el.src = '/collections/' + item.collection + tokenSeg + '/index.html' + (params.length ? '?' + params.join('&') : '');
     // Some collections compose the art in a centered inset with a black margin (e.g. send/receive's
