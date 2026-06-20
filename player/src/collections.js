@@ -180,6 +180,38 @@ const REGISTRY = [
     animateDefault: false,
     animatable: false,
   },
+  {
+    slug: 'chazstract',
+    artist: 'Chaz Wesley',
+    name: 'Chazstract',
+    chain: 'Tezos',
+    contract: 'KT1AATmFFJtPrmpnfdaTcFB1ojhdNJmd92C2',
+    // "Chazstract" is the artist's general objkt.com contract: every token is a DIFFERENT artwork, not a
+    // seeded series, so (like Golden Lining within "Dune Reveries") we support just the one vetted piece,
+    // token 28, "The Bloom". fixedToken skips the Token-ID prompt (still resolved on-chain for faithfulness).
+    tzkt: 'https://api.tzkt.io',
+    fixedToken: '28',
+    // The artifactUri is a bare IPFS *directory* CID whose index.html pulls p5.min.js + p5.sound.min.js +
+    // the music file by RELATIVE ref, so the mirror takes the asset base from the directory itself
+    // (dirBundle), not the gateway root.
+    dirBundle: true,
+    // The bundle also loads p5.sound.min.js, which the sketch never actually uses (its audio is raw Web
+    // Audio), and that unused library hangs the renderer in restricted contexts (it froze p5 before setup()
+    // in a headless browser). We are always muted (§12), so we drop it from the mirror: the visual is
+    // identical and now renders reliably everywhere. (The desktop archival copy keeps it, faithfully.)
+    dropScripts: ['p5.sound.min.js'],
+    // A fixed 1920x1080 (16:9) canvas the sketch self-fits to the viewport on black. Declaring the aspect
+    // letterboxes it on the bare square stage (Golden Lining-style); on a 16:9 screen it fills edge to edge.
+    aspect: '1920 / 1080',
+    // The piece opens behind a "Click to Bloom" overlay that also gates the bloom; a passive frame can't
+    // click, so the bloom hook auto-starts it on every display, silently (the music never plays, §12). It
+    // self-animates after that (flowers sway and spin on their own, a spaceship drifts), so no Animate
+    // toggle. Its hand interactions (click a flower to spin, the music panel) are not supported on a passive,
+    // muted frame.
+    animateDefault: false,
+    animatable: false,
+    animateHook: 'bloom',
+  },
 ];
 
 const bySlug = (slug) => REGISTRY.find((c) => c.slug === slug) || null;
@@ -364,6 +396,26 @@ const EASTER_HOOK = `
 })();
 </script>`;
 
+// Injected into Chaz Wesley's "The Bloom" (Chazstract #28): the piece opens behind a "Click to Bloom"
+// overlay (#startOverlay) whose click runs the sketch's startExperience(), which hides the overlay AND
+// starts the bloom clock (its flowers stay frozen as buds until then). A passive frame has no one to click,
+// so we fire it ourselves once setup() has run (the canvas exists). OpenObject is always muted (HANDOFF §12),
+// so we no-op audio playback first; the garden then blooms and self-animates with no sound. Runs
+// unconditionally: revealing the garden is required to display the art, not an optional Animate.
+const BLOOM_HOOK = `
+<script>
+(function(){
+  try { HTMLMediaElement.prototype.play = function(){ return Promise.resolve(); }; } catch (e) {}
+  var n = 0;
+  var iv = setInterval(function(){
+    if (++n > 300) { clearInterval(iv); return; }   // ~30s safety
+    if (typeof startExperience !== 'function' || !document.querySelector('canvas')) return;
+    clearInterval(iv);
+    try { startExperience(); } catch (e) {}
+  }, 100);
+})();
+</script>`;
+
 async function fetchBuf(url) {
   const r = await fetch(toHttp(url));
   if (!r.ok) throw new Error(`fetch ${url} → ${r.status}`);
@@ -398,13 +450,24 @@ async function mirrorBundle(slug, sourceUrl, tokenId) {
   const out = outDir(slug, tokenId);                                         // per-token dir, or the shared bundle
   if (fs.existsSync(path.join(out, 'index.html'))) return;                   // already mirrored
   const u = new URL(toHttp(sourceUrl));                                      // ipfs:// → gateway for the fetch
-  const dir = u.pathname.slice(0, u.pathname.lastIndexOf('/') + 1);          // .../<txid>/
+  // A dirBundle collection's sourceUrl is a bare directory CID (ipfs://<cid>), whose index.html pulls its
+  // assets by RELATIVE ref, so the asset base is the directory itself and the entry is its index.html.
+  // Otherwise the path carries the file (or trailing dir) and base/entry come from the last path segment.
+  const isDir = c && c.dirBundle;
+  const dir = isDir ? u.pathname.replace(/\/?$/, '/') : u.pathname.slice(0, u.pathname.lastIndexOf('/') + 1); // .../<txid>/
   const base = u.origin + dir;
-  const entry = u.pathname.slice(u.pathname.lastIndexOf('/') + 1) || 'index.html';
+  const entry = isDir ? 'index.html' : (u.pathname.slice(u.pathname.lastIndexOf('/') + 1) || 'index.html');
   let html = (await fetchBuf(base + entry)).toString('utf8');
   // A public gateway may inject a tracking beacon (e.g. Cloudflare's hidden cdn-cgi <a>) into the
   // served HTML; it is not part of the artist's file, so strip it for a faithful mirror.
   html = html.replace(/<a\b[^>]*cdn-cgi[^>]*><\/a>/gi, '');
+  // Drop any <script src> a collection flags as unwanted (e.g. The Bloom's unused p5.sound, which hangs the
+  // renderer in restricted contexts; we are always muted). Removing the tag here, before the asset scan,
+  // also stops the scan below from fetching it.
+  if (c && Array.isArray(c.dropScripts)) for (const s of c.dropScripts) {
+    const esc = s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    html = html.replace(new RegExp(`<script\\b[^>]*src=["']${esc}["'][^>]*>\\s*</script>`, 'gi'), '');
+  }
 
   const assets = new Set();
   const re = /(?:src|href)=["']([^"']+)["']/gi;
@@ -445,7 +508,8 @@ async function mirrorBundle(slug, sourceUrl, tokenId) {
   // Inject the matching hook (engaged by ?ooanim / ?oospeed at display time): an easterEgg collection
   // gets the overlay-toggle hook; a speedControl collection gets the cosine sweep; other Animate-control
   // pieces get the fire-once hook. Self-animating / still pieces (Kittoe, send/receive) get none, verbatim.
-  const hook = c && c.animateHook === 'easterEgg' ? EASTER_HOOK
+  const hook = c && c.animateHook === 'bloom' ? BLOOM_HOOK
+    : c && c.animateHook === 'easterEgg' ? EASTER_HOOK
     : c && c.speedControl ? SPEED_HOOK
     : (c && c.animatable !== false ? ANIMATE_HOOK : '');
   if (hook) html = html.includes('</body>') ? html.replace('</body>', hook + '\n</body>') : html + hook;

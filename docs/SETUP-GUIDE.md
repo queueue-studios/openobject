@@ -153,7 +153,8 @@ concentric colored rings that fills the whole panel and drifts on its own. The s
 generative study of motion: a chain of colored orbs swings like a pendulum, tracing slow, ever-shifting arcs across the
 whole panel. And Jeremy Booth's *Lost in Moffat County* is a series of painterly Western scenes that shift from day to
 night on their own with your local time; switch on Animate for that piece (in Settings) to reveal a hand-drawn animated
-easter egg. The supported collections live in the **Settings** tab, under
+easter egg. And Chaz Wesley's *The Bloom* is a hand-drawn flower garden that blooms at sunset, with a little
+spaceship drifting through the sky above it. The supported collections live in the **Settings** tab, under
 **Connected Collections**, where you can hide ones you don't own and, for collections that move, turn
 their motion on or off, or set how fast it moves. This is new and **curated**: only collections that have been
 specifically added will work, so it won't read just any link yet.
