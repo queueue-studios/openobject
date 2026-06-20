@@ -271,13 +271,33 @@ const toHttp = (url) => {
   return s.startsWith('ipfs://') ? IPFS_GATEWAY + s.slice(7).replace(/^ipfs\//, '') : s;
 };
 
+// Every outbound fetch below pulls from public RPC nodes and IPFS/Arweave gateways, which can stall
+// (connect but never answer). Node's fetch has no timeout, so a dead source would otherwise hang the
+// add/preview forever (the spinner that never returns). ooFetch puts one flat 30s ceiling on every
+// call and turns a stall into a clean, surfaced error instead. It is a FAILURE ceiling, not an
+// expected wait: the happy path is seconds, and 30s only bites when a source is genuinely stuck
+// (HANDOFF §8/§20). Hardcoded by choice — one number, generous enough that it should never need tuning.
+const FETCH_TIMEOUT_MS = 30000;
+async function ooFetch(url, opts) {
+  try {
+    return await fetch(url, { ...opts, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  } catch (e) {
+    if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) {
+      let host = String(url);
+      try { host = new URL(url).host; } catch { /* keep the raw string */ }
+      throw new Error(`Timed out reaching ${host} after ${FETCH_TIMEOUT_MS / 1000}s.`);
+    }
+    throw e;
+  }
+}
+
 // ── On-chain resolve: Token ID → official animation_url (+ title, preview) ──
 // tokenURI(uint256) (ERC-721) and uri(uint256) (ERC-1155) are both a free `eth_call` (no gas, no
 // wallet) returning the token's canonical metadata location — the source of truth, not a render.
 async function ethCallTokenURI(c, tokenId) {
   const selector = c.erc1155 ? '0x0e89341c' : '0xc87b56dd'; // uri(uint256) | tokenURI(uint256)
   const data = selector + BigInt(tokenId).toString(16).padStart(64, '0');
-  const r = await fetch(c.rpc, {
+  const r = await ooFetch(c.rpc, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to: c.contract, data }, 'latest'] }),
@@ -321,7 +341,7 @@ function firstImageUrl(html) {
 async function readTokenMeta(c, tid) {
   if (c.chain === 'Tezos') {
     const url = `${c.tzkt}/v1/tokens?contract=${encodeURIComponent(c.contract)}&tokenId=${encodeURIComponent(tid)}`;
-    const r = await fetch(url);
+    const r = await ooFetch(url);
     if (!r.ok) throw new Error(`Tezos indexer returned ${r.status}.`);
     const arr = await r.json();
     const meta = (Array.isArray(arr) && arr[0] && arr[0].metadata) || null;
@@ -329,7 +349,7 @@ async function readTokenMeta(c, tid) {
     return { meta, sourceUrl: meta.artifactUri, image: meta.displayUri || meta.thumbnailUri || null };
   }
   const metaUrl = await ethCallTokenURI(c, tid);                 // Ethereum → metadata location
-  const mr = await fetch(toHttp(metaUrl));                        // metadata may live on IPFS
+  const mr = await ooFetch(toHttp(metaUrl));                        // metadata may live on IPFS
   if (!mr.ok) throw new Error(`Couldn't read the token metadata (${mr.status}).`);
   const meta = await mr.json();
   return { meta, sourceUrl: meta.animation_url, image: meta.image || null };
@@ -348,7 +368,7 @@ async function resolveToken(slug, tokenId) {
   // Prefer the artwork's own image over a stylised official preview (e.g. Golden Lining's split
   // half-grey/half-colour `image`): pull the first image the bundle loads and use that instead.
   if (c.thumbFromAnimationImage) {
-    try { const img = firstImageUrl(await (await fetch(toHttp(sourceUrl))).text()); if (img) image = img; } catch { /* keep meta.image */ }
+    try { const img = firstImageUrl(await (await ooFetch(toHttp(sourceUrl))).text()); if (img) image = img; } catch { /* keep meta.image */ }
   }
   return { tokenId: tid, title: meta.name || `${c.name} #${tid}`, sourceUrl, image };
 }
@@ -496,7 +516,7 @@ const SNOW_HOOK = `
 </script>`;
 
 async function fetchBuf(url) {
-  const r = await fetch(toHttp(url));
+  const r = await ooFetch(toHttp(url));
   if (!r.ok) throw new Error(`fetch ${url} → ${r.status}`);
   return Buffer.from(await r.arrayBuffer());
 }
@@ -504,7 +524,7 @@ async function fetchBuf(url) {
 // Like fetchBuf but also returns the content-type, so a localized asset with no extension in its
 // URL (e.g. an IPFS CID) can be given a sensible local filename.
 async function fetchAsset(url) {
-  const r = await fetch(toHttp(url));
+  const r = await ooFetch(toHttp(url));
   if (!r.ok) throw new Error(`fetch ${url} → ${r.status}`);
   return { buf: Buffer.from(await r.arrayBuffer()), ct: (r.headers.get('content-type') || '').split(';')[0].trim().toLowerCase() };
 }
@@ -522,12 +542,24 @@ function extFor(ct, buf) {
   return '';
 }
 
-// Fetch the entry HTML + every relative asset it references (scripts, etc.). For collections that
-// expose an Animate control, inject the auto-animate hook; self-animating pieces are left verbatim.
+// Mirror a piece's bundle, cleaning up a half-built dir if any fetch fails so a retry starts fresh.
 async function mirrorBundle(slug, sourceUrl, tokenId) {
   const c = bySlug(slug);
   const out = outDir(slug, tokenId);                                         // per-token dir, or the shared bundle
   if (fs.existsSync(path.join(out, 'index.html'))) return;                   // already mirrored
+  try {
+    await mirrorInto(c, out, sourceUrl);
+  } catch (e) {
+    // A fetch timed out or the source died mid-mirror: drop the partial dir so the next add is clean
+    // (index.html is written last, so a leftover dir without it would just be dead weight anyway).
+    fs.rmSync(out, { recursive: true, force: true });
+    throw e;
+  }
+}
+
+// Fetch the entry HTML + every relative asset it references (scripts, etc.). For collections that
+// expose an Animate control, inject the auto-animate hook; self-animating pieces are left verbatim.
+async function mirrorInto(c, out, sourceUrl) {
   const u = new URL(toHttp(sourceUrl));                                      // ipfs:// → gateway for the fetch
   // A dirBundle collection's sourceUrl is a bare directory CID (ipfs://<cid>), whose index.html pulls its
   // assets by RELATIVE ref, so the asset base is the directory itself and the entry is its index.html.
@@ -622,7 +654,7 @@ async function cacheThumb(slug, tokenId, imageUrl) {
 async function toDataUrl(url) {
   if (!url) return null;
   try {
-    const r = await fetch(toHttp(url));
+    const r = await ooFetch(toHttp(url));
     if (!r.ok) return null;
     const ct = r.headers.get('content-type') || 'image/png';
     return `data:${ct};base64,${Buffer.from(await r.arrayBuffer()).toString('base64')}`;
