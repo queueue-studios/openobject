@@ -207,14 +207,17 @@ const REGISTRY = [
     // A fixed 1920x1080 (16:9) canvas the sketch self-fits to the viewport on black. Declaring the aspect
     // letterboxes it on the bare square stage (Golden Lining-style); on a 16:9 screen it fills edge to edge.
     aspect: '1920 / 1080',
-    // The piece opens behind a "Click to Bloom" overlay that also gates the bloom; a passive frame can't
-    // click, so the bloom hook auto-starts it on every display, silently (the music never plays, §12). It
-    // self-animates after that (flowers sway and spin on their own, a spaceship drifts), so no Animate
-    // toggle. Its hand interactions (click a flower to spin, the music panel) are not supported on a passive,
-    // muted frame.
+    // The piece opens behind a full-screen "Click to Bloom" overlay (#startOverlay) that also gates the
+    // bloom; a passive frame can't click, so the bloom hook auto-starts it on every display, silently (the
+    // music never plays, §12). The overlay lives in the static HTML, so it would paint (then fade over its
+    // own 0.8s) before the hook can run — a brief "Click to Bloom" flash; hideSelectors rules it out from the
+    // first paint (the hook still reveals the garden). It self-animates after that (flowers sway and spin on
+    // their own, a spaceship drifts), so no Animate toggle. Its hand interactions (click a flower to spin,
+    // the music panel) are not supported on a passive, muted frame.
     animateDefault: false,
     animatable: false,
     animateHook: 'bloom',
+    hideSelectors: ['#startOverlay'],
   },
   {
     slug: 'code-art',
@@ -713,6 +716,18 @@ async function mirrorInto(c, out, sourceUrl) {
     html = html.replace(/\s+(?:integrity|crossorigin|referrerpolicy)=("[^"]*"|'[^']*')/gi, '');
   }
 
+  // Hide any of the artist's static interaction chrome that is meaningless on a passive frame, from the
+  // very first paint. The Bloom ships a full-screen "Click to Bloom" gate (#startOverlay): the bloom hook
+  // dismisses it, but because it lives in the served HTML it would paint (then fade over its own 0.8s)
+  // before the hook can run — a brief flash; a head-level rule hides the selector before it ever paints,
+  // while the hook still fires startExperience() to reveal the garden. (SNOW_HOOK hides Binary Mountains'
+  // chrome similarly but via JS, since those nodes are created after load; a node already in the served
+  // HTML needs the rule in <head> to beat the first paint.)
+  if (c && Array.isArray(c.hideSelectors) && c.hideSelectors.length) {
+    const css = `<style>${c.hideSelectors.join(',')}{display:none!important}</style>`;
+    html = html.includes('</head>') ? html.replace('</head>', css + '\n</head>') : css + html;
+  }
+
   // Inject the matching hook (engaged by ?oochoice / ?ooanim / ?oospeed at display time): a choice
   // collection gets its own control hook (snow → set the level + hide overlays); a bloom/easterEgg
   // collection fires the artist's own handler once (start the bloom / toggle the easter egg); a
@@ -729,11 +744,16 @@ async function mirrorInto(c, out, sourceUrl) {
   fs.writeFileSync(path.join(out, 'index.html'), html, 'utf8');
 }
 
-// Remove a piece's mirrored bundle. perToken collections give each token its own bundle, so it is
-// safe to delete on removal; shared-bundle collections keep theirs (other pieces may still use it).
+// Reclaim a deleted piece's mirrored bundle. A perToken collection gives each token its own dir,
+// removed here. A shared bundle serves every token of its collection (the per-piece seed rides in the
+// URL query), so it is kept until the LAST piece is gone: once no library rows reference the
+// collection, drop the whole dir (the shared bundle, any perToken leftovers, and the thumbs). The
+// delete route removes the row before calling this, so countConnected reflects what remains.
 function removeBundle(slug, tokenId) {
   const c = bySlug(slug);
-  if (c && c.perToken) fs.rm(path.join(bundleDir(slug), String(tokenId)), { recursive: true, force: true }, () => {});
+  if (!c) return;
+  if (c.perToken) fs.rm(path.join(bundleDir(slug), String(tokenId)), { recursive: true, force: true }, () => {});
+  if (db.countConnected(slug) === 0) fs.rm(bundleDir(slug), { recursive: true, force: true }, () => {});
 }
 
 // Cache the preview image locally so the Library card has an offline thumbnail.

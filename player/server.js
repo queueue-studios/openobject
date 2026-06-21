@@ -295,8 +295,8 @@ app.delete('/api/library/:id', (req, res) => {
   if (!row) return res.status(404).json({ error: 'not found' });
   if (Number(db.getSetting('pinned_id', '')) === row.id) db.setSetting('pinned_id', ''); // drop a stale pin
   if (row.kind === 'connected') {
-    // Drop the cached thumbnail. A shared bundle stays (other pieces may use it); a per-token
-    // bundle is this piece's alone, so removeBundle reclaims it.
+    // Drop this piece's cached thumbnail, then let removeBundle reclaim disk: a per-token bundle is
+    // this piece's alone; a shared bundle is kept only until the collection's LAST piece is deleted.
     if (row.thumb && row.thumb.startsWith('/collections/')) {
       fs.rm(path.join(collections.COLLECTIONS_DIR, row.thumb.replace('/collections/', '')), { force: true }, () => {});
     }
