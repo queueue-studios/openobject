@@ -142,7 +142,7 @@ body {
 
 .hint .host { color: #8a8a8a; }
 
-/* Sleep Schedule / manual Blank (HANDOFF §13): the same boot/idle mark, dimmed and text-free,
+/* Sleep Hours / manual Blank (HANDOFF §13): the same boot/idle mark, dimmed and text-free,
    with a slow pixel-shift drift (transform set in JS) so a static mark can't sit on the panel.
    Same size and placement as the idle screen — only the dim and the missing caption differ. */
 .idle.asleep { transition: transform 4s ease-in-out; }

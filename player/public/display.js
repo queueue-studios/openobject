@@ -36,7 +36,7 @@ let front = 0; // which layer is currently visible
 let timer = null;
 let started = false;
 let shuffleQueue = [];
-let sleeping = false; // Sleep Schedule / manual Blank: showing the dimmed mark (HANDOFF §13)
+let sleeping = false; // Sleep Hours / manual Blank: showing the dimmed mark (HANDOFF §13)
 let shiftTimer = null; // slow pixel-shift while asleep (anti-burn-in)
 
 const sig = (item) => item.kind === 'connected'
@@ -182,7 +182,7 @@ function showIdle() {
   idle.classList.remove('hidden');
 }
 
-// Sleep Schedule / manual Blank (HANDOFF §13): stop playback and show the boot/idle mark,
+// Sleep Hours / manual Blank (HANDOFF §13): stop playback and show the boot/idle mark,
 // dimmed and text-free, drifting a few pixels on a slow cycle so it can't sit on the panel.
 function enterSleep() {
   if (sleeping) return;
@@ -215,7 +215,7 @@ function apply(state) {
   durationMs = state.durationMs;
   mode = state.mode;
 
-  if (state.asleep) return enterSleep();  // Sleep Schedule / manual Blank (HANDOFF §13)
+  if (state.asleep) return enterSleep();  // Sleep Hours / manual Blank (HANDOFF §13)
   if (sleeping) exitSleep();              // just woke — fall through and resume the rotation
 
   // A pinned piece collapses the rotation to just itself — held permanently (HANDOFF §7).
