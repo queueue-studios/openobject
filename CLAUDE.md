@@ -62,7 +62,7 @@ builder-only convenience.
 - **Source layer is a clean interface.** v1 ships **web upload** and **Connected
   Collections**, a curated on-chain/NFT resolver that is now a **core feature** (HANDOFF
   §8). SMB pull and a general "paste any URL" resolver remain seams, **not built** in v1.
-- **Sleep Hours** (optional overnight blank/dim) is a v1 feature.
+- **Sleep Schedule** (optional overnight/away blank/dim, by day of week) is a v1 feature.
 
 ## Formats (v1)
 Supported: **JPEG, PNG, GIF, AVIF, WebP, SVG, MP4, MOV, WebM**. PNG transparency renders
@@ -85,7 +85,7 @@ image (see Formats / §6). Aesthetic: understated, functional, no clutter.
 ## Phases
 - **Phase 0**, repo, structure, docs, CLAUDE.md, GitHub. *(done)*
 - **Phase 1** *(current)*, the Mac-testable web app: server, library/upload, control
-  panel, display page + behaviors, progressive sync, sleep hours, **self-update from
+  panel, display page + behaviors, progressive sync, sleep schedule, **self-update from
   GitHub**. All visible in a browser on macOS. Hardware-only features
   (Restart/Shutdown, Wi-Fi onboarding) ship as visible-but-inert stubs.
 - **Phase 2** *(when hardware arrives)*, lightweight Debian-based Linux, Chromium

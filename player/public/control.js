@@ -2,7 +2,7 @@
 
 // OpenObject control panel — upload, Library, Rotation curation, rotation settings.
 // Three tabs: Library (everything uploaded), Rotation (the curated, ordered subset on the
-// panel), and Settings (sleep hours + software self-update). Restart/shutdown stubs land next.
+// panel), and Settings (sleep schedule + software self-update). Restart/shutdown stubs land next.
 
 const grid = document.getElementById('grid');
 const libCount = document.getElementById('libCount');
@@ -31,6 +31,9 @@ const rotHint = document.getElementById('rotHint');
 const blankBtn = document.getElementById('blankBtn');
 const sleepRangesEl = document.getElementById('sleepRanges');
 const sleepStatus = document.getElementById('sleepStatus');
+const sleepAddBtn = document.getElementById('sleepAdd');
+const sleepEmptyEl = document.getElementById('sleepEmpty');
+const sleepStripEl = document.getElementById('sleepStrip');
 
 const updVersion = document.getElementById('updVersion');
 const checkUpdateBtn = document.getElementById('checkUpdateBtn');
@@ -66,6 +69,7 @@ const cxMsg = document.getElementById('cxMsg');
 const cxAdd = document.getElementById('cxAdd');
 const connectedList = document.getElementById('connectedList');
 const ccUnhideAll = document.getElementById('ccUnhideAll');
+const ccCount = document.getElementById('ccCount');
 
 const UNIT_MS = { seconds: 1000, minutes: 60000, hours: 3600000 };
 
@@ -80,7 +84,7 @@ let pinnedId = null;
 let mode = 'sequence';
 let durationUnit = 'seconds';
 let rotationItems = []; // last-loaded Rotation, in order — drives the ↑/↓ moves
-let sleepRanges = []; // up to two daily blank windows (HANDOFF §13)
+let sleepRanges = []; // up to three day-aware sleep windows (HANDOFF §13)
 let manualBlank = false; // instant "Blank screen" override
 let runningCommit = null; // the commit this player reports — used to detect the restart
 let updateNeedsReboot = false; // the offered update touches the kiosk display → frame reboot needed (HANDOFF §15)
@@ -356,7 +360,7 @@ async function loadSettings() {
   mode = s.mode;
   setSeg(modeSeg, 'mode', mode);
   pinnedId = s.pinnedId;
-  sleepRanges = (s.sleepRanges || []).map((r) => ({ enabled: !!r.enabled, start: r.start, end: r.end }));
+  sleepRanges = (s.sleepRanges || []).map((r) => ({ start: r.start, end: r.end, days: Array.isArray(r.days) ? r.days.slice() : [] }));
   manualBlank = !!s.manualBlank;
   renderSleep();
   renderBlank();
@@ -375,19 +379,29 @@ function pushDuration() {
   saveSettings({ durationMs: value * UNIT_MS[durationUnit] });
 }
 
-// ── Sleep hours (HANDOFF §13) — up to two daily blank windows, shown on a 12h clock ──
+// ── Sleep Schedule (HANDOFF §13): up to three day-aware windows on a 12h clock ──
 const pad2 = (n) => String(n).padStart(2, '0');
 const clampInt = (v, lo, hi) => Math.min(hi, Math.max(lo, Math.round(Number(v) || lo)));
 const toMin = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
 const to24 = (h12, min, ap) => pad2((h12 % 12) + (ap === 'PM' ? 12 : 0)) + ':' + pad2(min);
 const from24 = (hhmm) => { const [H, M] = hhmm.split(':').map(Number); return { h12: H % 12 || 12, min: M, ap: H >= 12 ? 'PM' : 'AM' }; };
-const fmt12 = (hhmm) => { const t = from24(hhmm); return `${t.h12}:${pad2(t.min)} ${t.ap}`; };
 const isOvernight = (r) => toMin(r.start) > toMin(r.end);
-const inWin = (nowMin, r) => {
+const fmtMin = (min) => { const h = Math.floor(min / 60) % 24, m = min % 60; return `${h % 12 || 12}:${pad2(m)}${h >= 12 ? 'pm' : 'am'}`; };
+const MAX_SLEEP_RANGES = 3;
+const DOW_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const DOW_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DOW_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+// One window vs a day-of-week + clock minute. Overnight windows are anchored to the day they begin:
+// the evening half belongs to that day, the after-midnight half to the day before.
+const windowAsleep = (r, dow, nowMin) => {
+  if (!r.days.length) return false;
   const s = toMin(r.start), e = toMin(r.end);
   if (s === e) return false;
-  return s < e ? nowMin >= s && nowMin < e : nowMin >= s || nowMin < e;
+  if (s < e) return r.days.includes(dow) && nowMin >= s && nowMin < e;
+  if (nowMin >= s) return r.days.includes(dow);
+  return nowMin < e && r.days.includes((dow + 6) % 7);
 };
+const asleepAt = (dow, nowMin) => sleepRanges.some((r) => windowAsleep(r, dow, nowMin));
 
 function timeBlock(which, hhmm) {
   const t = from24(hhmm);
@@ -404,22 +418,23 @@ function timeBlock(which, hhmm) {
 
 function sleepRow(r) {
   const el = document.createElement('div');
-  el.className = 'sleep-row' + (r.enabled ? '' : ' off');
+  const ov = isOvernight(r);
+  el.className = 'sleep-row' + (r.days.length ? '' : ' off');
   el.innerHTML = `
-    <button class="sleep-cbx${r.enabled ? ' on' : ''}" aria-pressed="${r.enabled}" aria-label="Enable this sleep time">${r.enabled ? CHECK : ''}</button>
-    ${timeBlock('start', r.start)}
-    <span class="to">→</span>
-    ${timeBlock('end', r.end)}
-    <span class="overnight"${isOvernight(r) ? '' : ' hidden'}>overnight</span>`;
-  const cbx = el.querySelector('.sleep-cbx');
-  cbx.addEventListener('click', () => {
-    const on = cbx.getAttribute('aria-pressed') !== 'true';
-    cbx.setAttribute('aria-pressed', String(on));
-    cbx.classList.toggle('on', on);
-    cbx.innerHTML = on ? CHECK : '';
-    el.classList.toggle('off', !on);
-    commitSleep();
-  });
+    <div class="sleep-left">
+      ${timeBlock('start', r.start)}
+      <span class="to">→</span>
+      ${timeBlock('end', r.end)}
+      <span class="overnight"${ov ? '' : ' hidden'}>overnight</span>
+    </div>
+    <div class="sleep-right">
+      <span class="sleep-daylabel">${ov ? 'Nights' : 'Days'}</span>
+      <span class="sleep-days">${DOW_LETTERS.map((letter, d) => {
+        const label = ov ? `${DOW_NAMES[d]} night` : DOW_NAMES[d];
+        return `<button type="button" class="sleep-day${r.days.includes(d) ? ' on' : ''}" data-d="${d}" aria-pressed="${r.days.includes(d)}" aria-label="${label}" title="${label}">${letter}</button>`;
+      }).join('')}</span>
+      <button type="button" class="sleep-remove" aria-label="Remove this sleep time">${X_MARK}</button>
+    </div>`;
   el.querySelectorAll('.t-h, .t-m').forEach((inp) =>
     inp.addEventListener('change', () => {
       inp.value = inp.classList.contains('t-h') ? clampInt(inp.value, 1, 12) : pad2(clampInt(inp.value, 0, 59));
@@ -431,6 +446,21 @@ function sleepRow(r) {
       b.addEventListener('click', () => { setSeg(seg, 'ap', b.dataset.ap); commitSleep(); })
     )
   );
+  el.querySelectorAll('.sleep-day').forEach((b) =>
+    b.addEventListener('click', () => {
+      const on = b.getAttribute('aria-pressed') !== 'true';
+      b.setAttribute('aria-pressed', String(on));
+      b.classList.toggle('on', on);
+      commitSleep();
+    })
+  );
+  el.querySelector('.sleep-remove').addEventListener('click', () => {
+    const rows = [...sleepRangesEl.querySelectorAll('.sleep-row')];
+    sleepRanges = rows.map(readRow);
+    sleepRanges.splice(rows.indexOf(el), 1);
+    renderSleep();
+    saveSettings({ sleepRanges });
+  });
   return el;
 }
 
@@ -441,36 +471,114 @@ const readTime = (block) =>
     block.querySelector('.ampm .on')?.dataset.ap || 'AM'
   );
 const readRow = (row) => ({
-  enabled: row.querySelector('.sleep-cbx').getAttribute('aria-pressed') === 'true',
   start: readTime(row.querySelector('.time12.start')),
   end: readTime(row.querySelector('.time12.end')),
+  days: [...row.querySelectorAll('.sleep-day')]
+    .filter((b) => b.getAttribute('aria-pressed') === 'true')
+    .map((b) => Number(b.dataset.d)),
 });
 
 function renderSleep() {
   sleepRangesEl.replaceChildren(...sleepRanges.map(sleepRow));
+  sleepEmptyEl.hidden = sleepRanges.length > 0;
+  sleepAddBtn.hidden = sleepRanges.length >= MAX_SLEEP_RANGES;
+  renderStrip();
   renderSleepStatus();
+}
+
+// Append a new window: 10pm→6am, no days yet (inactive until the owner picks nights/days).
+function addSleepTime() {
+  sleepRanges = [...sleepRangesEl.querySelectorAll('.sleep-row')].map(readRow);
+  if (sleepRanges.length >= MAX_SLEEP_RANGES) return;
+  sleepRanges.push({ start: '22:00', end: '06:00', days: [] });
+  renderSleep();
+  saveSettings({ sleepRanges });
 }
 
 async function commitSleep() {
   const rows = [...sleepRangesEl.querySelectorAll('.sleep-row')];
   sleepRanges = rows.map(readRow);
-  rows.forEach((row, i) => { row.querySelector('.overnight').hidden = !isOvernight(sleepRanges[i]); });
+  rows.forEach((row, i) => {
+    const ov = isOvernight(sleepRanges[i]);
+    row.querySelector('.overnight').hidden = !ov;
+    row.querySelector('.sleep-daylabel').textContent = ov ? 'Nights' : 'Days';
+    row.classList.toggle('off', sleepRanges[i].days.length === 0);
+  });
+  renderStrip();
   renderSleepStatus();
   await saveSettings({ sleepRanges });
 }
 
+// Header status, off the panel's own clock (the same signal the display flips on): reads
+// "Sleeping until 7:00am" while asleep, "Awake until 10:00pm" otherwise (next boundary in the week).
 function renderSleepStatus() {
   if (manualBlank) { sleepStatus.textContent = 'Blanked now'; return; }
-  const on = sleepRanges.filter((r) => r.enabled);
-  if (!on.length) { sleepStatus.textContent = ''; return; }
-  const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
-  const active = on.find((r) => inWin(nowMin, r));
-  if (active) { sleepStatus.textContent = 'Asleep until ' + fmt12(active.end); return; }
-  const next = on.reduce(
-    (best, r) => { const d = (toMin(r.start) - nowMin + 1440) % 1440; return d < best.d ? { d, start: r.start } : best; },
-    { d: Infinity, start: null }
-  );
-  sleepStatus.textContent = 'Next sleep at ' + fmt12(next.start);
+  if (!sleepRanges.some((r) => r.days.length)) { sleepStatus.textContent = ''; return; }
+  const now = new Date(), today = now.getDay(), nowMin = now.getHours() * 60 + now.getMinutes();
+  const asleepNow = asleepAt(today, nowMin);
+  let edge = null;
+  for (let i = 1; i <= 7 * 1440; i++) {
+    const tot = nowMin + i;
+    if (asleepAt((today + Math.floor(tot / 1440)) % 7, tot % 1440) !== asleepNow) { edge = tot % 1440; break; }
+  }
+  sleepStatus.textContent = edge === null
+    ? (asleepNow ? 'Sleeping' : '')
+    : (asleepNow ? 'Sleeping until ' : 'Awake until ') + fmtMin(edge);
+}
+
+// Week-at-a-glance strip: one 24h bar per day, filled where the screen sleeps. The result is
+// verifiable by eye, so nobody has to reason about which day an overnight window belongs to.
+function sleepRuns(d) {
+  const out = [];
+  let start = null;
+  for (let m = 0; m <= 1440; m++) {
+    const asleep = m < 1440 && asleepAt(d, m);
+    if (asleep && start === null) start = m;
+    if (!asleep && start !== null) { out.push([start, m]); start = null; }
+  }
+  return out;
+}
+
+// Positions are set through the CSSOM (el.style.*), not inline style="" attributes, so the
+// strict style-src CSP (server.js) stays intact: it blocks inline style attributes, not CSSOM.
+function renderStrip() {
+  sleepStripEl.replaceChildren();
+  if (!sleepRanges.length) { sleepStripEl.hidden = true; return; }
+  sleepStripEl.hidden = false;
+  const now = new Date(), today = now.getDay(), nowMin = now.getHours() * 60 + now.getMinutes();
+  const pct = (min) => (min / 1440 * 100).toFixed(2) + '%';
+  const div = (cls, parent) => { const el = document.createElement('div'); el.className = cls; parent.appendChild(el); return el; };
+  const span = (cls, parent, text) => { const el = document.createElement('span'); if (cls) el.className = cls; if (text != null) el.textContent = text; parent.appendChild(el); return el; };
+
+  const ruler = div('ss-ruler', sleepStripEl);
+  span('ss-spacer', ruler);
+  const labels = div('ss-rulerlabels', ruler);
+  [['12a', 0], ['6a', 25], ['12p', 50], ['6p', 75], ['12a', 100]].forEach(([t, p]) => {
+    const s = span('', labels, t);
+    if (p === 0) s.style.left = '0';
+    else if (p === 100) s.style.right = '0';
+    else { s.style.left = p + '%'; s.style.transform = 'translateX(-50%)'; }
+  });
+
+  for (let d = 0; d < 7; d++) {
+    const row = div('ss-row', sleepStripEl);
+    span('ss-label' + (d === today ? ' today' : ''), row, DOW_ABBR[d]);
+    const bar = div('ss-bar', row);
+    [25, 50, 75].forEach((p) => { div('ss-grid', bar).style.left = p + '%'; });
+    for (const [s, e] of sleepRuns(d)) {
+      const seg = div('ss-seg', bar);
+      seg.style.left = pct(s);
+      seg.style.width = pct(e - s);
+    }
+    if (d === today) div('ss-now', bar).style.left = pct(nowMin);
+  }
+
+  const legend = div('ss-legend', sleepStripEl);
+  [['ss-sw-sleep', 'Sleeping'], ['ss-sw-art', 'Displaying'], ['ss-sw-now', 'Now']].forEach(([cls, text]) => {
+    const item = span('', legend);
+    span('ss-sw ' + cls, item);
+    item.appendChild(document.createTextNode(text));
+  });
 }
 
 function renderBlank() {
@@ -789,6 +897,8 @@ async function loadCollections() {
 
 // Settings → Connected Collections: the supported list, each with Animate + Hide.
 function renderConnectedCard() {
+  const total = collectionsList.length, hidden = collectionsList.filter((c) => c.hidden).length;
+  ccCount.textContent = total ? `${total} collection${total === 1 ? '' : 's'}${hidden ? ` · ${hidden} hidden` : ''}` : '';
   ccUnhideAll.hidden = !collectionsList.some((c) => c.hidden);
   if (!collectionsList.length) {
     connectedList.innerHTML = '<p class="cc-empty">No connected collections are supported yet.</p>';
@@ -1004,6 +1114,30 @@ modeSeg.querySelectorAll('button').forEach((b) =>
   b.addEventListener('click', () => { mode = b.dataset.mode; setSeg(modeSeg, 'mode', mode); saveSettings({ mode }); loadRotation(); })
 );
 blankBtn.addEventListener('click', toggleBlank);
+sleepAddBtn.addEventListener('click', addSleepTime);
+
+// Collapsible Settings list-cards (HANDOFF §13): clicking the header folds the body away.
+// The open/closed state is remembered per browser (localStorage), so it survives a reload and
+// the panel's own auto-reload after an update. Default (nothing stored, or storage blocked) is open.
+function wireCollapse(cardId, toggleId) {
+  const card = document.getElementById(cardId), btn = document.getElementById(toggleId);
+  const key = 'oo.collapsed.' + cardId;
+  const apply = (collapsed) => {
+    card.classList.toggle('is-collapsed', collapsed);
+    btn.setAttribute('aria-expanded', String(!collapsed));
+  };
+  try { if (localStorage.getItem(key) === '1') apply(true); } catch { /* storage off: stay open */ }
+  btn.addEventListener('click', () => {
+    const collapsed = card.classList.toggle('is-collapsed');
+    btn.setAttribute('aria-expanded', String(!collapsed));
+    try { localStorage.setItem(key, collapsed ? '1' : '0'); } catch { /* storage off: in-memory only */ }
+  });
+}
+wireCollapse('sleepCard', 'sleepToggle');
+wireCollapse('connectedCard', 'connectedToggle');
+
+// Keep the Sleep Schedule status line and the week strip's "now" marker current as time passes.
+setInterval(() => { if (!panelSettings.hidden) { renderSleepStatus(); renderStrip(); } }, 60000);
 
 checkUpdateBtn.addEventListener('click', checkUpdate);
 applyUpdateBtn.addEventListener('click', applyUpdate);

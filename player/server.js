@@ -50,14 +50,13 @@ const DEFAULT_MODE = 'sequence';
 const MODES = new Set(['sequence', 'shuffle']);
 const FITS = new Set(['fit', 'fill']);
 
-// Sleep hours (HANDOFF §13): up to two daily windows, each independently enabled; the panel
-// blanks to the dimmed mark while inside an enabled window (or while manually blanked). Off
-// by default. Times are stored 24h "HH:MM"; the control panel shows them on a 12h clock.
-const DEFAULT_SLEEP_RANGES = [
-  { enabled: false, start: '22:00', end: '07:00' },
-  { enabled: false, start: '09:00', end: '17:00' },
-];
+// Sleep Schedule (HANDOFF §13): up to three day-aware windows, each with its own days of the
+// week; the panel blanks to the dimmed mark while inside an active window (or while manually
+// blanked). Off by default (no windows). Times are stored 24h "HH:MM" with days as 0-6 (0=Sun);
+// the control panel shows them on a 12h clock. An overnight window is anchored to the day it
+// begins, so its evening half counts as that day and its after-midnight half as the day before.
 const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const SLEEP_DAYS_ALL = [0, 1, 2, 3, 4, 5, 6];
 
 db.initDb(); // ensure the SQLite store + uploads dir exist before serving
 
@@ -372,25 +371,41 @@ app.put('/api/rotation/order', (req, res) => {
   res.json(db.reorderRotation(order));
 });
 
-// ── Rotation settings (global, equal-time) + Pin + Sleep hours ──────
+// ── Rotation settings (global, equal-time) + Pin + Sleep Schedule ──────
 const toMinutes = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
-function inWindow(nowMin, startMin, endMin) {
-  if (startMin === endMin) return false;        // zero-length window = off
-  return startMin < endMin
-    ? nowMin >= startMin && nowMin < endMin      // same-day window
-    : nowMin >= startMin || nowMin < endMin;     // wraps past midnight (overnight)
+const sanitizeDays = (days) =>
+  Array.isArray(days)
+    ? [...new Set(days.map(Number))].filter((d) => Number.isInteger(d) && d >= 0 && d <= 6).sort((a, b) => a - b)
+    : [];
+// One window vs the clock + the day it falls on. An overnight window (end <= start) belongs to the
+// day it begins: its evening half counts as today, its after-midnight half as the day before.
+function windowAsleep(r, dow, nowMin) {
+  if (!r.days.length) return false;              // no days selected = inactive
+  const s = toMinutes(r.start), e = toMinutes(r.end);
+  if (s === e) return false;                     // zero-length window = off
+  if (s < e) return r.days.includes(dow) && nowMin >= s && nowMin < e;  // same-day window
+  if (nowMin >= s) return r.days.includes(dow);                         // overnight, before midnight
+  return nowMin < e && r.days.includes((dow + 6) % 7);                  // overnight, after midnight
 }
 function isAsleep(settings, now = new Date()) {
   if (settings.manualBlank) return true;         // manual Blank overrides the schedule (HANDOFF §13)
-  const nowMin = now.getHours() * 60 + now.getMinutes();
-  return settings.sleepRanges.some((r) => r.enabled && inWindow(nowMin, toMinutes(r.start), toMinutes(r.end)));
+  const dow = now.getDay(), nowMin = now.getHours() * 60 + now.getMinutes();
+  return settings.sleepRanges.some((r) => windowAsleep(r, dow, nowMin));
 }
+// Read + normalize. New windows carry days[]; older {enabled,...} windows migrate (enabled = all
+// seven days, so behavior is unchanged), and anything malformed is dropped. Capped at three.
 function readSleepRanges() {
-  try {
-    const v = JSON.parse(db.getSetting('sleep_ranges', ''));
-    if (Array.isArray(v)) return v.map((r) => ({ enabled: !!r.enabled, start: String(r.start), end: String(r.end) }));
-  } catch { /* not set yet / malformed — use defaults */ }
-  return DEFAULT_SLEEP_RANGES.map((r) => ({ ...r }));
+  let v;
+  try { v = JSON.parse(db.getSetting('sleep_ranges', '')); } catch { return []; }
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((r) => r && typeof r.start === 'string' && typeof r.end === 'string')
+    .map((r) => ({
+      start: String(r.start),
+      end: String(r.end),
+      days: Array.isArray(r.days) ? sanitizeDays(r.days) : (r.enabled ? SLEEP_DAYS_ALL.slice() : []),
+    }))
+    .slice(0, 3);
 }
 
 function currentSettings() {
@@ -399,7 +414,7 @@ function currentSettings() {
     durationMs: Number(db.getSetting('duration_ms', DEFAULT_DURATION_MS)) || DEFAULT_DURATION_MS,
     mode: db.getSetting('rotation_mode', DEFAULT_MODE),
     pinnedId: pin ? Number(pin) : null, // one piece held permanently (HANDOFF §7), or null
-    sleepRanges: readSleepRanges(),     // up to two daily blank windows (HANDOFF §13)
+    sleepRanges: readSleepRanges(),     // up to three day-aware sleep windows (HANDOFF §13)
     manualBlank: db.getSetting('manual_blank', '') === '1', // instant "Blank panel" override
   };
 }
@@ -420,10 +435,12 @@ app.put('/api/settings', (req, res) => {
   if (sleepRanges !== undefined) {
     const ok =
       Array.isArray(sleepRanges) &&
-      sleepRanges.length <= 2 &&
-      sleepRanges.every((r) => r && typeof r.enabled === 'boolean' && HHMM.test(r.start) && HHMM.test(r.end));
-    if (!ok) return res.status(400).json({ error: 'sleepRanges must be up to two {enabled, start:"HH:MM", end:"HH:MM"}' });
-    db.setSetting('sleep_ranges', JSON.stringify(sleepRanges.map((r) => ({ enabled: r.enabled, start: r.start, end: r.end }))));
+      sleepRanges.length <= 3 &&
+      sleepRanges.every((r) =>
+        r && HHMM.test(r.start) && HHMM.test(r.end) &&
+        Array.isArray(r.days) && r.days.every((d) => Number.isInteger(d) && d >= 0 && d <= 6));
+    if (!ok) return res.status(400).json({ error: 'sleepRanges must be up to three {start:"HH:MM", end:"HH:MM", days:[0-6]}' });
+    db.setSetting('sleep_ranges', JSON.stringify(sleepRanges.map((r) => ({ start: r.start, end: r.end, days: sanitizeDays(r.days) }))));
   }
   if (manualBlank !== undefined) {
     if (typeof manualBlank !== 'boolean') return res.status(400).json({ error: 'manualBlank must be a boolean' });

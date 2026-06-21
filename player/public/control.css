@@ -1,5 +1,5 @@
 /* OpenObject control panel — upload, library, rotation settings.
-   Dark, understated; grows as the panel gains pin, sleep hours, self-update, etc. */
+   Dark, understated; grows as the panel gains pin, sleep schedule, self-update, etc. */
 
 :root {
   --bg: #0e0e0f;
@@ -114,7 +114,29 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .blank-toggle:hover { color: var(--text); }
 .blank-toggle[aria-pressed="true"] { background: #2a2410; border-color: #5a4d1f; color: #ffd479; }
 
-/* Sleep hours (HANDOFF §13) — up to two daily windows, each independently enabled */
+/* Collapsible Settings cards (Sleep Schedule, Connected Collections): a clickable header that
+   folds the body away. Both are lists that can grow (HANDOFF §13). */
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card-toggle {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.card-chev { display: inline-flex; flex: none; color: var(--muted); transition: transform 0.15s; }
+.is-collapsed .card-chev { transform: rotate(-90deg); }
+.is-collapsed .card-body { display: none; }
+
+/* Sleep Schedule (HANDOFF §13) — up to three day-aware windows on a 12h clock */
 .sleep {
   margin-top: 16px;
   padding: 14px 18px 16px;
@@ -122,31 +144,54 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
   border: 1px solid var(--line);
   border-radius: 12px;
 }
-.sleep-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
-.sleep-status { color: var(--muted); font-size: 12px; }
+.sleep-status { color: var(--muted); font-size: 12px; text-align: right; }
 .sleep-ranges { display: flex; flex-direction: column; }
-.sleep-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 11px 0; }
+.sleep-row { display: flex; justify-content: space-between; align-items: center; gap: 10px 14px; flex-wrap: wrap; padding: 11px 0; }
 .sleep-row + .sleep-row { border-top: 1px solid var(--line); }
-.sleep-row.off .time12, .sleep-row.off .to, .sleep-row.off .overnight { opacity: 0.4; }
-.sleep-cbx {
+.sleep-row.off .time12, .sleep-row.off .to, .sleep-row.off .overnight, .sleep-row.off .sleep-daylabel { opacity: 0.4; }
+.sleep-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sleep-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sleep-daylabel { color: var(--muted); font-size: 12px; }
+.sleep-days { display: flex; gap: 5px; flex-wrap: wrap; }
+.sleep-day {
   appearance: none;
-  flex: none;
-  width: 20px;
-  height: 20px;
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  background: var(--panel-2);
-  color: transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid #3a3a40;
+  border-radius: 7px;
+  background: transparent;
+  color: #cfcfd4;
+  font: inherit;
+  font-size: 12px;
   cursor: pointer;
 }
-.sleep-cbx:hover { border-color: #4a4a52; }
-.sleep-cbx.on { background: var(--text); border-color: var(--text); color: var(--bg); }
-.time12 { display: inline-flex; align-items: center; gap: 5px; }
+.sleep-day:hover { border-color: #5a5a62; }
+.sleep-day.on { background: var(--text); border-color: var(--text); color: var(--bg); }
+.sleep-remove { appearance: none; flex: none; border: 0; background: transparent; color: var(--muted); padding: 4px; border-radius: 6px; display: inline-flex; cursor: pointer; }
+.sleep-remove:hover { color: var(--danger); background: var(--panel-2); }
+.sleep-add {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 7px 12px;
+  border: 1px dashed #3a3a40;
+  border-radius: 8px;
+  background: transparent;
+  color: #cfcfd4;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.sleep-add:hover { border-color: #5a5a62; color: var(--text); }
+.sleep-add[hidden] { display: none; }
+.sleep-add svg { flex: none; }
+.sleep-empty { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+.time12 { display: inline-flex; align-items: center; gap: 4px; }
 .time12 input {
-  width: 40px;
+  width: 34px;
   height: 32px;
   text-align: center;
   background: var(--panel-2);
@@ -157,7 +202,7 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 }
 .time12 input:focus { outline: none; border-color: #4a4a52; }
 .time12 .colon { color: var(--muted); }
-.seg.ampm button { padding: 6px 10px; font-size: 13px; }
+.seg.ampm button { padding: 5px 8px; font-size: 13px; }
 .to { color: var(--muted); }
 .overnight {
   font-size: 11px;
@@ -169,10 +214,30 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
   letter-spacing: 0.02em;
 }
 
-/* Shared section header for the Settings-tab cards (Sleep Hours, Software Update) */
+/* Week-at-a-glance strip (HANDOFF §13): 7 day bars, filled where the screen sleeps, so the
+   schedule is verifiable by eye without reasoning about overnight windows. */
+.sleep-strip { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+.ss-ruler { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.ss-spacer { width: 32px; flex: none; }
+.ss-rulerlabels { position: relative; flex: 1; height: 14px; }
+.ss-rulerlabels span { position: absolute; top: 0; font-size: 11px; color: var(--muted); }
+.ss-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+.ss-label { width: 32px; flex: none; font-size: 11px; color: var(--muted); text-align: right; }
+.ss-label.today { color: var(--text); font-weight: 600; }
+.ss-bar { position: relative; flex: 1; height: 16px; background: var(--panel-2); border-radius: 5px; overflow: hidden; }
+.ss-grid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
+.ss-seg { position: absolute; top: 0; bottom: 0; background: #6a6a76; }
+.ss-now { position: absolute; top: -2px; bottom: -2px; width: 2px; background: #e8c06a; }
+.ss-legend { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 11px; color: var(--muted); }
+.ss-sw { display: inline-block; width: 18px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+.ss-sw-sleep { background: #6a6a76; }
+.ss-sw-art { background: var(--panel-2); border: 1px solid var(--line); }
+.ss-sw-now { width: 3px; background: #e8c06a; }
+
+/* Shared section header for the Settings-tab cards (Sleep Schedule, Software Update) */
 .section-title { color: var(--text); font-size: 15px; font-weight: 600; }
 
-/* Software Update (HANDOFF §15) — lives in the Settings tab, below Sleep Hours */
+/* Software Update (HANDOFF §15): lives in the Settings tab, below Sleep Schedule */
 .update {
   margin-top: 16px;
   padding: 14px 18px 16px;
@@ -367,7 +432,7 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .tab-count { color: var(--muted); font-size: 12px; font-weight: 400; }
 .panel { margin-top: 18px; }
 .panel .settings { margin: 0 0 18px; }   /* duration/order now lives inside the Rotation tab */
-.panel .sleep { margin-top: 0; }          /* sleep hours now lives inside the Settings tab */
+.panel .sleep { margin-top: 0; }          /* the sleep schedule now lives inside the Settings tab */
 .panel .dropzone { margin-bottom: 18px; } /* upload now lives inside the Library tab */
 
 /* Rotation list — the curated, ordered subset on the panel */
@@ -495,8 +560,8 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .cx-supported-ids { color: var(--text); }
 .cx-foot { margin-top: 16px; display: flex; justify-content: flex-end; }
 
-/* Connected Collections settings card */
-.cc-head { display: flex; align-items: center; justify-content: space-between; }
+/* Connected Collections settings card (header uses the shared collapsible .card-head) */
+.cc-count { color: var(--muted); font-size: 12px; white-space: nowrap; }
 .cc-unhide { appearance: none; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }
 .cc-unhide:hover { color: var(--text); }
 .cc-list { margin-top: 6px; }

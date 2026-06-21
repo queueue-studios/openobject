@@ -107,7 +107,7 @@ is the set that's actually showing on the wall. The control panel has three tabs
 - **Rotation:** just what's playing, in order, plus how long each piece shows and Sequence or
   Shuffle. New uploads join the Rotation automatically, so you can keep a growing collection and
   still show just today's pick by removing the rest.
-- **Settings:** sleep hours, connected collections, software updates, frame controls (restart, shut down), an optional password, how to reach the frame over Wi-Fi, and an About section,
+- **Settings:** sleep schedule, connected collections, software updates, frame controls (restart, shut down), an optional password, how to reach the frame over Wi-Fi, and an About section,
   described below.
 
 **Order.** Choose how the Rotation plays:
@@ -171,12 +171,18 @@ The supported collections live in the **Settings** tab, under
 adjust, turn their motion on or off, set how fast it moves, or choose a setting like the snowfall. This is new and **curated**: only collections that have been
 specifically added will work, so it won't read just any link yet.
 
-**Sleep hours** *(in the **Settings** tab)*. Optionally have the screen rest on a schedule. You get
-**two time ranges**, each with its own on/off checkbox, so you can cover both "while I'm at work"
-and "overnight." Set them on a normal **12-hour clock** (AM/PM). While asleep, the screen shows the
-OpenObject logo dimmed and stops playing, then picks the rotation back up on its own. **Want it off
-right now?** Tap **Blank screen** at the top of the control panel, and the art goes dark until you
-tap it again.
+**Sleep Schedule** *(in the **Settings** tab)*. Optionally have the screen rest on a schedule. Add up
+to **three sleep times**, and for each one tap the **days** it applies to, so a weekday rest, a
+weekend lie-in, and an "I'm at the office" block can all live side by side. Set the times on a normal
+**12-hour clock** (AM/PM). A time that runs past midnight is tagged **"overnight,"** and its days
+are the **nights it begins** (10:00 PM to 4:00 AM on Friday means Friday night into Saturday). A little
+**week chart** underneath shades when the screen will sleep, so you can check the whole week at a glance.
+While asleep, the screen shows the OpenObject logo dimmed and stops playing, then picks the rotation
+back up on its own. **Want it off right now?** Tap **Blank screen** at the top of the control panel,
+and the art goes dark until you tap it again.
+
+The **Sleep Schedule** and **Connected Collections** sections can be **collapsed** by tapping their
+headers, which keeps the Settings tab short.
 
 **Power** *(Settings tab)*. **Restart** restarts the OpenObject software, handy if the app seems
 stuck. **Reboot** restarts the whole frame, and **Shut down** turns it off. If a control ever

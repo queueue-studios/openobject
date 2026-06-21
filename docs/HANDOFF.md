@@ -297,22 +297,40 @@ photos never enter the repo, §8). Build none of this in Phase 1.
 | Fit/Fill default | **Fit** (original aspect ratio); settable | Applies to new clips; per-clip override always available. |
 | Display duration | **Settable global** (seconds / minutes / hours) | One equal-time duration for **every** piece; no per-clip override. |
 | Rotation order | **Sequence** | Sequence / Shuffle (§7); settable. |
-| Sleep hours | **Off** (no windows enabled) | Up to two daily blank windows (12h clock) + manual "Blank panel"; dimmed-logo sleep screen (§13). |
+| Sleep Schedule | **Off** (no windows) | Up to three day-aware windows (12h clock, per day of week) + week-at-a-glance strip + manual "Blank screen"; dimmed-logo sleep screen (§13). |
 | Updates | **Manual check; track `main`** | Self-update from GitHub via the control panel (§15). Owner-initiated; fast-forward only. |
 | Connected Collections | **Supported list; Animate on where applicable, none hidden** | Curated web/on-chain collections, added by Token ID (§8). Per-collection Animate (auto-motion), a motion-speed slider (0 to 10), or a mode dropdown (e.g. snowfall) where the piece offers one, shown only for collections with something to set, plus Hide/Unhide. |
 
 ---
 
-## 13. Sleep hours (v1 feature)
+## 13. Sleep Schedule (v1 feature)
 
-An **optional schedule to blank or dim the panel overnight** (configurable start/end). The panel otherwise runs 24/7; this is a longevity and preference feature (the owner dislikes it running at night). Build in v1. When asleep, the panel is blanked/dimmed; it resumes the rotation on schedule. Pairs cleanly with the display layer (no playback during the sleep window).
+An **optional schedule to blank or dim the panel** when the owner is out or asleep (configurable times, by day of week). The panel otherwise runs 24/7; this is a longevity and preference feature (the owner dislikes it running at night). When asleep, the panel is blanked/dimmed and resumes the rotation on schedule. Pairs cleanly with the display layer (no playback during the sleep window).
 
-**Built 2026-06-13.** Up to **two daily windows**, each with its own **enable checkbox**,
-covering both "I'm at work" and "I'm asleep." Times are entered on a **12-hour clock with an
-AM/PM toggle** and may cross midnight (an auto **"overnight"** tag flags a window that wraps).
-A manual **"Blank panel"** toggle in the control-panel header turns the art off on demand,
-independent of the schedule, the companion to scheduled sleep, and the answer to "how do I
-stop the display right now?". While asleep, **playback stops** and the panel shows the **sleep
+**Built 2026-06-13, reworked to a day-aware schedule 2026-06-21.** Up to **three windows**, each
+a start/end time plus the **days of the week** it applies to (seven day chips, Sunday first). A
+window with no days selected is inactive, so the chips carry on/off; there is no separate enable
+box, and a fresh install ships with **no windows** (off). Times use a **12-hour clock with an
+AM/PM toggle**. A window may cross midnight: it is anchored to the day it **begins** (its chips
+read **"Nights"**, with an auto **"overnight"** tag), so "10 PM to 4 AM on Friday" is Friday
+night into Saturday; a same-day window reads **"Days"**. The server applies that anchoring (a
+window's evening half counts as its start day, its after-midnight half as the day before) and
+remains the single source of `asleep`. Older two-window data (`{enabled,...}`) migrates on read,
+an enabled window becoming all seven days, so behavior is unchanged across the upgrade. Windows
+are capped at three: more is a complexity most owners will never want, and the cap can lift later
+if asked.
+
+A **week-at-a-glance strip** under the windows draws one 24-hour bar per day, filled where the
+screen sleeps, with a marker at "now". It makes the schedule **verifiable by eye**, so an
+overnight window cannot be silently attached to the wrong day. The card header shows a live
+status: **"Sleeping until 7:00am"** while asleep, or **"Awake until 10:00pm"** otherwise. The
+Sleep Schedule and Connected Collections cards (the two Settings lists that can grow) are
+**collapsible** from their headers; the other Settings cards are not. Strip positions are set
+through the CSSOM, so the strict `style-src 'self'` CSP (no inline styles) stays intact.
+
+A manual **"Blank screen"** toggle in the control-panel header turns the art off on demand,
+independent of the schedule, the companion to scheduled sleep and the answer to "how do I stop
+the display right now?". While asleep, **playback stops** and the panel shows the **sleep
 screen**: the same boot/idle mark at the **same size and placement, dimmed (~0.05 opacity) and
 with no caption** underneath. To rest the panel it does a slow, imperceptible **pixel-shift**
 every ~90 s (the standard anti-burn-in technique, chosen over a periodic fade as sufficient on
@@ -704,7 +722,7 @@ Realizes the §17 "web / HTML art pieces" seam, opt-in and off the default path 
 - **Model.** A built-in registry of supported collections (code, not user-authored). The owner picks a collection and enters the piece's **Token ID**.
 - **Resolution is on-chain and official.** The player reads the token's `tokenURI` via a free `eth_call` to a public Ethereum node, follows it to the canonical metadata, and stores the **official `animation_url` verbatim**, never a marketplace-rendered copy. (Confirmed the OpenSea/Highlight web pages bury the real URL among their own proxy copies; the contract's `tokenURI` is the source of truth, reachable from any Ethereum node.)
 - **Plays offline.** The shared render bundle is mirrored to `player/data/collections/<slug>/` and served same-origin; the network is touched only once, at add time. A `connected` render kind shows it in a sandboxed same-origin iframe, and an injected hook auto-engages the collection's motion when **Animate** is on.
-- **UI.** "Add connected artwork" in the Library (pick collection, enter Token ID, see a derived preview, Add); a "Connected" library card (badge + cached thumbnail, no Fit/Fill); a Settings "Connected Collections" card (per-collection Animate, Hide / Unhide all) placed directly under Sleep Hours.
+- **UI.** "Add connected artwork" in the Library (pick collection, enter Token ID, see a derived preview, Add); a "Connected" library card (badge + cached thumbnail, no Fit/Fill); a Settings "Connected Collections" card (per-collection Animate, Hide / Unhide all) placed directly under Sleep Schedule.
 - **CSP.** `/collections/*` gets its own policy (`script-src 'self' 'unsafe-inline'`, `frame-ancestors 'self'`) so the mirrored art runs and the display can frame it; the rest of the panel keeps the strict policy.
 - **Verified on hardware (after a cold power-cycle).** The earlier wrong render was the **stale kiosk**: self-update restarts the player but not the kiosk Chromium, which kept running the pre-feature `/display`. A power-cycle loaded the new display code and Azulejo #101 renders and animates correctly. Separately observed: the control-panel **Reboot** button hung on the firmware boot splash on this unit (warm `systemctl reboot` stuck at POST; a cold unplug/replug recovered) (FIXED 2026-06-17 with `reboot=pci`, see the top of this log).
 - Docs: this section, plus §6, §8, §12, §17.
@@ -715,14 +733,14 @@ Realizes the §17 "web / HTML art pieces" seam, opt-in and off the default path 
 - **Landing-page title shortened to "OpenObject"** (was "OpenObject · revive a stranded art frame"). Safari truncated the long title in the tab down to its tail ("revive a stranded art frame"); the tab now leads with the brand. The tagline stays in the meta description and the og/twitter tags, so search and social are unchanged.
 
 ### 2026-06-16: Settings tab pass (reorder, password copy, stacked fields, About card, Wi-Fi link color)
-A pass over the Settings tab for the next owner: clearer ordering, tighter copy, and consistent link styling. No behavior changes. Order is now Sleep Hours, Software Update, Power, Password, Wi-Fi, About (matches the Setup Guide walkthrough).
+A pass over the Settings tab for the next owner: clearer ordering, tighter copy, and consistent link styling. No behavior changes. Order is now Sleep Schedule, Software Update, Power, Password, Wi-Fi, About (matches the Setup Guide walkthrough).
 - **Password card moved beneath Power.** It's opt-in and off by default, so it now sits below the everyday frame controls instead of above them.
 - **Enable button relabeled** from "Turn on password" to "Set password". The New and Confirm fields sit right in the card, so the click saves a value you've already typed (a "Set" action, not a toggle that prompts afterward); it also matches the card's own wording ("set a password") and pairs with the existing "Change password". The red "Turn off password" control is unchanged.
 - **Entry fields stacked.** The New and Confirm password inputs were side by side and stretched the full card width, which looked odd; they now stack vertically at a normal field width (capped to match the login box) in both the set and change states.
 - **Password copy tightened**, keeping the "open to anyone" preface (its value is the "why" you'd want a password): "The control panel is open to anyone on your network. Optionally set a password. This will not affect the display of art."
 - **New About card** at the bottom (after Wi-Fi, the lowest-interaction spot): the OpenObject name and one-line description, a link to the project home (openobject.io) and to the source on GitHub, and a license line ("© 2026 OpenObject · Free for noncommercial use."). The source link is deliberate: it points the next owner of a stranded frame back to the project so they can revive it. Static HTML in control.html.
 - **Wi-Fi link color fixed.** The Wi-Fi card's addresses and the openobject.local link were falling back to the browser's default blue: a refactor had moved the card to inline paragraphs and left the old `.reach-list` link CSS unmatched. Gave them the house near-white + underline treatment (matching the About links) and removed the five dead `.reach-list` rules that caused the gap.
-- **Settings stays single-column.** A two-column / half-width layout was considered and declined: the panel is mostly phone-driven (columns collapse on a narrow screen anyway) and the two tallest cards (Sleep Hours, Password) already use the full width, so halving them would just wrap their controls. If Settings grows, the cleaner lever is grouping, not columns.
+- **Settings stays single-column.** A two-column / half-width layout was considered and declined: the panel is mostly phone-driven (columns collapse on a narrow screen anyway) and the two tallest cards (Sleep Schedule, Password) already use the full width, so halving them would just wrap their controls. If Settings grows, the cleaner lever is grouping, not columns. (Done 2026-06-21: the two Settings lists, Sleep Schedule and Connected Collections, are now collapsible from their headers.)
 
 ### 2026-06-16: Security follow-ups (filename XSS, CSP, upload/disk guards, path scrub)
 A read-only security review (private home-network deployment) found no committed secrets; the items it flagged were fixed this session.

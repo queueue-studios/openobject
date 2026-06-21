@@ -12,7 +12,7 @@ delete + per-clip **Fit/Fill**, and global **duration + order** settings), and t
 **display rotation engine**, `/display` cycles the rotation edge-to-edge with Fit/Fill,
 one global equal-time duration (seconds/minutes/hours), **Pin** (hold one piece),
 loop-to-fill, and Sequence/Shuffle/Random, crossfading between pieces and folding in
-changes without restarting. Rotation curation, sleep hours, restart/shutdown stubs, and
+changes without restarting. Rotation curation, sleep schedule, restart/shutdown stubs, and
 self-update come next.
 
 Run it with:

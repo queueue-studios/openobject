@@ -85,24 +85,39 @@
     </section>
 
     <section class="panel" id="panelSettings" role="tabpanel" aria-labelledby="tabSettings" hidden>
-      <!-- Sleep Hours — optional overnight/away blanking, up to two daily windows (HANDOFF §13) -->
-      <section class="sleep">
-        <div class="sleep-head">
-          <span class="section-title">Sleep Hours</span>
+      <!-- Sleep Schedule — optional overnight/away blanking, up to three day-aware windows (HANDOFF §13).
+           Collapsible: it's a list that can grow, so its header folds the body away. -->
+      <section class="sleep" id="sleepCard">
+        <div class="card-head">
+          <button type="button" class="card-toggle" id="sleepToggle" aria-expanded="true" aria-controls="sleepBody">
+            <span class="card-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="section-title">Sleep Schedule</span>
+          </button>
           <span class="sleep-status" id="sleepStatus"></span>
         </div>
-        <div class="sleep-ranges" id="sleepRanges"></div>
+        <div class="card-body" id="sleepBody">
+          <div class="sleep-ranges" id="sleepRanges"></div>
+          <p class="sleep-empty" id="sleepEmpty" hidden>No sleep times yet. The screen stays on around the clock.</p>
+          <button type="button" class="sleep-add" id="sleepAdd"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Add sleep time</button>
+          <div class="sleep-strip" id="sleepStrip" hidden></div>
+        </div>
       </section>
 
       <!-- Connected Collections: the curated supported list; hide/unhide + animate.
-           Content-related, so it sits high in Settings, just under Sleep Hours. -->
+           Content-related, so it sits high in Settings, just under Sleep Schedule.
+           Collapsible: another list that can grow, so its header folds the body away. -->
       <section class="device" id="connectedCard">
-        <div class="cc-head">
-          <span class="section-title">Connected Collections</span>
+        <div class="card-head">
+          <button type="button" class="card-toggle" id="connectedToggle" aria-expanded="true" aria-controls="connectedBody">
+            <span class="card-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="section-title">Connected Collections</span>
+          </button>
+          <span class="cc-count" id="ccCount"></span>
           <button type="button" id="ccUnhideAll" class="cc-unhide" hidden>Unhide all</button>
         </div>
-        <p class="device-note device-note-block">Connected Collections live on the web or on-chain.</p>
-        <div id="connectedList" class="cc-list"></div>
+        <div class="card-body" id="connectedBody">
+          <div id="connectedList" class="cc-list"></div>
+        </div>
       </section>
 
       <!-- Software Update — pull the latest OpenObject from GitHub, all from the browser (HANDOFF §15) -->
