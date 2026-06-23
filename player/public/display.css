@@ -148,3 +148,18 @@ body {
 .idle.asleep { transition: transform 4s ease-in-out; }
 .idle.asleep .mark { opacity: 0.05; }
 .idle.asleep .hint { display: none; }
+
+/* Retro Arcade — the hidden self-playing demo (easter egg). A full-stage canvas above the media and
+   idle layers while active; display:none otherwise, so it costs nothing normally and arcade.js only
+   runs its loop between start() and stop(). The square playfield is centred by arcade.js; on a wide
+   screen the side margins carry the same starfield (no bars, no cropped action). */
+.arcade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: var(--stage-bg);
+  z-index: 2;
+}
+.arcade[hidden] { display: none; }

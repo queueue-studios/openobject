@@ -29,6 +29,14 @@ const SUPERVISED = process.env.OO_SUPERVISED === '1';
 // happened — even a plain Restart, where the version/commit is unchanged (HANDOFF §10).
 const BOOT_ID = crypto.randomBytes(4).toString('hex');
 
+// Retro Arcade — the hidden self-playing "attract mode" demo (an easter egg). This on/off flag is
+// RUNTIME-ONLY: it is never written to the store, so a restart, reboot, or crash always wakes the
+// frame to art, never into the demo. The control panel flips it (a secret key sequence turns it on,
+// Return to Art off); the display reads it from /api/display and swaps the rotation for the canvas.
+// Homage notice: a trivial, non-playable, era-styled homage; no specific game or brand is reproduced
+// (full notice in player/public/arcade.js).
+let retroArcade = false;
+
 // Express 4 doesn't catch errors thrown from async handlers — wrap them so a rejected promise
 // becomes a clean 500 instead of an unhandled rejection.
 const ah = (fn) => (req, res) => fn(req, res).catch((err) => {
@@ -416,6 +424,7 @@ function currentSettings() {
     pinnedId: pin ? Number(pin) : null, // one piece held permanently (HANDOFF §7), or null
     sleepRanges: readSleepRanges(),     // up to three day-aware sleep windows (HANDOFF §13)
     manualBlank: db.getSetting('manual_blank', '') === '1', // instant "Blank panel" override
+    retroArcade,                        // runtime-only easter-egg flag (never persisted; see /api/arcade)
   };
 }
 
@@ -461,6 +470,12 @@ app.delete('/api/pin', (_req, res) => {
   res.json(currentSettings());
 });
 
+// Retro Arcade on/off (the hidden easter egg). Runtime-only (see the `retroArcade` flag above): never
+// stored, so the frame always wakes to art. Gated like every other control when a password is set; the
+// kiosk reads the flag via /api/display, which stays open. PUT turns the demo on, DELETE turns it off.
+app.put('/api/arcade', (_req, res) => { retroArcade = true; res.json({ retroArcade }); });
+app.delete('/api/arcade', (_req, res) => { retroArcade = false; res.json({ retroArcade }); });
+
 // What the display plays: while asleep (a sleep window or manual Blank, §13) it serves
 // `asleep:true` and the display shows the dimmed mark. Otherwise a pinned piece overrides
 // everything — held permanently even if not in the Rotation (§7) — else the Rotation in order.
@@ -494,6 +509,7 @@ app.get('/api/display', (_req, res) => {
     mode: settings.mode,
     pinnedId: settings.pinnedId,
     asleep: isAsleep(settings),
+    retroArcade: settings.retroArcade, // hidden self-playing demo: the display swaps to the canvas
   });
 });
 

@@ -11,6 +11,7 @@
 
 const idle = document.getElementById('idle');
 const layers = [document.getElementById('layer0'), document.getElementById('layer1')];
+const arcadeCanvas = document.getElementById('arcade'); // hidden self-playing demo (easter egg)
 
 // The idle hint shows the address to reach the control panel: the host this page was opened at
 // (localhost:3000 when the Mac is the display). The frame's kiosk opens localhost though, where the
@@ -38,6 +39,7 @@ let started = false;
 let shuffleQueue = [];
 let sleeping = false; // Sleep Hours / manual Blank: showing the dimmed mark (HANDOFF §13)
 let shiftTimer = null; // slow pixel-shift while asleep (anti-burn-in)
+let arcadeOn = false; // Retro Arcade demo is taking the stage (easter egg)
 
 const sig = (item) => item.kind === 'connected'
   ? 'c|' + item.collection + '|' + item.source_url + '|' + (item.animate ? 1 : 0) + '|' + (item.speed == null ? '' : item.speed) + '|' + (item.rpcUrl || '') + '|' + item.fit
@@ -211,9 +213,31 @@ function stopPixelShift() {
   idle.style.transform = '';
 }
 
+// Retro Arcade (the hidden easter egg): the secret key sequence on the control panel flips a
+// runtime-only server flag; the display swaps the rotation for arcade.js's self-playing demo and
+// holds it until Return to Art. Entering tears down playback (like Sleep) and hides the idle mark so
+// the canvas owns the stage; exiting stops the loop and the rotation restarts via apply() below.
+function enterArcade() {
+  if (arcadeOn) return;
+  arcadeOn = true;
+  if (sleeping) exitSleep();
+  showIdle();                    // stop video/iframe playback + reset rotation state
+  idle.classList.add('hidden');  // hide the idle mark — the demo canvas covers the stage
+  arcadeCanvas.hidden = false;
+  if (window.RetroArcade) RetroArcade.start(arcadeCanvas);
+}
+function exitArcade() {
+  arcadeOn = false;
+  if (window.RetroArcade) RetroArcade.stop();
+  arcadeCanvas.hidden = true;    // playback resumes via the rest of apply() (started=false → advance)
+}
+
 function apply(state) {
   durationMs = state.durationMs;
   mode = state.mode;
+
+  if (state.retroArcade) return enterArcade(); // hidden self-playing demo (easter egg) owns the stage
+  if (arcadeOn) exitArcade();                  // just left the demo — fall through and resume the rotation
 
   if (state.asleep) return enterSleep();  // Sleep Hours / manual Blank (HANDOFF §13)
   if (sleeping) exitSleep();              // just woke — fall through and resume the rotation

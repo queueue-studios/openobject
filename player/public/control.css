@@ -114,6 +114,22 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .blank-toggle:hover { color: var(--text); }
 .blank-toggle[aria-pressed="true"] { background: #2a2410; border-color: #5a4d1f; color: #ffd479; }
 
+/* Return to Art — the only control shown while the hidden demo runs; flips it back off. Styled to
+   stand out (the one obvious way out), green like the primary action. */
+.return-art {
+  appearance: none;
+  border: 1px solid #2f5a3c;
+  background: #1c3a26;
+  color: #b6f0c2;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.return-art:hover { background: #224a2f; border-color: #3a6e49; }
+
 /* Collapsible Settings cards (Sleep Schedule, Connected Collections): a clickable header that
    folds the body away. Both are lists that can grow (HANDOFF §13). */
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -306,6 +322,10 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .about-links a:hover { color: #fff; }
 .about-sep { color: var(--muted); margin: 0 8px; }
 .about-legal { margin: 14px 0 0; color: var(--muted); font-size: 13px; }
+/* Hint for the hidden Retro Arcade demo: its trigger sequence, painted in the card's own background
+   colour so it stays invisible until you drag-select the About text (then ::selection reveals it). */
+.about-hint { color: var(--panel); -webkit-user-select: all; user-select: all; }
+.about-hint::selection { background: #2a6f43; color: #fff; }
 
 /* Library */
 .library { margin-top: 30px; }

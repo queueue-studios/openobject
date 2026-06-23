@@ -22,7 +22,11 @@
       <div class="mark" role="img" aria-label="OpenObject"></div>
       <p class="hint">add art at <span class="host"></span></p>
     </section>
+    <!-- Retro Arcade: the hidden self-playing demo (easter egg). Covers the stage only while active;
+         idle until display.js calls RetroArcade.start(). -->
+    <canvas id="arcade" class="arcade" hidden></canvas>
   </main>
+  <script src="/arcade.js"></script>
   <script src="/display.js"></script>
 </body>
 </html>

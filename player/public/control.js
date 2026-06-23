@@ -29,6 +29,7 @@ const rotEmpty = document.getElementById('rotEmpty');
 const rotHint = document.getElementById('rotHint');
 
 const blankBtn = document.getElementById('blankBtn');
+const returnArtBtn = document.getElementById('returnArtBtn'); // shown only while the hidden demo runs
 const sleepRangesEl = document.getElementById('sleepRanges');
 const sleepStatus = document.getElementById('sleepStatus');
 const sleepAddBtn = document.getElementById('sleepAdd');
@@ -364,6 +365,7 @@ async function loadSettings() {
   manualBlank = !!s.manualBlank;
   renderSleep();
   renderBlank();
+  showReturnArt(!!s.retroArcade); // reflect the demo's runtime state (e.g. on reload while it runs)
 }
 
 const saveSettings = (patch) =>
@@ -1115,6 +1117,24 @@ modeSeg.querySelectorAll('button').forEach((b) =>
 );
 blankBtn.addEventListener('click', toggleBlank);
 sleepAddBtn.addEventListener('click', addSleepTime);
+
+// ── Retro Arcade (hidden easter egg) ────────────────────────────────
+// A secret key sequence flips the display into the self-playing demo; Return to Art (shown only while
+// it runs) flips it back. The server flag is runtime-only, so the frame never wakes into the demo.
+// Nothing here names the sequence or the demo on the panel — Return to Art is the lone affordance.
+const ARCADE_CODE = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+let arcadeCodePos = 0;
+function showReturnArt(on) { returnArtBtn.hidden = !on; }
+async function startArcade() { try { await fetch('/api/arcade', { method: 'PUT' }); } catch {} showReturnArt(true); }
+async function stopArcade() { try { await fetch('/api/arcade', { method: 'DELETE' }); } catch {} showReturnArt(false); }
+window.addEventListener('keydown', (e) => {
+  const tag = (e.target && e.target.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return; // not while typing
+  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  arcadeCodePos = key === ARCADE_CODE[arcadeCodePos] ? arcadeCodePos + 1 : (key === ARCADE_CODE[0] ? 1 : 0);
+  if (arcadeCodePos === ARCADE_CODE.length) { arcadeCodePos = 0; startArcade(); }
+});
+returnArtBtn.addEventListener('click', stopArcade);
 
 // Collapsible Settings cards (HANDOFF §13): clicking the header folds the body away. The four
 // collapsible cards (Sleep Schedule, Connected Collections, Password, Wi-Fi) start closed to keep
