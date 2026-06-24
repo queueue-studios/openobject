@@ -931,6 +931,27 @@ function renderConnectedCard() {
         <select class="cc-choice-select" aria-label="${escapeHtml(c.choice.label)} for ${escapeHtml(c.name)}">${opts}</select>
       </span>`);
     }
+    // General multi-control model: render each declared control (a range slider or a select) in order. Wired
+    // below by data-cc-key, so several ranges/selects on one row each patch their own key independently.
+    if (Array.isArray(c.controls)) {
+      for (const ctl of c.controls) {
+        const v = ctl.value == null ? ctl.default : ctl.value;
+        if (ctl.type === 'range') {
+          ctls.push(`<span class="cc-ctrl" data-cc-key="${escapeHtml(ctl.key)}">
+            <span class="cc-ctrl-label">${escapeHtml(ctl.label)} <span class="cc-ctrl-val">${escapeHtml(String(v))}${escapeHtml(ctl.suffix || '')}</span></span>
+            <input class="cc-ctrl-range" type="range" min="${ctl.min}" max="${ctl.max}" step="${ctl.step}" value="${v}" aria-label="${escapeHtml(ctl.label)} for ${escapeHtml(c.name)}">
+          </span>`);
+        } else if (ctl.type === 'select') {
+          const copts = ctl.options
+            .map((o) => `<option value="${escapeHtml(o.value)}"${String(o.value) === String(v) ? ' selected' : ''}>${escapeHtml(o.label)}</option>`)
+            .join('');
+          ctls.push(`<span class="cc-ctrl" data-cc-key="${escapeHtml(ctl.key)}">
+            <span class="cc-ctrl-label">${escapeHtml(ctl.label)}</span>
+            <select class="cc-ctrl-select" aria-label="${escapeHtml(ctl.label)} for ${escapeHtml(c.name)}">${copts}</select>
+          </span>`);
+        }
+      }
+    }
     if (c.animatable !== false) {
       ctls.push(`<span class="cc-animate">Animate <button class="cc-switch${c.animate ? ' on' : ''}" role="switch" aria-checked="${c.animate}" aria-label="Animate ${escapeHtml(c.name)}"></button></span>`);
     }
@@ -956,6 +977,19 @@ function renderConnectedCard() {
       range.addEventListener('input', () => { valEl.textContent = Number(range.value) === 0 ? 'Off' : range.value; });
       range.addEventListener('change', () => patchCollection(c.slug, { speed: Number(range.value) }));
     }
+    // General controls: each .cc-ctrl carries its key; wire its range or select to patch just that key.
+    row.querySelectorAll('.cc-ctrl').forEach((el) => {
+      const key = el.getAttribute('data-cc-key');
+      const def = (c.controls || []).find((d) => d.key === key) || {};
+      const r = el.querySelector('.cc-ctrl-range');
+      if (r) {
+        const valEl = el.querySelector('.cc-ctrl-val');
+        r.addEventListener('input', () => { valEl.textContent = r.value + (def.suffix || ''); });
+        r.addEventListener('change', () => patchCollection(c.slug, { controls: { [key]: Number(r.value) } }));
+      }
+      const s = el.querySelector('.cc-ctrl-select');
+      if (s) s.addEventListener('change', () => patchCollection(c.slug, { controls: { [key]: s.value } }));
+    });
     row.querySelector('.cc-hide').addEventListener('click', () => patchCollection(c.slug, { hidden: !c.hidden }));
     return row;
   }));

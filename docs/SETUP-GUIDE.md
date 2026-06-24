@@ -168,7 +168,7 @@ switch its background between **White** (the original) and **Black**; and on its
 **Fit** to show the whole squiggle or **Fill** to enlarge it to fill the screen, trimming the edges.
 The supported collections live in the **Settings** tab, under
 **Connected Collections**, where you can hide ones you don't own and, for collections that have something to
-adjust, turn their motion on or off, set how fast it moves, or choose a setting like the snowfall. This is new and **curated**: only collections that have been
+adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect or snowfall. This is new and **curated**: only collections that have been
 specifically added will work, so it won't read just any link yet.
 
 **Sleep Schedule** *(in the **Settings** tab)*. Optionally have the screen rest on a schedule. Add up

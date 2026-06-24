@@ -321,6 +321,43 @@ const REGISTRY = [
       ],
     },
   },
+  {
+    slug: 'bouncing-openobject-logo',
+    artist: 'OpenObject',
+    name: 'Bouncing OpenObject Logo',
+    chain: 'Ethereum',
+    contract: '0xa6279e1bcc8dfab0fef4e556d1cf9d6eee864de7',
+    rpc: 'https://ethereum-rpc.publicnode.com',
+    // ERC-1155, so the metadata location is read from uri(uint256), not tokenURI (like Dune Reveries).
+    erc1155: true,
+    // The whole collection is this single piece (token 1); fixedToken auto-resolves it (no Token-ID
+    // prompt), still read on-chain for faithfulness — the Golden Lining / The Bloom / Binary Mountains shape.
+    fixedToken: '1',
+    // OpenObject's own piece, and the sample seeded into every fresh Library (HANDOFF §20). The artwork is a
+    // fully self-contained HTML file (an inline SVG wordmark + CSS + JS, no external assets), so the mirror is
+    // a clean one-file copy. The mark bounces and recolours on its own (DVD-screensaver style), so it is
+    // self-animating — nothing to engage on load, no Animate control. Its size is a % of the viewport's short
+    // side, so it fills the stage edge to edge and reads the same on the 1:1 frame and a widescreen Mac alike;
+    // no crop, no aspect.
+    animateDefault: false,
+    animatable: false,
+    // The first collection to use the general multi-control `controls` model: an ordered list of slider/select
+    // controls (here the piece's own Speed / Size / Corner effect), surfaced as collection settings and applied
+    // at display time by BOUNCE_HOOK from ?oo_<key> params. (The older speedControl/choice flags each carry a
+    // single control; `controls` generalises that to any number, which this two-slider-plus-select piece needs.)
+    controls: [
+      { key: 'speed',  type: 'range',  label: 'Speed',         min: 1, max: 12, step: 0.5, default: 2.5, suffix: '×' },
+      { key: 'size',   type: 'range',  label: 'Size',          min: 5, max: 40, step: 1,   default: 16,  suffix: '%' },
+      { key: 'corner', type: 'select', label: 'Corner effect', default: 'confetti', options: [
+          { value: 'confetti',  label: 'Confetti' },
+          { value: 'flash',     label: 'Flash' },
+          { value: 'pulse',     label: 'Pulse' },
+          { value: 'shockwave', label: 'Shockwave' },
+          { value: 'none',      label: 'None' },
+      ] },
+    ],
+    controlHook: 'bounce',
+  },
 ];
 
 const bySlug = (slug) => REGISTRY.find((c) => c.slug === slug) || null;
@@ -615,6 +652,36 @@ const SQUIGGLE_HOOK = `
 })();
 </script>`;
 
+// Injected into OpenObject's own "Bouncing OpenObject Logo": the piece exposes three top-level `let`
+// bindings — `speed` (1..12), `sizePct` (5..40, % of the viewport's short side) and `cornerMode` (the
+// corner-hit effect) — which a classic <script> injected into the same document can set directly (the
+// Chromie Squiggle pattern: classic scripts share the top-level lexical scope). It self-animates (bounces
+// and recolours on its own), so this is not an Animate toggle: it just applies the owner's chosen Speed /
+// Size / Corner effect from the display params (?oo_speed / ?oo_size / ?oo_corner). The loop re-reads
+// `speed` and `sizePct` every frame and `cornerMode` on each corner hit, so setting them once is enough; a
+// param left out leaves that global at the artist's default. We wait out any temporal-dead-zone (the
+// bindings are created when the artist's script runs) before assigning.
+const BOUNCE_HOOK = `
+<script>
+(function(){
+  var qs = new URLSearchParams(location.search);
+  var sp = parseFloat(qs.get('oo_speed'));
+  var sz = parseFloat(qs.get('oo_size'));
+  var cm = qs.get('oo_corner');
+  var n = 0;
+  var iv = setInterval(function(){
+    if (++n > 300) { clearInterval(iv); return; }   // ~30s safety
+    try { void speed; void sizePct; void cornerMode; } catch (e) { return; } // bindings not ready yet (TDZ)
+    clearInterval(iv);
+    try {
+      if (!isNaN(sp)) speed = Math.max(1, Math.min(12, sp));
+      if (!isNaN(sz)) sizePct = Math.max(5, Math.min(40, sz));
+      if (cm) cornerMode = cm;
+    } catch (e) {}
+  }, 50);
+})();
+</script>`;
+
 async function fetchBuf(url) {
   const r = await ooFetch(toHttp(url));
   if (!r.ok) throw new Error(`fetch ${url} → ${r.status}`);
@@ -740,7 +807,8 @@ async function mirrorInto(c, out, sourceUrl) {
   // speedControl collection gets a cosine sweep (Golden Lining) or, for the squiggle, the combined squiggle
   // hook (which drives its loops/speed AND its background from the display params); other Animate-control
   // pieces get the generic fire-once hook. Self-animating / still pieces (Kittoe, send/receive) get none.
-  const hook = c && c.choiceHook === 'snow' ? SNOW_HOOK
+  const hook = c && c.controlHook === 'bounce' ? BOUNCE_HOOK
+    : c && c.choiceHook === 'snow' ? SNOW_HOOK
     : c && c.animateHook === 'bloom' ? BLOOM_HOOK
     : c && c.animateHook === 'easterEgg' ? EASTER_HOOK
     : c && c.speedControl ? (c.speedHook === 'squiggle' ? SQUIGGLE_HOOK : SPEED_HOOK)
@@ -786,7 +854,36 @@ async function toDataUrl(url) {
   } catch { return null; }
 }
 
-// ── Per-frame curation state (hidden / animate / speed), merged over the registry defaults ──
+// A collection's display controls (the general multi-control model): an ordered list of range/select
+// descriptors the owner sets per collection, applied at display time by the collection's controlHook from
+// ?oo_<key> params. (The older speedControl/choice flags are the original single-control shorthands.)
+function controlsOf(c) { return Array.isArray(c && c.controls) ? c.controls : []; }
+
+// Merge a collection's stored control values over the registry defaults, validating each: a range is coerced
+// to a number and clamped to [min,max]; a select must be one of its option values. `stored` may be the JSON
+// string from the DB or an already-parsed object; an unknown / blank value falls back to the control default.
+function mergedControls(c, stored) {
+  let s = {};
+  if (typeof stored === 'string') { try { s = JSON.parse(stored) || {}; } catch { s = {}; } }
+  else if (stored && typeof stored === 'object') s = stored;
+  const out = {};
+  for (const ctl of controlsOf(c)) {
+    let v = s[ctl.key];
+    if (ctl.type === 'range') {
+      v = Number(v);
+      if (!Number.isFinite(v)) v = ctl.default;
+      v = Math.max(ctl.min, Math.min(ctl.max, v));
+    } else if (ctl.type === 'select') {
+      v = (ctl.options || []).some((o) => String(o.value) === String(v)) ? String(v) : ctl.default;
+    } else {
+      v = v == null ? ctl.default : v;
+    }
+    out[ctl.key] = v;
+  }
+  return out;
+}
+
+// ── Per-frame curation state (hidden / animate / speed / controls), merged over the registry defaults ──
 function getState(slug) {
   const c = bySlug(slug);
   if (!c) return null;
@@ -798,11 +895,22 @@ function getState(slug) {
     speed: c.speedControl ? (st && st.speed != null ? st.speed : c.speedDefault) : null,
     // Choice collections carry a selected option value (a string from the registry options); others none.
     choice: c.choice ? (st && st.choice != null ? st.choice : c.choice.default) : null,
+    // A controls collection carries a {key:value} of its display controls, each merged over the registry
+    // default and validated; collections without the general controls model carry none.
+    controls: controlsOf(c).length ? mergedControls(c, st && st.controls) : null,
   };
 }
 function setState(slug, patch) {
-  if (!bySlug(slug)) throw new Error('Unknown collection.');
-  db.setCollectionState(slug, patch);
+  const c = bySlug(slug);
+  if (!c) throw new Error('Unknown collection.');
+  const dbPatch = { ...patch };
+  // A controls patch arrives as a partial {key:value}; merge it over the current values, validate the whole
+  // set (mergedControls clamps ranges / checks selects), and store it as the JSON the DB column holds.
+  if (patch.controls !== undefined) {
+    const cur = mergedControls(c, (db.getCollectionState(slug) || {}).controls);
+    dbPatch.controls = JSON.stringify(mergedControls(c, { ...cur, ...(patch.controls || {}) }));
+  }
+  db.setCollectionState(slug, dbPatch);
   return getState(slug);
 }
 
@@ -815,12 +923,15 @@ function list() {
       return {
         slug: c.slug, artist: c.artist, name: c.name, chain: c.chain,
         hidden: st.hidden, animate: st.animate,
-        // A speedControl collection shows a 0..10 slider, a choice collection shows a dropdown, and an
-        // animatable collection shows the on/off Animate switch — the three are mutually exclusive.
-        animatable: c.animatable !== false && !c.speedControl && !c.choice,
+        // A speedControl collection shows a 0..10 slider, a choice collection shows a dropdown, an animatable
+        // collection shows the on/off Animate switch, and a controls collection shows its own list of
+        // sliders/selects — mutually exclusive surfaces (a collection uses one of these models).
+        animatable: c.animatable !== false && !c.speedControl && !c.choice && !(c.controls && c.controls.length),
         speedControl: !!c.speedControl, speed: st.speed, speedMax: 10,
         // A choice collection: the control descriptor (label + options) plus the current value, for the dropdown.
         choice: c.choice ? { label: c.choice.label, options: c.choice.options, value: st.choice } : null,
+        // A controls collection: each control descriptor with its current value, for the Settings card.
+        controls: st.controls ? c.controls.map((ctl) => ({ ...ctl, value: st.controls[ctl.key] })) : null,
         fixedToken: c.fixedToken || null,    // single-piece collection: no Token-ID prompt
         // IDs for the add modal's "Supported Token IDs" hint: a fixedToken collection's one id, an explicit
         // supportedTokens subset (e.g. Lost in Moffat County's 3,4,5,6), or null for open collections (no hint).

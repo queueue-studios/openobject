@@ -88,21 +88,24 @@ function initDb() {
   // Per-frame curation of the supported collections list (the registry itself lives in code):
   // hidden = don't show when adding; animate = override the collection's animate-on-load default;
   // speed = a speedControl collection's 0..10 motion speed (NULL = use the registry default);
-  // choice = a `choice` collection's selected option value (NULL = use the registry default).
+  // choice = a `choice` collection's selected option value (NULL = use the registry default);
+  // controls = a `controls` collection's general control values as JSON {key:value} (NULL = registry defaults).
   db.exec(`
     CREATE TABLE IF NOT EXISTS collection_state (
-      slug    TEXT PRIMARY KEY,
-      hidden  INTEGER NOT NULL DEFAULT 0,
-      animate INTEGER,                      -- NULL = use the registry default
-      speed   REAL,                         -- NULL = use the registry default (speedControl only)
-      choice  TEXT                          -- NULL = use the registry default (choice control only)
+      slug     TEXT PRIMARY KEY,
+      hidden   INTEGER NOT NULL DEFAULT 0,
+      animate  INTEGER,                     -- NULL = use the registry default
+      speed    REAL,                        -- NULL = use the registry default (speedControl only)
+      choice   TEXT,                        -- NULL = use the registry default (choice control only)
+      controls TEXT                         -- NULL = use registry defaults (general controls model; JSON {key:value})
     );
   `);
-  // `speed`, then `choice`, were added after the first connected collections shipped — add them in
-  // place for older libraries. Idempotent.
+  // `speed`, then `choice`, then `controls`, were added after the first connected collections shipped — add
+  // them in place for older libraries. Idempotent.
   const ccols = new Set(db.prepare('PRAGMA table_info(collection_state)').all().map((c) => c.name));
   if (!ccols.has('speed')) db.exec('ALTER TABLE collection_state ADD COLUMN speed REAL');
   if (!ccols.has('choice')) db.exec('ALTER TABLE collection_state ADD COLUMN choice TEXT');
+  if (!ccols.has('controls')) db.exec('ALTER TABLE collection_state ADD COLUMN controls TEXT');
 
   console.log(`SQLite ready (node:sqlite) → ${DB_PATH}`);
   return db;
@@ -166,20 +169,22 @@ function countConnected(slug) {
 
 // ── Connected-collection curation state (hidden / animate override / motion speed / choice) ──
 function getCollectionState(slug) {
-  return getDb().prepare('SELECT slug, hidden, animate, speed, choice FROM collection_state WHERE slug = ?').get(slug) || null;
+  return getDb().prepare('SELECT slug, hidden, animate, speed, choice, controls FROM collection_state WHERE slug = ?').get(slug) || null;
 }
 function setCollectionState(slug, patch) {
-  const cur = getCollectionState(slug) || { hidden: 0, animate: null, speed: null, choice: null };
+  const cur = getCollectionState(slug) || { hidden: 0, animate: null, speed: null, choice: null, controls: null };
   const hidden = patch.hidden !== undefined ? (patch.hidden ? 1 : 0) : cur.hidden;
   const animate = patch.animate !== undefined ? (patch.animate ? 1 : 0) : cur.animate;
   const speed = patch.speed !== undefined ? (patch.speed == null ? null : Number(patch.speed)) : cur.speed;
   const choice = patch.choice !== undefined ? (patch.choice == null ? null : String(patch.choice)) : cur.choice;
+  // controls arrives already serialised (a JSON string) from collections.setState, or null to clear.
+  const controls = patch.controls !== undefined ? (patch.controls == null ? null : String(patch.controls)) : cur.controls;
   getDb()
     .prepare(
-      `INSERT INTO collection_state (slug, hidden, animate, speed, choice) VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(slug) DO UPDATE SET hidden = excluded.hidden, animate = excluded.animate, speed = excluded.speed, choice = excluded.choice`
+      `INSERT INTO collection_state (slug, hidden, animate, speed, choice, controls) VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(slug) DO UPDATE SET hidden = excluded.hidden, animate = excluded.animate, speed = excluded.speed, choice = excluded.choice, controls = excluded.controls`
     )
-    .run(slug, hidden, animate, speed, choice);
+    .run(slug, hidden, animate, speed, choice, controls);
 }
 
 // Library grid shows newest first; the Rotation is the curated subset in its chosen order.

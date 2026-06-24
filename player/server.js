@@ -319,8 +319,8 @@ app.delete('/api/library/:id', (req, res) => {
 app.get('/api/collections', (_req, res) => res.json(collections.list()));
 
 app.patch('/api/collections/:slug', (req, res) => {
-  const { hidden, animate, speed, choice } = req.body || {};
-  if (hidden === undefined && animate === undefined && speed === undefined && choice === undefined) {
+  const { hidden, animate, speed, choice, controls } = req.body || {};
+  if (hidden === undefined && animate === undefined && speed === undefined && choice === undefined && controls === undefined) {
     return res.status(400).json({ error: 'nothing to update' });
   }
   if ((hidden !== undefined && typeof hidden !== 'boolean') || (animate !== undefined && typeof animate !== 'boolean')) {
@@ -337,7 +337,26 @@ app.patch('/api/collections/:slug', (req, res) => {
     const allowed = c.choice ? c.choice.options.map((o) => String(o.value)) : [];
     if (!allowed.includes(String(choice))) return res.status(400).json({ error: 'invalid choice' });
   }
-  res.json(collections.setState(req.params.slug, { hidden, animate, speed, choice }));
+  // A controls patch is a partial {key:value} over the collection's general controls model: each key must be a
+  // declared control, a range value a number within [min,max], a select value one of its options.
+  if (controls !== undefined) {
+    if (typeof controls !== 'object' || controls === null || Array.isArray(controls)) {
+      return res.status(400).json({ error: 'controls must be an object' });
+    }
+    const defs = Array.isArray(c.controls) ? c.controls : [];
+    for (const [k, v] of Object.entries(controls)) {
+      const def = defs.find((d) => d.key === k);
+      if (!def) return res.status(400).json({ error: 'unknown control: ' + k });
+      if (def.type === 'range') {
+        if (typeof v !== 'number' || !Number.isFinite(v) || v < def.min || v > def.max) {
+          return res.status(400).json({ error: `${def.label} must be a number from ${def.min} to ${def.max}` });
+        }
+      } else if (def.type === 'select' && !def.options.some((o) => String(o.value) === String(v))) {
+        return res.status(400).json({ error: 'invalid value for ' + def.label });
+      }
+    }
+  }
+  res.json(collections.setState(req.params.slug, { hidden, animate, speed, choice, controls }));
 });
 
 // Resolve a Token ID to its title + preview WITHOUT adding (drives the add-flow preview).
@@ -493,6 +512,7 @@ const withConnectedFlags = (item) => {
     animate: st && !(c && c.speedControl) ? st.animate : false,
     speed: c && c.speedControl ? (st ? st.speed : c.speedDefault) : null, // 0..10 motion (0 = static)
     choice: c && c.choice ? (st ? st.choice : c.choice.default) : null, // selected option value → ?oochoice
+    controls: c && Array.isArray(c.controls) && c.controls.length && st ? st.controls : null, // general controls → ?oo_<key>
     perToken: !!(c && c.perToken),
     rpcUrl: c && c.liveRpc ? c.rpc : null,
     crop: c && c.crop ? c.crop : null, // art occupies this centered fraction; display zooms it edge to edge

@@ -42,7 +42,7 @@ let shiftTimer = null; // slow pixel-shift while asleep (anti-burn-in)
 let arcadeOn = false; // Retro Arcade demo is taking the stage (easter egg)
 
 const sig = (item) => item.kind === 'connected'
-  ? 'c|' + item.collection + '|' + item.source_url + '|' + (item.animate ? 1 : 0) + '|' + (item.speed == null ? '' : item.speed) + '|' + (item.rpcUrl || '') + '|' + item.fit
+  ? 'c|' + item.collection + '|' + item.source_url + '|' + (item.animate ? 1 : 0) + '|' + (item.speed == null ? '' : item.speed) + '|' + (item.rpcUrl || '') + '|' + item.fit + '|' + (item.controls ? JSON.stringify(item.controls) : '')
   : item.fit + '|' + item.filename;
 const once = (fn) => {
   let done = false;
@@ -88,6 +88,7 @@ function render(layer, item, onReady) {
     if (item.animate) params.push('ooanim=1');                          // fire the bundle's animate hook
     if (item.speed != null) params.push('oospeed=' + encodeURIComponent(item.speed)); // 0..10 cosine sweep speed
     if (item.choice != null) params.push('oochoice=' + encodeURIComponent(item.choice)); // single-choice control value
+    if (item.controls) for (const k in item.controls) params.push('oo_' + k + '=' + encodeURIComponent(item.controls[k])); // general controls → ?oo_<key>=value
     const tokenSeg = item.perToken && item.token_id != null ? '/' + encodeURIComponent(item.token_id) : '';
     el.src = '/collections/' + item.collection + tokenSeg + '/index.html' + (params.length ? '?' + params.join('&') : '');
     // Some collections compose the art in a centered inset with a black margin (e.g. send/receive's
