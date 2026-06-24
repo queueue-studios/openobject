@@ -30,6 +30,13 @@ const DATA_DIR = process.env.OO_DATA_DIR || path.join(__dirname, '..', 'data');
 const UPLOADS_DIR = process.env.OO_UPLOADS_DIR || path.join(__dirname, '..', 'uploads');
 const DB_PATH = path.join(DATA_DIR, 'openobject.sqlite');
 
+// The install sample (the Bouncing OpenObject Logo, seeded into every fresh Library by the install step) is
+// anchored to the BOTTOM of the Library grid by listLibrary, so it reads as the original piece that "came
+// with the install" — beneath the owner's own pieces — regardless of when it was added (it may carry a high
+// id if added by hand to an existing library, e.g. the bench frame). Sort-only: the card is otherwise
+// identical to any other piece (no special row, badge, or handling). Pairs with the seed step.
+const INSTALL_SAMPLE_COLLECTION = 'bouncing-openobject-logo';
+
 let db = null;
 
 function initDb() {
@@ -187,9 +194,13 @@ function setCollectionState(slug, patch) {
     .run(slug, hidden, animate, speed, choice, controls);
 }
 
-// Library grid shows newest first; the Rotation is the curated subset in its chosen order.
+// Library grid shows newest first, with the install sample anchored to the bottom (INSTALL_SAMPLE_COLLECTION):
+// non-sample pieces sort by id DESC (newest first), then the sample row last, so it sits beneath the owner's
+// own pieces however recently it was added. Sort-only; the Rotation is the curated subset in its own order.
 function listLibrary() {
-  return getDb().prepare('SELECT * FROM library ORDER BY id DESC').all();
+  return getDb()
+    .prepare("SELECT * FROM library ORDER BY (COALESCE(collection, '') = ?) ASC, id DESC")
+    .all(INSTALL_SAMPLE_COLLECTION);
 }
 function listRotation() {
   return getDb().prepare('SELECT * FROM library WHERE in_rotation = 1 ORDER BY position ASC, id ASC').all();
