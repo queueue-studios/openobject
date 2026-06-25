@@ -99,6 +99,12 @@ WebM**. Anything else is simply skipped, with nothing changed or converted. Very
 512 MB) are skipped as well, and if the frame is low on storage it will ask you to remove some art
 before adding more.
 
+**Name your art (optional).** An uploaded piece shows its filename until you give it a title. Tap the
+name on its Library card to edit the **title** and **artist**, then Save (or press Enter); leave a field
+blank to fall back to the filename. Add a single file and its card opens ready to name. (Connected pieces
+already carry their own title and artist.) These labels are for organizing in the control panel; they
+never appear over the art.
+
 **Your Library vs the Rotation.** Everything you upload stays in the **Library**. The **Rotation**
 is the set that's actually showing on the wall. The control panel has three tabs:
 

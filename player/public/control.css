@@ -397,6 +397,28 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .actions .pin:hover, .actions .fit:hover { background: #242428; color: var(--text); }
 .actions .del:hover { background: #2a1c1e; color: var(--danger); }
 
+/* Uploaded-piece title/artist edit (HANDOFF §7): the name/artist block is a tap target (pointer + a faint
+   hover tint that takes no extra space) which swaps in two inputs; the actions row becomes Save/Cancel. */
+.meta.editable { cursor: pointer; }
+.meta.editable:hover { background: #1c1c1f; }
+.meta.editing { gap: 8px; }
+.meta-input {
+  appearance: none;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 9px;
+}
+.meta-input:focus { outline: none; border-color: #4a4a52; }
+.actions .meta-save { color: #b6f0c2; border-right: 1px solid var(--line); }
+.actions .meta-save:hover { background: #1c3a26; color: #d6ffe0; }
+.actions .meta-cancel:hover { background: #242428; color: var(--text); }
+
 /* Add-to-rotation toggle — top-right of each Library thumbnail */
 .rot-toggle {
   position: absolute;

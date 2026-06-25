@@ -148,6 +148,7 @@ const thumbCropScale = (slug) => {
 function card(item) {
   const el = document.createElement('div');
   el.className = 'card';
+  el.dataset.id = item.id; // so the single-upload nicety can find this card after a refresh
   const isFill = item.fit === 'fill';
   const isPinned = item.id === pinnedId;
   const inRot = !!item.in_rotation;
@@ -160,7 +161,12 @@ function card(item) {
   // Connected pieces show the artist's name as the subtitle (the official title may or may not embed
   // it: Brinkman's does, Kittoe's doesn't). Files show their size.
   const artistName = (collectionsBySlug[item.collection] || {}).artist || '';
-  const sub = connected ? escapeHtml(artistName) : fmtBytes(item.bytes);
+  // Uploads can carry an owner-set title/artist (HANDOFF §7): show the custom title when set (else the
+  // filename), and the artist name when set (else the file size), matching how connected pieces show theirs.
+  const titleText = !connected && item.title ? item.title : item.original_name;
+  const sub = connected
+    ? escapeHtml(artistName)
+    : (item.artist ? escapeHtml(item.artist) : fmtBytes(item.bytes));
   const canFit = !connected || !!(collectionsBySlug[item.collection] || {}).fitFill;
   const fitBtn = canFit ? `<button class="fit" aria-pressed="${isFill}" title="How this piece fills the screen">${isFill ? 'Fill' : 'Fit'}</button>` : '';
   const cs = connected ? thumbCropScale(item.collection) : 0; // crop the thumbnail to match the cropped display
@@ -174,7 +180,7 @@ function card(item) {
       ${isPinned ? '<span class="pin-badge">📌 Pinned</span>' : ''}
     </div>
     <div class="meta">
-      <span class="name" title="${escapeHtml(item.original_name)}">${escapeHtml(item.original_name)}</span>
+      <span class="name" title="${escapeHtml(item.original_name)}">${escapeHtml(titleText)}</span>
       <span class="sub">${sub}</span>
     </div>
     <div class="actions">
@@ -189,7 +195,61 @@ function card(item) {
   const fitEl = el.querySelector('.fit');
   if (fitEl) fitEl.addEventListener('click', () => toggleFit(item));
   el.querySelector('.del').addEventListener('click', () => remove(item));
+  // Uploaded pieces: the whole name/artist block is the tap target to edit the title + artist in place
+  // (HANDOFF §7). Connected pieces carry their title/artist from the chain/registry, so they aren't editable.
+  if (!connected) {
+    const metaEl = el.querySelector('.meta');
+    metaEl.classList.add('editable');
+    metaEl.setAttribute('role', 'button');
+    metaEl.setAttribute('tabindex', '0');
+    // Enter edit mode on tap / Enter / Space — but NOT once editing: clicks and keystrokes inside the
+    // fields bubble up to this same block, so without the guard, clicking the artist field (or typing a
+    // space) would re-trigger this and bounce focus back to the title / swallow the keystroke.
+    metaEl.addEventListener('click', () => { if (!metaEl.classList.contains('editing')) enterEditMeta(el, item); });
+    metaEl.addEventListener('keydown', (e) => {
+      if (metaEl.classList.contains('editing')) return;
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enterEditMeta(el, item); }
+    });
+  }
   return el;
+}
+
+// Inline edit of an uploaded piece's title + artist (HANDOFF §7). Swaps the name/artist block for two
+// inputs and the actions row for Save/Cancel, in place on the card. Save persists via PATCH then refreshes;
+// Cancel (or Esc) re-renders from server state, discarding the edit; Enter saves. Blank clears the field.
+function enterEditMeta(cardEl, item) {
+  const meta = cardEl.querySelector('.meta');
+  const actions = cardEl.querySelector('.actions');
+  const curTitle = item.title ? item.title : '';   // empty when unset → the placeholder shows the filename
+  const curArtist = item.artist ? item.artist : '';
+  meta.classList.remove('editable');
+  meta.classList.add('editing');
+  meta.removeAttribute('role');
+  meta.removeAttribute('tabindex');
+  meta.innerHTML = `
+    <input class="meta-input meta-title" type="text" maxlength="200" aria-label="Title"
+      placeholder="${escapeHtml(item.original_name)}" value="${escapeHtml(curTitle)}">
+    <input class="meta-input meta-artist" type="text" maxlength="200" aria-label="Artist"
+      placeholder="Artist (optional)" value="${escapeHtml(curArtist)}">`;
+  actions.innerHTML = '<button class="meta-save">Save</button><button class="meta-cancel">Cancel</button>';
+  const titleInput = meta.querySelector('.meta-title');
+  const artistInput = meta.querySelector('.meta-artist');
+  const save = async () => {
+    await fetch(`/api/library/${item.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: titleInput.value, artist: artistInput.value }),
+    });
+    await refresh();
+  };
+  actions.querySelector('.meta-save').addEventListener('click', save);
+  actions.querySelector('.meta-cancel').addEventListener('click', () => refresh());
+  meta.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); save(); }
+    else if (e.key === 'Escape') { e.preventDefault(); refresh(); }
+  });
+  titleInput.focus();
+  titleInput.select();
 }
 
 async function loadLibrary() {
@@ -344,13 +404,19 @@ async function send(files) {
     setStatus(res.error || `Upload failed (${resp.status}).`, true);
     return;
   }
-  const added = res.added?.length || 0;
+  const addedItems = res.added || [];
   const skipped = res.skipped || [];
   setStatus(
-    `Added ${added}.` + (skipped.length ? ` Skipped ${skipped.length} unsupported: ${skipped.join(', ')}` : ''),
+    `Added ${addedItems.length}.` + (skipped.length ? ` Skipped ${skipped.length} unsupported: ${skipped.join(', ')}` : ''),
     true
   );
   await refresh();
+  // Single-file upload: open the new piece straight into title/artist editing, so a one-off nudges you to
+  // name it. A multi-file drop adds them silently (no per-file prompt). (HANDOFF §7.)
+  if (addedItems.length === 1) {
+    const cardEl = grid.querySelector(`.card[data-id="${addedItems[0].id}"]`);
+    if (cardEl) { cardEl.scrollIntoView({ block: 'nearest' }); enterEditMeta(cardEl, addedItems[0]); }
+  }
 }
 
 // ── Rotation settings (global, equal-time) ──────────────────────────

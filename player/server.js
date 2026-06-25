@@ -283,12 +283,12 @@ app.get('/api/library', (_req, res) => {
   res.json(db.listLibrary(db.getSetting('library_sort', db.DEFAULT_LIBRARY_SORT)));
 });
 
-// Per-clip Fit/Fill (§6) and Rotation membership (§7). Either or both may be sent.
+// Per-clip Fit/Fill (§6), Rotation membership (§7), and optional title/artist (§7). Any subset may be sent.
 app.patch('/api/library/:id', (req, res) => {
   const id = Number(req.params.id);
-  const { fit, inRotation } = req.body || {};
-  if (fit === undefined && inRotation === undefined) {
-    return res.status(400).json({ error: 'nothing to update (fit and/or inRotation)' });
+  const { fit, inRotation, title, artist } = req.body || {};
+  if (fit === undefined && inRotation === undefined && title === undefined && artist === undefined) {
+    return res.status(400).json({ error: 'nothing to update (fit, inRotation, title, and/or artist)' });
   }
   if (fit !== undefined && !FITS.has(fit)) {
     return res.status(400).json({ error: 'fit must be "fit" or "fill"' });
@@ -296,9 +296,21 @@ app.patch('/api/library/:id', (req, res) => {
   if (inRotation !== undefined && typeof inRotation !== 'boolean') {
     return res.status(400).json({ error: 'inRotation must be a boolean' });
   }
-  if (!db.getLibraryItem(id)) return res.status(404).json({ error: 'not found' });
+  for (const [k, v] of [['title', title], ['artist', artist]]) {
+    if (v === undefined) continue;
+    if (typeof v !== 'string') return res.status(400).json({ error: `${k} must be a string` });
+    if (v.length > 200) return res.status(400).json({ error: `${k} must be 200 characters or fewer` });
+  }
+  const row = db.getLibraryItem(id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  // Title/artist are owner-set metadata for uploaded pieces; connected pieces carry theirs from the
+  // chain/registry (kept authoritative), so reject an attempt to override them.
+  if ((title !== undefined || artist !== undefined) && row.kind === 'connected') {
+    return res.status(400).json({ error: 'title and artist can only be set on uploaded pieces' });
+  }
   if (fit !== undefined) db.setLibraryFit(id, fit);
   if (inRotation !== undefined) db.setLibraryRotation(id, inRotation);
+  if (title !== undefined || artist !== undefined) db.setLibraryMeta(id, { title, artist });
   res.json(db.getLibraryItem(id));
 });
 

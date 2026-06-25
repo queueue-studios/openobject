@@ -92,6 +92,13 @@ function initDb() {
     if (!cols.has(col)) db.exec(`ALTER TABLE library ADD COLUMN ${col} TEXT`);
   }
 
+  // Optional per-upload metadata (HANDOFF §7): a custom display title and artist the owner can set on an
+  // uploaded piece (NULL = unset; the card then falls back to the filename / file size). Connected pieces
+  // get their title/artist from the chain/registry, not here. Added in place so older libraries upgrade.
+  for (const col of ['title', 'artist']) {
+    if (!cols.has(col)) db.exec(`ALTER TABLE library ADD COLUMN ${col} TEXT`);
+  }
+
   // Per-frame curation of the supported collections list (the registry itself lives in code):
   // hidden = don't show when adding; animate = override the collection's animate-on-load default;
   // speed = a speedControl collection's 0..10 motion speed (NULL = use the registry default);
@@ -198,12 +205,12 @@ function setCollectionState(slug, patch) {
 // of the grid: the `(collection = sample) ASC` primary key always sorts the sample row last, so it sits
 // beneath the owner's own pieces however recently it was added, in every order. The ORDER BY fragments
 // are a fixed allowlist (never interpolated from user input), so there is no SQL-injection surface.
-// "name" sorts by the displayed title (original_name); when uploaded pieces gain an optional custom Title
-// later, change that key to COALESCE(title, original_name) COLLATE NOCASE and the anchoring still holds.
+// "name" sorts by the DISPLAYED title: a piece's custom title when set, else its filename/derived title
+// (the same fallback the card shows). NULLIF('') treats a blank title as unset so COALESCE falls through.
 const LIBRARY_SORTS = {
   recent: 'id DESC',                                  // newest first (the default)
   oldest: 'id ASC',                                   // oldest first
-  name: 'original_name COLLATE NOCASE ASC, id DESC',  // A–Z, id as a stable tiebreaker for equal names
+  name: "COALESCE(NULLIF(title, ''), original_name) COLLATE NOCASE ASC, id DESC",  // A–Z, id tiebreaker
 };
 const DEFAULT_LIBRARY_SORT = 'recent';
 
@@ -226,6 +233,16 @@ function getLibraryItem(id) {
 function setLibraryFit(id, fit) {
   if (!getLibraryItem(id)) return null;
   getDb().prepare('UPDATE library SET fit = ? WHERE id = ?').run(fit, id);
+  return getLibraryItem(id);
+}
+
+// Set a piece's optional display title and/or artist (HANDOFF §7). A blank value clears the field to NULL,
+// so the card falls back to the filename / file size. Only the fields present in `fields` are touched.
+function setLibraryMeta(id, fields) {
+  if (!getLibraryItem(id)) return null;
+  const norm = (v) => { const s = String(v == null ? '' : v).trim(); return s === '' ? null : s; };
+  if (fields.title !== undefined) getDb().prepare('UPDATE library SET title = ? WHERE id = ?').run(norm(fields.title), id);
+  if (fields.artist !== undefined) getDb().prepare('UPDATE library SET artist = ? WHERE id = ?').run(norm(fields.artist), id);
   return getLibraryItem(id);
 }
 
@@ -287,6 +304,7 @@ module.exports = {
   listRotation,
   getLibraryItem,
   setLibraryFit,
+  setLibraryMeta,
   setLibraryRotation,
   reorderRotation,
   deleteLibraryItem,
