@@ -300,13 +300,25 @@ function rotRow(item, idx, total) {
   el.dataset.id = item.id;
   const isPinned = item.id === pinnedId;
   const cs = item.kind === 'connected' ? thumbCropScale(item.collection) : 0; // crop the thumbnail to match the cropped display
+  // First line: the title, then a small type pill (the file's format, or "Connected") and a Fill pill when
+  // the clip center-crops — the format/Connected that used to be the whole second line. Second line: the
+  // artist (connected pieces from the collection registry, like the Library card; uploads from the owner-set
+  // artist field), shown without a "by " prefix and omitted entirely when there's no artist.
+  const connected = item.kind === 'connected';
+  const artistName = connected
+    ? ((collectionsBySlug[item.collection] || {}).artist || '')
+    : (item.artist || '');
+  const typePill = connected
+    ? '<span class="rot-pill rot-pill-connected">Connected</span>'
+    : `<span class="rot-pill">${escapeHtml(item.format)}</span>`; // CSS uppercases it (svg -> SVG)
+  const fillPill = item.fit === 'fill' ? '<span class="rot-pill">Fill</span>' : '';
   el.innerHTML = `
     <span class="rot-grip" title="Drag to reorder">${GRIP}</span>
     <span class="rot-num">${idx + 1}</span>
     <span class="rot-thumb fit-${item.fit === 'fill' ? 'fill' : 'fit'}${cs ? ' crop' : ''}">${thumbTag(item)}</span>
     <span class="rot-meta">
-      <span class="rot-name">${isPinned ? '<span class="rot-pin" title="Pinned">📌</span> ' : ''}${escapeHtml(item.original_name)}</span>
-      <span class="rot-sub">${item.kind === 'connected' ? 'Connected' : item.format.toUpperCase() + (item.fit === 'fill' ? ' · Fill' : '')}</span>
+      <span class="rot-name">${isPinned ? '<span class="rot-pin" title="Pinned">📌</span>' : ''}<span class="rot-title">${escapeHtml(item.original_name)}</span>${typePill}${fillPill}</span>
+      ${artistName ? `<span class="rot-sub">${escapeHtml(artistName)}</span>` : ''}
     </span>
     <span class="rot-btns">
       <button class="up" ${idx === 0 ? 'disabled' : ''} aria-label="Move earlier">${CHEV_UP}</button>

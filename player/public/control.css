@@ -516,9 +516,24 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .rot-thumb.fit-fit  img, .rot-thumb.fit-fit  video { object-fit: contain; } /* honor Fit/Fill — match the Library card + panel */
 .rot-thumb.fit-fill img, .rot-thumb.fit-fill video { object-fit: cover; }
 .rot-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.rot-name { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rot-name { font-size: 14px; min-width: 0; display: flex; align-items: center; gap: 7px; }
+.rot-title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* truncates; pills stay */
 .rot-sub { font-size: 12px; color: var(--muted); }
-.rot-pin { color: #ffd479; }
+.rot-pin { flex: none; color: #ffd479; }
+/* Type pill after the title: the file's format (SVG/MP4/…) or "Connected", plus a Fill pill when the clip
+   center-crops. Echoes the Library card's thumbnail badge, restyled for the panel's dark meta row. */
+.rot-pill {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.rot-pill-connected { color: #9fe1cb; border-color: #2f4a44; }   /* match the card's connected accent */
 .rot-btns { display: flex; align-items: center; gap: 4px; flex: none; }
 .rot-btns button {
   appearance: none;

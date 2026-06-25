@@ -259,7 +259,7 @@ A fresh, wall-mounted box has no art and isn't on Wi-Fi yet, but the control pan
 
 **Wired option:** the free Gigabit Ethernet port is a fully supported bonus, but **Wi-Fi is the baseline**, the kit must not require running a CAT5 cable, since the next owner may not be able to.
 
-**Built 2026-06-13 (§20, Phase-1 stub).** The control panel's **Settings → Wi-Fi** card explains the
+**Built 2026-06-13 (§20, Phase-1 stub).** The control panel's **Settings → Network** card explains the
 first-run onboarding flow above; the setup AP + captive page themselves are **Phase 2** (they need the
 device's networking). The card also shows **how to reach the control panel now**, the live LAN
 address(es) (`http://<ip>:<port>`, from `GET /api/system`) plus the `openobject.local` name **only where it
@@ -331,7 +331,7 @@ screen sleeps, with a marker at "now". It makes the schedule **verifiable by eye
 overnight window cannot be silently attached to the wrong day. The card header shows a live
 status: **"Sleeping until 7:00am"** while asleep, or **"Awake until 10:00pm"** otherwise. The
 Sleep Schedule and Connected Collections cards (the lists that can grow), plus the
-infrequently-used Password and Wi-Fi cards, are **collapsible** from their headers and **start
+infrequently-used Password and Network cards, are **collapsible** from their headers and **start
 closed** to keep the tab short; each card's open/closed choice is then remembered per browser, so
 one the owner opens stays open until closed. Software Update, Power, and About are not. Strip positions are set
 through the CSSOM, so the strict `style-src 'self'` CSP (no inline styles) stays intact.
@@ -538,6 +538,18 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-06-25: Rename the Settings "Wi-Fi" card to "Network"
+The Settings card was labelled **Wi-Fi**, but in Phase 1 its only content is **how to reach the control panel** (the live LAN address plus `openobject.local` on the frame), a network *address*, not a Wi-Fi setting, so the label over-promised: tapping "Wi-Fi" suggested joining or switching a wireless network. Renamed the visible label to **Network**, which (a) describes today's reach-address content, (b) matches this spec's own §11 title ("Network & first-run onboarding"), (c) covers the officially-supported **wired Ethernet** option (§11), which "Wi-Fi" would mislabel, and (d) still fits once Phase 2 folds the real Wi-Fi onboarding (the OpenObject-Setup AP + captive page) into this same card. It is a **label-only** change: the word "Wi-Fi" is kept everywhere it genuinely means joining the home wireless network (the Setup Guide's install step and troubleshooting, "set the frame's Wi-Fi while installing it"), and the internal ids stay `wifiCard`/`wifiToggle`/`wifiBody` (the card's Phase-2 job is Wi-Fi onboarding; renaming the ids/collapse wiring would be churn and breakage risk for no user benefit, the common display-label-≠-id pattern).
+- **Files.** `player/public/control.html` (the `section-title` label, and the card's lead comment), this doc (§11 stub note, §12 collapsible-cards list), Setup Guide (the Settings overview, the collapsible-cards line, and the "Reaching the frame" heading + body). Historical §20 entries that say "Wi-Fi card" are left as the record of that date.
+- **Verified on Mac** (Phase 1 preview): the Settings card header now reads **Network**, still collapses/expands, and still shows "Reach this panel from another device at …"; no console errors. (Matt, 2026-06-25.)
+
+### 2026-06-25: Rotation rows show the artist on the second line; the format/Connected becomes a pill after the title
+Each Rotation row's smaller second line used to carry the file's format (`JPEG`, `MP4 · Fill`) or the word `Connected`. It now carries the **artist** instead, and that type indicator moves up to a small **pill after the title**. The artist is sourced exactly like the Library card's subtitle: a connected piece reads its **collection registry artist** (`collectionsBySlug[...].artist`, the same value the server's `effArtist` uses for the Artist sort), an upload reads its **owner-set `artist`** field. It is shown as the bare name, **no "by " prefix**, and the line is **omitted entirely when there is no artist** (most uploads), so the row collapses to a single, vertically-centered title rather than leaving a blank line.
+- **The pill is the format, or "Connected" for connected pieces** (the teal-accented `rot-pill-connected`, matching the Library card's thumbnail badge `badge-connected`), restyled for the panel's dark meta row. The format is lower-case in the data and the pill uppercases it in CSS (`svg` -> `SVG`). The per-clip **Fill** marker that used to ride along in the old second line (`· Fill`) is kept as its own second pill, shown only when the clip center-crops, so no information is lost from the row.
+- **The title (first line) is unchanged: still `original_name`.** This matters for a connected piece whose *official* title embeds the artist, e.g. Bryan Brinkman's *"Azulejo Galo by Bryan Brinkman #101"*: the full official title still reads on line 1 and the artist line below it reads just "Bryan Brinkman". The artist is taken from the registry, never parsed out of the title, so the embedded "by Bryan Brinkman" is left alone and not treated as a duplicate. (Uploads still show their filename on line 1 here, not their custom title, as before; only the second line and the pill changed.)
+- **Files.** `player/public/control.js` (`rotRow`: artist + `typePill`/`fillPill`, restructured `.rot-name`), `control.css` (`.rot-name` now a flex row, new `.rot-title` ellipsis, `.rot-pill`/`.rot-pill-connected`). Setup Guide unchanged: it never described the row's two lines, so it stays accurate.
+- **Verified on Mac** (Phase 1, the dev rotation of 12: connected pieces + uploads): connected rows show the registry artist (Bryan Brinkman, Erick Calderon (Snowfro), Alex Kittoe, …) under a `CONNECTED` pill; *Azulejo Galo by Bryan Brinkman #101* keeps its full title with "Bryan Brinkman" below; uploads show a `PNG` pill and no second line, and a Fill upload shows `PNG` + `FILL`; the title still truncates with the pills held to the right; no console errors. (Matt, 2026-06-25.)
 
 ### 2026-06-25: Pruned §17 (Future enhancements) to empty
 Cleared the Future-enhancements list. With Connected Collections (§8) and SVG (§6) shipped and the remaining ideas dropped, nothing was left worth carrying as "to build later," so §17 keeps only its header and a short placeholder (it stays because it is cross-referenced from §6 and §8).

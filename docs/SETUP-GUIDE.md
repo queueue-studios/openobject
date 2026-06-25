@@ -113,7 +113,7 @@ is the set that's actually showing on the wall. The control panel has three tabs
 - **Rotation:** just what's playing, in order, plus how long each piece shows and Sequence or
   Shuffle. New uploads join the Rotation automatically, so you can keep a growing collection and
   still show just today's pick by removing the rest.
-- **Settings:** sleep schedule, connected collections, software updates, frame controls (restart, shut down), an optional password, how to reach the frame over Wi-Fi, and an About section,
+- **Settings:** sleep schedule, connected collections, software updates, frame controls (restart, shut down), an optional password, how to reach the frame on your network, and an About section,
   described below.
 
 **Sort your Library.** As your collection grows, use the **Sort** control on the right of the Library
@@ -204,7 +204,7 @@ back up on its own. **Want it off right now?** Tap **Sleep** at the top of the c
 button reads **Wake** while the screen is off. If you tap **Wake** during a scheduled sleep, the art
 stays on until the next scheduled sleep.
 
-The **Sleep Schedule**, **Connected Collections**, **Password**, and **Wi-Fi** sections **start
+The **Sleep Schedule**, **Connected Collections**, **Password**, and **Network** sections **start
 collapsed** to keep the Settings tab short. Tap a header to open one, and it stays the way you leave it.
 
 **Power** *(Settings tab)*. **Restart** restarts the OpenObject software, handy if the app seems
@@ -214,8 +214,8 @@ the frame.
 
 **Password** *(Settings tab)*. The control panel is open to anyone on your home network by default, which is usually fine at home. If you'd like to lock it, set a password under Settings: after that, this device and any other will ask for it before making changes. The art on the wall keeps playing either way, and you can turn the password back off any time.
 
-**Reaching the frame** *(Settings, Wi-Fi)*. You set the frame's Wi-Fi while installing it. The
-Wi-Fi section of the control panel lists the addresses you can open it at from another device.
+**Reaching the frame** *(Settings, Network)*. You set the frame's Wi-Fi while installing it. The
+Network section of the control panel lists the addresses you can open it at from another device.
 
 **About** *(Settings tab, at the bottom)*. A small card with the OpenObject name, a link to the
 project home at openobject.io, a link to the source code on GitHub, and the license. If you ever
