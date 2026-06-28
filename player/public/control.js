@@ -52,7 +52,6 @@ const rebootBtn = document.getElementById('rebootBtn');
 const powerStatus = document.getElementById('powerStatus');
 const reachEl = document.getElementById('reach');
 const frameAddr = document.getElementById('frameAddr');
-const frameMdns = document.getElementById('frameMdns');
 
 const loginOverlay = document.getElementById('loginOverlay');
 const loginForm = document.getElementById('loginForm');
@@ -971,11 +970,11 @@ async function loadSystem() {
     const url = `http://${ip}${s.port && Number(s.port) !== 80 ? ':' + s.port : ''}`;
     return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a>`;
   });
-  frameAddr.innerHTML = addrs.join(' or ') || '—';
-  const reachMdns = document.getElementById('reachMdns');
-  if (s.mdns) { frameMdns.textContent = s.mdns; frameMdns.href = `http://${s.mdns}`; reachMdns.hidden = false; }
-  else reachMdns.hidden = true;
-  reachEl.hidden = addrs.length === 0 && !s.mdns;
+  // mDNS name shown bare (openobject.local), linking to its http:// URL.
+  if (s.mdns) addrs.push(`<a href="http://${escapeHtml(s.mdns)}" target="_blank" rel="noopener">${escapeHtml(s.mdns)}</a>`);
+  // One address per line under the lead instruction.
+  frameAddr.innerHTML = addrs.map((a) => `<span class="reach-addr">${a}</span>`).join('') || '—';
+  reachEl.hidden = addrs.length === 0;
 }
 
 // Poll /healthz until the player is back up and a predicate holds (a new commit after an update,

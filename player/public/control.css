@@ -315,6 +315,8 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .device-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
 .device-row .update-btn { min-width: 112px; }   /* align Restart / Shut down */
 .device-note { color: var(--muted); font-size: 13px; }
+.reach-lead { margin: 0 0 6px; }                                    /* instruction → details: standard 6px gap */
+.reach-addrs { display: flex; flex-direction: column; gap: 2px; }   /* one address per line, tight */
 .device-note-block { margin: 10px 0 0; line-height: 1.6; max-width: 62ch; }
 .device-note-block strong { color: var(--text); font-weight: 600; }
 .device-status { margin-top: 12px; font-size: 13px; color: var(--text); }
