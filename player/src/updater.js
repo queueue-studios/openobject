@@ -15,13 +15,14 @@
 //   • Fast-forward ONLY — never a force-reset. Local divergence makes the update refuse.
 //   • Runtime data is never touched: player/data/ and uploads/ are gitignored, so a pull
 //     cannot disturb the library, settings, or art.
-//   • Two channels: track `main` (default) or tagged releases only.
+//   • One track: the current branch's upstream (origin/main). There is no "stable" lane.
+//     Tags / GitHub Releases are a point-in-time publishing concept (the version people cite,
+//     the Phase 2 image asset), NOT an update channel, so the frame can never lag a fix behind
+//     a release. Keep main always deployable (only vetted commits land there).
 
 const path = require('path');
 const fs = require('fs');
 const { execFile } = require('node:child_process');
-
-const db = require('./db');
 
 // All git commands run against the repo checkout — the repo ROOT, two levels above this
 // file (player/src/ → player/ → repo root), where .git lives. Dependency installs run in
@@ -29,8 +30,6 @@ const db = require('./db');
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const PLAYER_DIR = path.resolve(__dirname, '..');
 
-const CHANNELS = new Set(['main', 'releases']);
-const DEFAULT_CHANNEL = 'main';
 const GIT_TIMEOUT_MS = 20000;   // a hung network must never wedge a request (§9 offline-safe)
 const NPM_TIMEOUT_MS = 180000;  // a dependency reinstall gets longer
 
@@ -55,17 +54,6 @@ function run(cmd, args, opts = {}) {
   });
 }
 const git = (...args) => run('git', args);
-
-// ── Channel (setting) ───────────────────────────────────────────────
-function getChannel() {
-  const c = db.getSetting('update_channel', DEFAULT_CHANNEL);
-  return CHANNELS.has(c) ? c : DEFAULT_CHANNEL;
-}
-function setChannel(channel) {
-  if (!CHANNELS.has(channel)) throw new Error('channel must be "main" or "releases"');
-  db.setSetting('update_channel', channel);
-  return channel;
-}
 
 // ── Local git facts (no network) ────────────────────────────────────
 async function isGitCheckout() {
@@ -100,24 +88,12 @@ async function refreshCommitCache() {
 const cachedCommitSync = () => cachedCommit;
 
 // ── Comparing to upstream ───────────────────────────────────────────
-async function fetchUpstream(channel) {
-  const args =
-    channel === 'releases'
-      ? ['fetch', '--tags', '--prune', 'origin']
-      : ['fetch', '--prune', 'origin'];
-  return git(...args);
+async function fetchUpstream() {
+  return git('fetch', '--prune', 'origin');
 }
 
-// The ref to compare/advance to. main → the branch's upstream tracking ref (origin/main);
-// releases → the newest semver-looking tag.
-async function resolveTarget(channel) {
-  if (channel === 'releases') {
-    const r = await git('tag', '--list', '--sort=-v:refname');
-    if (r.code !== 0 || !r.stdout) return null;
-    const tags = r.stdout.split('\n').map((s) => s.trim()).filter(Boolean);
-    const tag = tags.find((t) => /^v?\d+\.\d+\.\d+/.test(t)) || null;
-    return tag ? { ref: tag, name: tag } : null;
-  }
+// The ref to compare/advance to: the current branch's upstream tracking ref (origin/main).
+async function resolveTarget() {
   const up = await git('rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}');
   if (up.code === 0 && up.stdout) return { ref: up.stdout, name: null };
   const br = await currentBranch();
@@ -212,20 +188,17 @@ function isKioskFacingPath(file) {
 
 // ── Public API ──────────────────────────────────────────────────────
 
-// Instant, no-network status for page load: what we're running + the channel. Offline-safe.
+// Instant, no-network status for page load: what we're running. Offline-safe.
 async function localStatus() {
-  const channel = getChannel();
-  const base = { channel, version: appVersion(), commit: await currentCommit(), branch: await currentBranch() };
+  const base = { version: appVersion(), commit: await currentCommit(), branch: await currentBranch() };
   if (!(await isGitCheckout())) return { ...base, isRepo: false, unavailable: 'not-a-git-checkout' };
   return { ...base, isRepo: true, date: await commitDate('HEAD'), repoUrl: await repoWebUrl() };
 }
 
-// Check for updates: fetch, then compare HEAD to the channel's target. Network call; a
+// Check for updates: fetch, then compare HEAD to the upstream target. Network call; a
 // failure is reported as `offline` and changes nothing.
 async function check() {
-  const channel = getChannel();
   const common = {
-    channel,
     version: appVersion(),
     commit: await currentCommit(),
     branch: await currentBranch(),
@@ -235,18 +208,12 @@ async function check() {
   };
   if (!(await isGitCheckout())) return { ...common, ok: false, unavailable: 'not-a-git-checkout' };
 
-  const f = await fetchUpstream(channel);
+  const f = await fetchUpstream();
   if (f.code !== 0) return { ...common, ok: false, offline: true, detail: f.stderr || 'could not reach GitHub' };
 
-  const target = await resolveTarget(channel);
+  const target = await resolveTarget();
   if (!target) {
-    return {
-      ...common,
-      ok: true,
-      updateAvailable: false,
-      target: null,
-      note: channel === 'releases' ? 'no published releases yet' : 'no upstream configured',
-    };
+    return { ...common, ok: true, updateAvailable: false, target: null, note: 'no upstream configured' };
   }
 
   const { behind, ahead, canFastForward } = await compare(target.ref);
@@ -287,14 +254,11 @@ async function check() {
 async function apply() {
   if (!(await isGitCheckout())) return { ok: false, error: 'not a git checkout — update unavailable' };
 
-  const channel = getChannel();
-  const f = await fetchUpstream(channel);
+  const f = await fetchUpstream();
   if (f.code !== 0) return { ok: false, offline: true, error: 'could not reach GitHub' };
 
-  const target = await resolveTarget(channel);
-  if (!target) {
-    return { ok: false, error: channel === 'releases' ? 'no published releases yet' : 'no upstream configured' };
-  }
+  const target = await resolveTarget();
+  if (!target) return { ok: false, error: 'no upstream configured' };
 
   const { behind, canFastForward } = await compare(target.ref);
   if (behind === 0) return { ok: true, updated: false, upToDate: true };
@@ -341,8 +305,6 @@ async function apply() {
 }
 
 module.exports = {
-  getChannel,
-  setChannel,
   isAppRelevantPath,
   isKioskFacingPath,
   localStatus,
@@ -350,7 +312,6 @@ module.exports = {
   apply,
   refreshCommitCache,
   cachedCommitSync,
-  CHANNELS,
   REPO_ROOT,
   PLAYER_DIR,
 };

@@ -404,9 +404,12 @@ player. The idle/boot screen flashes briefly; the panel returns on the new versi
   website (`site/`), or repo meta report **up to date** instead of nagging a restart.
 - **Runtime data is never touched.** `player/data/` and uploads are gitignored, so a
   pull never disturbs the library, settings, or art.
-- **Update channel** (setting): track the **`main`** branch (default) or **tagged
-  releases only** (conservative). Releases also carry the prebuilt USB image (above),
-  but self-update pulls *source*, not the image.
+- **One update track:** the frame always fast-forwards to the upstream of `main`
+  (`origin/main`). There is no separate "stable" channel, so a fix can never sit on
+  `main` waiting for a release before frames see it; the cost is that `main` must stay
+  always-deployable (only vetted commits land there). Tags / GitHub Releases remain a
+  point-in-time **publishing** concept (the cited version, the prebuilt USB image),
+  not an update lane (§20, 2026-06-30).
 - **Local-first and offline-safe** (§9): if GitHub is unreachable the check fails
   gracefully and playback is unaffected. Updating is always **owner-initiated**, never
   automatic, never in the playback path.
@@ -422,12 +425,13 @@ unchanged.
 **supervisor** (`player/supervisor.js`) that relaunches `node server.js` when the player exits
 with restart code 75 after an update; `npm run start:direct` runs the server without it (manual
 restart). Routes: `GET /api/update` (no-network status for page load), `POST /api/update/check`
-(fetch + compare to the channel's target), `POST /api/update/apply` (fast-forward + deps-if-changed
-+ restart), `PUT /api/update/channel`. `/healthz` returns `{version, commit}` so the panel can
+(fetch + compare to the upstream of `main`), `POST /api/update/apply` (fast-forward + deps-if-changed
++ restart). `/healthz` returns `{version, commit}` so the panel can
 confirm the relaunched version. All git runs via `execFile` against the **repo root**; the player
 app and its `package.json`/lockfile live in `player/`, so a dependency reinstall runs there. The
-card shows `version · build date · commit` (no jargon); the update channel is a backend setting
-(`update_channel`: `main` | `releases`) but v1 surfaces no toggle and tracks `main` (§20). Verified on macOS against a
+card shows `version · build date · commit` (no jargon). The frame tracks a single ref, the upstream
+of `main` (`origin/main`); there is no channel setting (the dormant `update_channel` track was
+removed, §20 2026-06-30). Verified on macOS against a
 throwaway bare-clone "fake origin" (no real upstream commits, never touches GitHub): check →
 fast-forward + restart (commit flips on `/healthz`) → divergence refusal, plus the offline and
 not-a-git-checkout paths. Phase 2 swaps the supervisor for a systemd unit; the mechanism is
@@ -538,6 +542,9 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-06-30: Self-update simplified to a single track (the dormant `releases` channel removed)
+The updater carried two channels: `main` (default, tracks `origin/main`) and `releases` (advances only to the newest semver tag). The `releases` track had **no UI** (it was settable only via `PUT /api/update/channel`, which nothing called), so it was dormant machinery, but it created a real failure mode and confusion: a fix could sit on `main` while the newest tag lagged behind it, so a frame on `releases` would report "up to date" and never receive the fix (this nearly bit the 2026-06-30 display fixes, which are on `main` but not in any tag past v1.0.0). Matt's model: the updater should always track `main`; tags / GitHub Releases are a **point-in-time publishing** concept (the cited version, the Phase 2 USB image asset), not an update lane (Matt, 2026-06-30). So the channel was removed entirely: `getChannel`/`setChannel`/`CHANNELS`/`DEFAULT_CHANNEL` and the `update_channel` setting are gone, `fetchUpstream`/`resolveTarget` take no argument and always target the current branch's upstream (`@{u}` → `origin/main`), and the `channel` field is dropped from every status response. The tradeoff, recorded plainly: with no "stable" gate, a frame pulls whatever is on `main` at its next owner-initiated check, so **`main` must stay always-deployable** (only vetted commits land there, which is already the practice). This supersedes the two earlier channel entries below (2026-06-17 "toggle removed from the UI" and the original "Channel setting"); the tags themselves and GitHub Releases are untouched. **Files.** `player/src/updater.js` (channel logic removed; `db` require dropped, now unused), `player/server.js` (the `PUT /api/update/channel` route removed; check comment reworded). **Setup Guide unchanged:** it never described an update channel. **Verified on Mac:** `localStatus()` and `check()` run clean with no `channel` field, `check()` resolves `target: origin/main` and reports up-to-date correctly; both files parse.
 
 ### 2026-06-30: Add-connected modal opens with no collection pre-selected
 The **Add connected artwork** dialog used to **pre-check the first collection** in the list, but that is rarely the one the owner wants, so the alphabetical first piece looked chosen by default (Matt, 2026-06-30). It now opens with **nothing selected**: the owner must pick a collection first. The Token ID field (and the "Supported Token IDs" hint) stay hidden until a collection is chosen, then appear for a normal collection (focus moving into the field) or stay hidden and auto-resolve for a single-piece `fixedToken` collection. The preview/add calls were already guarded against a null selection, so this is a panel-only change with no new failure mode. **Setup Guide unchanged:** it says "enter your Token ID" and never described a default collection. **Files.** `player/public/control.js` (`renderPicker` no longer defaults to the first slug; `syncTokenInput` hides the field while nothing is picked; the open path drops the now-moot auto-preview and focus). **Verified on Mac:** the modal opens with 0 of 12 rows checked and **Add** disabled; picking Azulejo reveals and focuses the Token ID field, picking Golden Lining keeps it hidden and auto-resolves; only one row selects at a time.

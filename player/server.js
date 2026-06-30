@@ -635,19 +635,9 @@ app.get('/api/update', ah(async (_req, res) => {
   res.json({ ...(await updater.localStatus()), supervised: SUPERVISED });
 }));
 
-// Check for updates: fetch + compare to the channel's target. A network failure → offline.
+// Check for updates: fetch + compare to the upstream (origin/main). A network failure → offline.
 app.post('/api/update/check', ah(async (_req, res) => {
   res.json(await updater.check());
-}));
-
-// Update channel: track `main` (default) or tagged releases only (HANDOFF §12, §15).
-app.put('/api/update/channel', ah(async (req, res) => {
-  try {
-    updater.setChannel((req.body || {}).channel);
-  } catch (e) {
-    return res.status(400).json({ error: e.message });
-  }
-  res.json(await updater.localStatus());
 }));
 
 // Update & restart: fast-forward + (deps if changed), then — only if that succeeded and we're
