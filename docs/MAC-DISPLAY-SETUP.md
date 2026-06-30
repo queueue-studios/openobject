@@ -89,6 +89,7 @@ open -na "Google Chrome" --args --user-data-dir="/tmp/oo-kiosk" --kiosk "http://
 - **Exit full screen:** press **Cmd and Q**.
 - **Go back to full screen:** run the command from Step 5 again.
 - **Change your art:** open the control panel in Safari (http://localhost:3000), make your changes, and the display updates on its own within a few seconds. No need to restart it.
+- **The Mac stays awake:** while the display is showing, OpenObject asks the Mac to keep the screen on, so your art will not dim or sleep on you. (This works because the display runs from your own Mac at localhost. If you instead just open the art in a browser from another device, that device follows its own normal sleep settings.)
 - **Stop OpenObject entirely:** go to the Terminal window running the server and press **Control and C**, or just close the window.
 
 ## If something is not right

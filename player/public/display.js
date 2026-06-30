@@ -283,3 +283,22 @@ async function tick() {
 
 tick();
 setInterval(tick, 5000); // fold in library/settings changes without restarting the loop
+
+// Keep the screen awake while art is showing. The display IS the display, so a device that would
+// otherwise dim or sleep mid-rotation (a Mac or laptop running the player) should stay lit. Hold a
+// Screen Wake Lock whenever this page is visible, and re-acquire it after the system releases it
+// (the lock drops on a tab switch or a manual lock; visibilitychange re-requests on return). No UI:
+// staying awake is the display's whole job. The dedicated frame already stays on at the OS level, so
+// this is belt-and-suspenders there. The API needs a SECURE CONTEXT (https or localhost), so it
+// engages on the localhost display paths (the frame's kiosk, "your Mac as the display") and harmlessly
+// no-ops where unavailable, notably when the page is opened over http://openobject.local (not secure).
+let wakeLock = null;
+async function keepAwake() {
+  if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; }, { once: true });
+  } catch { /* denied or interrupted — visibilitychange will retry */ }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
+keepAwake();
