@@ -1156,10 +1156,8 @@ function openConnected() {
   cxSlug = null; cxResolved = null;
   cxToken.value = '';
   cxResult.hidden = true; cxStatus(''); cxAdd.disabled = true;
-  renderPicker();
-  maybeAutoPreview();                       // a fixed-token collection resolves its one piece up front
+  renderPicker();                           // no collection pre-selected: the owner picks one first
   cxOverlay.hidden = false;
-  if (!cxToken.hidden) setTimeout(() => cxToken.focus(), 0);
 }
 const closeConnected = () => { cxOverlay.hidden = true; };
 
@@ -1170,7 +1168,7 @@ function renderPicker() {
     cxAdd.disabled = true;
     return;
   }
-  if (!cxSlug || !visible.some((c) => c.slug === cxSlug)) cxSlug = visible[0].slug; // default-select first
+  if (cxSlug && !visible.some((c) => c.slug === cxSlug)) cxSlug = null; // no default; the owner must pick a collection
   cxCollections.replaceChildren(...visible.map((c) => {
     const row = document.createElement('div');
     row.className = 'cx-col' + (c.slug === cxSlug ? ' sel' : '');
@@ -1180,7 +1178,7 @@ function renderPicker() {
         <span class="cx-col-sub">${escapeHtml(c.artist)}</span>
       </span>
       <span class="cx-col-check">✓</span>`;
-    row.addEventListener('click', () => { cxSlug = c.slug; resetResolve(); renderPicker(); maybeAutoPreview(); });
+    row.addEventListener('click', () => { cxSlug = c.slug; resetResolve(); renderPicker(); maybeAutoPreview(); if (!cxToken.hidden) cxToken.focus(); });
     return row;
   }));
   syncTokenInput();
@@ -1192,6 +1190,9 @@ const INFO_ICON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" s
 // A fixedToken collection supports a single piece, so the Token ID field is hidden and the piece is
 // resolved automatically; every other collection shows the field and waits for a Token ID.
 function syncTokenInput() {
+  // No collection picked yet (the owner must choose one first): nothing to enter, so hide the Token ID
+  // field and the supported-IDs hint until a selection exists.
+  if (!cxSlug) { cxTokenLabel.hidden = true; cxToken.hidden = true; cxSupported.hidden = true; return; }
   const c = collectionsBySlug[cxSlug] || {};
   const fixed = !!c.fixedToken;
   cxTokenLabel.hidden = fixed;
