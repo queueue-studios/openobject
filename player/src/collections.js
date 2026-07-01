@@ -113,11 +113,6 @@ const REGISTRY = [
     // and The Bloom's #startOverlay): a brief blank while the photo settles replaces the stray text,
     // keeping the stage chrome-free (§6).
     hideSelectors: ['#p5_loading'],
-    // The artist's draw() greys the whole canvas with a per-frame filter(GRAY) (a full-canvas readback every
-    // frame), which WebKit/Safari tile-corrupts (gray/black blocks on iPhone/iPad; perfect on Chromium).
-    // Override draw() with a filter-free crossfade (pre-grey once, then draw grey + colour at opacity): no
-    // per-frame readback, identical visual + motion, colour stays full-res (see PRERENDER_HOOK). Fixes Safari.
-    preRender: true,
   },
   {
     slug: 'perfect-everything',
@@ -579,49 +574,6 @@ const SPEED_HOOK = `
 })();
 </script>`;
 
-// Injected at the very END of a `preRender` collection's bundle (Golden Lining), AFTER the artist's sketch
-// so it overrides the global draw(). The artist's draw() greys the whole canvas with a per-frame `filter(GRAY)`
-// (a full-canvas pixel read-back every frame) then draws the colour photo on top at the crossfade opacity;
-// that per-frame readback is what WebKit/Safari tile-corrupts (gray/black blocks on iPhone/iPad; perfect on
-// Chromium). This replaces it with a filter-FREE equivalent: pre-grey the photo ONCE using p5's own GRAY
-// filter (so the tone is identical), then each frame draw the pre-greyed image plus the colour photo at the
-// same opacity. No per-frame readback, so WebKit has nothing to corrupt. Visual + motion are identical, the
-// COLOUR layer stays full resolution; only the one-time grey buffer is capped (a 4530px-wide canvas exceeds
-// iOS's max canvas dimension, and the grey is only ever shown at display res, so the cap is invisible).
-// Serve-side render fix; the desktop archival bundle stays verbatim (the dropScripts split). Faithful to the
-// artist's VISUAL RESULT, which a corrupted render is not (Matt's framing).
-const PRERENDER_HOOK = `
-<script>
-(function(){
-  var greyImg = null, built = false;
-  function ensureGrey(){
-    if (built || typeof baseImage === 'undefined' || !baseImage || !baseImage.width) return;
-    built = true;
-    try {
-      var cap = 2048; // grey backdrop only; shown at display res, and 4530px would exceed iOS's max canvas dim
-      var s = Math.min(cap / baseImage.width, cap / baseImage.height, 1);
-      var gw = Math.max(1, Math.round(baseImage.width * s)), gh = Math.max(1, Math.round(baseImage.height * s));
-      var g = createGraphics(gw, gh);
-      g.image(baseImage, 0, 0, gw, gh);
-      g.filter(GRAY);
-      greyImg = g;
-    } catch (e) { greyImg = null; }
-  }
-  window.draw = function(){
-    if (typeof baseImage === 'undefined' || !baseImage || !baseImage.width) return;
-    ensureGrey();
-    clear();
-    var s = Math.min(width / baseImage.width, height / baseImage.height, 1);
-    var dw = baseImage.width * s, dh = baseImage.height * s;
-    if (greyImg) { tint(255, 255, 255, 255); image(greyImg, width / 2, height / 2, dw, dh); }
-    var a = Math.max(0, Math.min(255, Math.floor((window.opacity || 0) * 255 / 100)));
-    tint(255, 255, 255, a);
-    image(baseImage, width / 2, height / 2, dw, dh);
-    noTint();
-  };
-})();
-</script>`;
-
 // Injected into "Lost in Moffat County" (Jeremy Booth): the piece is a time-aware day/night photo that
 // also has a click "easter egg" (its touchEnded toggles a global `easterEgg`, swapping in an animated GIF
 // overlay). With ?ooanim=1 (Animate on) we engage that overlay hands-free: wait until the sketch's setup()
@@ -883,11 +835,6 @@ async function mirrorInto(c, out, sourceUrl) {
     : c && c.speedControl ? (c.speedHook === 'squiggle' ? SQUIGGLE_HOOK : SPEED_HOOK)
     : (c && c.animatable !== false ? ANIMATE_HOOK : '');
   if (hook) html = html.includes('</body>') ? html.replace('</body>', hook + '\n</body>') : html + hook;
-
-  // A `preRender` collection (Golden Lining) gets its draw() overridden to drop the per-frame filter(GRAY)
-  // (see PRERENDER_HOOK). Appended at the VERY END, after the artist's sketch script, so the override wins.
-  if (c && c.preRender) html += '\n' + PRERENDER_HOOK;
-
   fs.mkdirSync(out, { recursive: true });
   fs.writeFileSync(path.join(out, 'index.html'), html, 'utf8');
 }
