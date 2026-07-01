@@ -33,7 +33,7 @@ it is, and positions the architecture for a future tvOS companion app.
 3. **Ship a proper Mac app** that ordinary people install and run to host
    OpenObject on their Mac.
 4. **Land a signed, notarized `.dmg`.** App Store is explicitly **not** a goal
-   (see §7); the notarized Developer ID `.dmg` is the target.
+   (see §8); the notarized Developer ID `.dmg` is the target.
 
 ### Non-goals for this plan
 - The **tvOS companion app** is not built here. This plan only puts the
@@ -182,8 +182,9 @@ Additive, off the playback path, safe for the frame.
   library DB and uploads (the equivalent of `player/data/` and `uploads/`).
 
 ### Phase C: Signing, notarization, delivery
-- **C1.** Codesign with the LLC Developer ID; hardened runtime; entitlements for the
-  bundled Node child process and the local server.
+- **C1.** Codesign with the LLC Developer ID (the **Queueue Studios LLC** team, not the
+  old Personal Team; both are signed into Xcode, so select deliberately); hardened
+  runtime; entitlements for the bundled Node child process and the local server.
 - **C2.** Notarize and staple; build the drag-to-Applications `.dmg`.
 - **C3.** Integrate Sparkle: generate signing keys, publish the appcast, wire "Check
   for Updates."
@@ -199,10 +200,56 @@ Additive, off the playback path, safe for the frame.
   **Mac App guide** as the hero for no-frame users, the DIY Terminal path
   (`MAC-DISPLAY-SETUP.md`) demoted to a developer appendix, tvOS as a future stub.
 - **D4.** Setup Guide stays in lockstep with shipped behavior.
+- **D5.** Add the **"viewing is not owning" positioning statement** (below) to the
+  README, the Mac App guide (right where the owner is about to upload), and the
+  homepage. It is a values statement, always true, so it is not gated on the app
+  shipping (see the timing clocks in §7).
+
+**Positioning statement (viewing is not owning).** A short, reassuring note that draws
+the owning/using line honestly, so artists are met with the distinction rather than
+surprised by it. Keep the voice consistent with the "source available for noncommercial
+use" language and the White Walls framing. Draft copy:
+
+> **On displaying art you love**
+> Anyone can view digital art in a browser, download it, or take a screenshot. That has
+> always been true, and it isn't what OpenObject changes. Viewing art and *using* art are
+> different things.
+> OpenObject is built to display art you own, or otherwise have the right to display, and
+> it's intended for home use. If you display art in public, please make sure you have a
+> license to do so. We intentionally avoided wallet connections and their complexity: the
+> process is simply to save a local copy of your art and upload it to OpenObject to
+> display it.
 
 ---
 
-## 7. The multi-Host / discovery story (and how it sets up Apple TV)
+## 7. Docs and license timing (three clocks)
+
+These three things answer to different clocks, so they are sequenced separately rather
+than done together:
+
+- **Positioning statement (§ D5): anytime.** It is a values statement, always true, and
+  not gated on any shipped behavior. Land it in the README and homepage whenever docs
+  are next touched, independent of the `.dmg` timeline.
+- **LICENSE: only on a business-model decision, never as part of this work.** Shipping a
+  notarized `.dmg` (or even the App Store, which is not a goal) does **not** require
+  changing the source license. Compiled binaries of PolyForm-Noncommercial source can be
+  distributed as-is. The trigger to revisit `LICENSE` is a **rights or monetization**
+  decision (charging for the app, granting different rights for the binary than the
+  source), not a distribution or technical one. Absent that, leave `LICENSE` exactly as
+  is. The one *new* license artifact the Mac app may want is separate: a short
+  **end-user note / EULA for the app itself** (an addition shipped with the binary, and
+  required if the App Store is ever pursued), handled at Phase C/D, not a change to the
+  repo `LICENSE`.
+- **README, then homepage: gate on shipped reality.** Update the **README** to reposition
+  around the Mac app when the `.dmg` actually exists and is downloadable (end of Phase C
+  / start of Phase D); repositioning it to say "download the Mac app" before there is one
+  would mislead the next owner. Update the **homepage (openobject.io) last**, after the
+  README settles (matches the doc-overhaul sequence: new guide first, incremental docs,
+  website last; the homepage update needs a gh-pages re-publish that keeps the CNAME).
+
+---
+
+## 8. The multi-Host / discovery story (and how it sets up Apple TV)
 
 The most forward-looking part, and the reason Phase A matters even before the app.
 Today the frame **fuses** Host and Display into one box. Splitting them, and making the
@@ -236,7 +283,7 @@ pointing at a reachable test server. Not built now; a non-issue when tvOS arrive
 
 ---
 
-## 8. Guardrails (what must not change)
+## 9. Guardrails (what must not change)
 
 - **The XXL path is untouched.** `installer/` and the git-pull self-update model stay
   exactly as they are. No change to this plan may regress the frame.
@@ -253,7 +300,7 @@ pointing at a reachable test server. Not built now; a non-issue when tvOS arrive
 
 ---
 
-## 9. Open items to settle during execution (not blocking the plan)
+## 10. Open items to settle during execution (not blocking the plan)
 
 - Exact Chrome invocation for the display (kiosk vs app mode, choosing a monitor,
   behavior when Chrome is not installed).
