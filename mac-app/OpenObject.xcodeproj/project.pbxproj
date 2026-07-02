@@ -54,6 +54,7 @@
 			buildConfigurationList = 363FE4D424833BD82FE419FB /* Build configuration list for PBXNativeTarget "OpenObject" */;
 			buildPhases = (
 				4AA1C9D5C5617A996D8C9F2D /* Sources */,
+				E7F3DE4159226D427EE34797 /* Bundle engine (Node + player) */,
 			);
 			buildRules = (
 			);
@@ -98,6 +99,28 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		E7F3DE4159226D427EE34797 /* Bundle engine (Node + player) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle engine (Node + player)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/scripts/bundle-engine.sh\"";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		4AA1C9D5C5617A996D8C9F2D /* Sources */ = {
