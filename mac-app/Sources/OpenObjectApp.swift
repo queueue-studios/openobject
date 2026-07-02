@@ -20,10 +20,9 @@ struct OpenObjectApp: App {
                 .environmentObject(appDelegate.discovery)
                 .environmentObject(appDelegate.roleStore)
         }
-        // Opens compact by default but stays user-resizable (contentMinSize lets the user drag it
-        // larger, e.g. to reveal a long host name). The resize isn't persisted — see WindowConfigurator.
-        .defaultSize(width: 420, height: 380)
-        .windowResizability(.contentMinSize)
+        // The window sizes exactly to its content: compact for a Host or two, taller for several,
+        // and the list caps + scrolls beyond that (so the window never runs off-screen).
+        .windowResizability(.contentSize)
 
         // The menu-bar item. Fuller start/stop, open control panel/display, and role/status UX
         // arrive in B5; for now it mirrors the Host status and offers Open Control Panel + Quit.

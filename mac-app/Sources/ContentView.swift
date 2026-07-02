@@ -17,15 +17,21 @@ struct ContentView: View {
             Text("OpenObject")
                 .font(.title.weight(.semibold))
 
-            roleSection
-
-            Divider()
-            hostsView
+            if showOnboarding {
+                // A focused first-run choice: just the card (the found Hosts are its buttons, so the
+                // usual list below would be redundant, and it also freed the card from being squeezed).
+                onboardingCard
+            } else {
+                roleSection
+                Divider()
+                hostsView
+            }
         }
         .padding(40)
-        // Compact by default, user-resizable (long host names widen to read in full), and the resize
-        // is not persisted — see WindowConfigurator. Top-aligned so extra height falls below content.
-        .frame(minWidth: 380, maxWidth: .infinity, minHeight: 320, maxHeight: .infinity, alignment: .top)
+        // Fixed default width (420), growable to read a long host name; height follows the content so
+        // the window grows to fit a few Hosts and the list scrolls only when there are many (see
+        // hostsView). Resizes aren't persisted — see WindowConfigurator.
+        .frame(minWidth: 420, maxWidth: .infinity)
         .background(WindowConfigurator())
     }
 
@@ -74,6 +80,52 @@ struct ContentView: View {
         Button("Run OpenObject on this Mac") { roleStore.runAsHost() }
     }
 
+    // MARK: - First-run onboarding (only when another Host is found)
+
+    // Hosts that aren't this Mac's own running Host.
+    private var otherHosts: [HostDiscovery.Host] {
+        discovery.hosts.filter { $0.id != engine.hostId }
+    }
+
+    // Offer the choice only when there's a real one to make: the owner hasn't chosen yet, our own
+    // Host is up (so `otherHosts` correctly excludes it), and at least one other Host is present. A
+    // fresh Mac with no other Host around never sees this and just runs as a Host (zero friction).
+    private var showOnboarding: Bool {
+        !roleStore.hasChosen && engine.hostId != nil && !otherHosts.isEmpty
+    }
+
+    @ViewBuilder private var onboardingCard: some View {
+        VStack(spacing: 12) {
+            Text("OpenObject is already on your network")
+                .font(.headline)
+                .multilineTextAlignment(.center)
+            Text("Use this Mac to view and control it, or run a separate OpenObject here.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: 8) {
+                ForEach(otherHosts) { host in
+                    Button {
+                        roleStore.view(hostId: host.id, name: host.name)
+                    } label: {
+                        Text("View \(host.name)").lineLimit(1).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                Button {
+                    roleStore.runAsHost()
+                } label: {
+                    Text("Run OpenObject on this Mac").frame(maxWidth: .infinity)
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.10)))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.secondary.opacity(0.25)))
+    }
+
     // MARK: - Bottom: discovered Hosts (selectable to switch roles)
 
     @ViewBuilder private var hostsView: some View {
@@ -84,14 +136,29 @@ struct ContentView: View {
                 Text("Searching…")
                     .font(.callout)
                     .foregroundStyle(.secondary)
-            } else {
+            } else if orderedHosts.count <= maxRowsBeforeScroll {
+                // A few Hosts: show them all; the window grows to fit (Matt's Q2, 2026-07-02).
                 ForEach(orderedHosts) { host in
                     hostRow(host)
                 }
+            } else {
+                // Many Hosts (rare): cap the height and scroll, so the window doesn't run off-screen.
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(orderedHosts) { host in
+                            hostRow(host)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(height: rowHeight * Double(maxRowsBeforeScroll))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+
+    private let maxRowsBeforeScroll = 5
+    private let rowHeight: Double = 26
 
     @ViewBuilder private func hostRow(_ host: HostDiscovery.Host) -> some View {
         let active = isActive(host)
@@ -165,21 +232,15 @@ struct ContentView: View {
 // restoration so the window always opens at its default size — the user may resize it (e.g. to reveal
 // a long host name) but the resize is not remembered across launches.
 private struct WindowConfigurator: NSViewRepresentable {
-    // The default size the window opens at every launch. Resizes during a session are allowed but
-    // not remembered (Matt, 2026-07-02).
-    static let defaultSize = NSSize(width: 420, height: 380)
-
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
         DispatchQueue.main.async {
             guard let window = view.window else { return }
-            // Stop the frame from being remembered across launches: SwiftUI autosaves the window
-            // frame (and macOS restores it) independently, so isRestorable = false is not enough on
-            // its own. Clear the autosave name AND force the default size, so a prior session's
-            // resize never carries over.
+            // Don't remember the frame across launches: SwiftUI autosaves the window frame (and macOS
+            // restores it) independently, so a prior session's resize would otherwise carry over. With
+            // autosave off + not restorable, the window reopens at its content-driven size each launch.
             window.isRestorable = false
             window.setFrameAutosaveName("")
-            window.setContentSize(Self.defaultSize)
         }
         return view
     }
