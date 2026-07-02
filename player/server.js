@@ -687,7 +687,8 @@ function lanAddresses() {
 
 app.get('/api/system', (_req, res) => {
   res.json({
-    supervised: SUPERVISED,
+    supervised: SUPERVISED, // this Host can soft-restart itself (relaunch available) → show Restart
+    isDevice: process.platform === 'linux', // this Host can OS-power (the frame) → show Reboot / Shut down
     port: PORT,
     // openobject.local resolves only where mDNS is configured (the installed frame, which is Linux),
     // not on a Mac/standalone, so only advertise it there; the control panel hides the line otherwise.

@@ -45,6 +45,7 @@ const applyUpdateBtn = document.getElementById('applyUpdateBtn');
 const updApply = document.getElementById('updApply');
 const dismissUpdateBtn = document.getElementById('dismissUpdateBtn');
 const updStatus = document.getElementById('updStatus');
+const updateCard = document.querySelector('section.update'); // whole Software Update card (git-pull)
 
 const restartBtn = document.getElementById('restartBtn');
 const shutdownBtn = document.getElementById('shutdownBtn');
@@ -761,8 +762,9 @@ async function loadUpdate() {
   const s = await fetch('/api/update').then((r) => r.json());
   renderVersion(s);
   if (s.unavailable === 'not-a-git-checkout') {
-    setUpdStatus('Automatic updates aren’t available for this install.');
-    checkUpdateBtn.disabled = true;
+    // Git-pull self-update is the frame's mechanism. A Host that isn't a git checkout (the Mac app,
+    // which updates through the app itself) hides the whole card rather than showing a dead one.
+    if (updateCard) updateCard.hidden = true;
   }
 }
 
@@ -965,6 +967,22 @@ async function doReboot() {
 async function loadSystem() {
   const s = await fetch('/api/system').then((r) => r.json()).catch(() => null);
   if (!s) return;
+
+  // Power card, gated by what the HOST (not the browsing device) can do: OS power (Reboot / Shut
+  // down) needs the frame; the soft Restart needs a supervisor to relaunch. The Mac app as Host has
+  // neither, so those rows hide (and the whole card if nothing applies). Restart on a Mac Host is
+  // instead "quit and reopen the app".
+  const canPower = !!s.isDevice;      // Reboot / Shut down
+  const canRestart = !!s.supervised;  // soft Restart
+  const rebootRow = rebootBtn && rebootBtn.closest('.device-row');
+  const shutdownRow = shutdownBtn && shutdownBtn.closest('.device-row');
+  const restartRow = restartBtn && restartBtn.closest('.device-row');
+  if (rebootRow) rebootRow.hidden = !canPower;
+  if (shutdownRow) shutdownRow.hidden = !canPower;
+  if (restartRow) restartRow.hidden = !canRestart;
+  const powerCard = restartBtn && restartBtn.closest('section');
+  if (powerCard) powerCard.hidden = !(canPower || canRestart);
+
   const addrs = (s.addresses || []).map((ip) => {
     // Omit the port for plain http (:80) so the frame shows a clean http://<ip> (HANDOFF §11).
     const url = `http://${ip}${s.port && Number(s.port) !== 80 ? ':' + s.port : ''}`;
