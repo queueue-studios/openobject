@@ -1,0 +1,48 @@
+# OpenObject Mac app — XcodeGen project spec (MAC-APP-PLAN §B; HANDOFF §20, 2026-07-01).
+#
+# This YAML is the maintainable source of truth for the Xcode project; `xcodegen generate`
+# produces OpenObject.xcodeproj from it. The generated .xcodeproj is ALSO committed, so the app
+# builds with only `xcodebuild` and no extra tooling (the "checked-in Xcode project" decision,
+# 2026-07-01). Regenerate after editing this file: `cd mac-app && xcodegen generate`.
+#
+# Phase B1a: a buildable skeleton — a Dock icon + window AND a menu-bar item, nothing else yet.
+# No bundled Node / player/ (that is B1b), no server (B2). Unsigned/local; the Queueue Studios LLC
+# Developer ID, hardened runtime, and notarization are wired in Phase C.
+
+name: OpenObject
+
+options:
+  bundleIdPrefix: io.openobject
+  deploymentTarget:
+    macOS: "13.0"       # MenuBarExtra requires macOS 13+
+  createIntermediateGroups: true
+
+settings:
+  base:
+    ARCHS: arm64        # Apple Silicon only for v1 (universal is a Phase C expansion if wanted)
+    ONLY_ACTIVE_ARCH: "NO"
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0.1"   # matches the engine; Phase C's release workflow auto-syncs this
+    CURRENT_PROJECT_VERSION: "1"
+    # Local/unsigned for now so it builds and runs without a Developer ID. Phase C sets the real
+    # signing identity (Queueue Studios LLC), hardened runtime, and entitlements.
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGNING_REQUIRED: "NO"
+    ENABLE_HARDENED_RUNTIME: "NO"
+
+targets:
+  OpenObject:
+    type: application
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: Sources
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+        PRODUCT_NAME: OpenObject
+        PRODUCT_BUNDLE_IDENTIFIER: io.openobject.OpenObject
+        INFOPLIST_KEY_CFBundleDisplayName: OpenObject
+        INFOPLIST_KEY_LSUIElement: "NO"   # NO = show a Dock icon (we want BOTH Dock and menu bar)
+        INFOPLIST_KEY_NSHumanReadableCopyright: "OpenObject. Source available for noncommercial use (PolyForm Noncommercial)."

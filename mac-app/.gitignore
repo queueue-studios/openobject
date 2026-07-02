@@ -1,0 +1,13 @@
+# Xcode / build products for the Mac app shell. The generated OpenObject.xcodeproj IS committed
+# (so the app builds with only xcodebuild); only per-user and build output are ignored.
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Bundled engine payload copied in at build time (B1b): a pinned Node binary + a snapshot of
+# player/. These are build inputs staged locally, never committed (the engine lives in player/).
+Resources/node
+Resources/player/
