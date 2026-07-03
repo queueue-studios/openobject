@@ -14,7 +14,7 @@ name: OpenObject
 options:
   bundleIdPrefix: io.openobject
   deploymentTarget:
-    macOS: "13.0"       # MenuBarExtra requires macOS 13+
+    macOS: "15.0"       # macOS 15+ only (Matt, 2026-07-03); MenuBarExtra needs 13+, this is a superset
   createIntermediateGroups: true
 
 settings:
@@ -35,15 +35,17 @@ targets:
   OpenObject:
     type: application
     platform: macOS
-    deploymentTarget: "13.0"
+    deploymentTarget: "15.0"
     sources:
       - path: Sources
+      - path: Assets.xcassets
     settings:
       base:
         GENERATE_INFOPLIST_FILE: "YES"
         PRODUCT_NAME: OpenObject
         PRODUCT_BUNDLE_IDENTIFIER: io.openobject.OpenObject
         INFOPLIST_KEY_CFBundleDisplayName: OpenObject
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_LSUIElement: "NO"   # NO = show a Dock icon (we want BOTH Dock and menu bar)
         INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright 2026 Queueue Studios LLC. All rights reserved."
     postBuildScripts:

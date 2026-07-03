@@ -11,9 +11,11 @@
 >   finds and can view/control the real XXL frame.
 > - **Phase C — IN PROGRESS.** The **signing/notarization pipeline is validated** (step 0
 >   "smoke-test"): a signed, notarized, stapled build under the **Queueue Studios LLC**
->   Developer ID (`mac-app/scripts/sign-and-notarize.sh`). **Next, per the agreed order
->   (HANDOFF §20, 2026-07-03):** branding (real OPEN/OBJECT icon + wordmark) → remaining
->   polish (e.g. per-Host renaming) → the Phase C **release** (`.dmg` + Sparkle) → **Phase D docs**.
+>   Developer ID (`mac-app/scripts/sign-and-notarize.sh`). **Branding: app icon DONE** — the
+>   real OPEN/OBJECT wordmark is wired as the AppIcon (macOS rounds it), and the deployment
+>   target is now **macOS 15**. **Next, per the agreed order (HANDOFF §20, 2026-07-03):**
+>   finish branding (the **menu-bar mark**, still a placeholder) → remaining polish (e.g.
+>   per-Host renaming) → the Phase C **release** (`.dmg` + Sparkle) → **Phase D docs**.
 > - **Phase D (docs) — pending**, gated on a real `.dmg` existing.
 >
 > The authoritative, detailed build log is **`HANDOFF.md` §20** (newest first); read the

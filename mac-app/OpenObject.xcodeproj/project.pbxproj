@@ -10,6 +10,7 @@
 		2E575EA7298F316A7001D6D3 /* MenuBarContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EC8E631879991B7EF81EA40 /* MenuBarContent.swift */; };
 		39E0A47149F27C20E155F445 /* DisplayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3659DF56DF0C102C316D13E4 /* DisplayController.swift */; };
 		6BAE82DA228EBEB676DC7524 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55DE3081F59FD00A056D232F /* ContentView.swift */; };
+		7998C806D8D4795FD548426D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9F495F9E260E654A7FF423B1 /* Assets.xcassets */; };
 		79BEEA042A777BE468DB3484 /* RoleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E005BA69E941B01F3C40FABC /* RoleStore.swift */; };
 		975256C9B88CC5551DFDE9D3 /* OpenObjectApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E5EAFDEBAABEBDFDC5CCFA /* OpenObjectApp.swift */; };
 		989C2BEC4A064E2E7549246F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B206D206987C3DD8432B568 /* AppDelegate.swift */; };
@@ -28,6 +29,7 @@
 		58E5EAFDEBAABEBDFDC5CCFA /* OpenObjectApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenObjectApp.swift; sourceTree = "<group>"; };
 		5B206D206987C3DD8432B568 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8908E88C7524511930497EDF /* HostDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostDiscovery.swift; sourceTree = "<group>"; };
+		9F495F9E260E654A7FF423B1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E005BA69E941B01F3C40FABC /* RoleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoleStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -35,6 +37,7 @@
 		45FB89F809E72C32975B65D4 = {
 			isa = PBXGroup;
 			children = (
+				9F495F9E260E654A7FF423B1 /* Assets.xcassets */,
 				4B9965AD3BE888154B253124 /* Sources */,
 				91A625EA3E8B3B284AA7FC97 /* Products */,
 			);
@@ -72,6 +75,7 @@
 			buildConfigurationList = 363FE4D424833BD82FE419FB /* Build configuration list for PBXNativeTarget "OpenObject" */;
 			buildPhases = (
 				4AA1C9D5C5617A996D8C9F2D /* Sources */,
+				58908A60D0710C6A97E31F5B /* Resources */,
 				E7F3DE4159226D427EE34797 /* Bundle engine (Node + player) */,
 			);
 			buildRules = (
@@ -117,6 +121,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		58908A60D0710C6A97E31F5B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7998C806D8D4795FD548426D /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		E7F3DE4159226D427EE34797 /* Bundle engine (Node + player) */ = {
@@ -173,7 +188,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = io.openobject.OpenObject;
 				PRODUCT_NAME = OpenObject;
 				SDKROOT = macosx;
@@ -237,7 +252,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -301,7 +316,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -327,7 +342,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = io.openobject.OpenObject;
 				PRODUCT_NAME = OpenObject;
 				SDKROOT = macosx;
