@@ -25,7 +25,7 @@ OO_GROUP="${OO_USER}"
 OO_HOME="/home/${OO_USER}"
 TARGET="${OO_TARGET:-/opt/openobject}"          # where the OpenObject checkout lives on the device
 DATA_ROOT="${OO_DATA_ROOT:-/var/lib/openobject}" # runtime data (library, uploads, browser profile)
-OO_ORIGIN="${OO_ORIGIN:-https://github.com/mattonchain/openobject.git}"
+OO_ORIGIN="${OO_ORIGIN:-https://github.com/queueue-studios/openobject.git}"
 
 # Where this script (and thus the checkout it belongs to) actually is, so we can seed /opt if run
 # from a USB stick instead of from an already-cloned /opt/openobject.

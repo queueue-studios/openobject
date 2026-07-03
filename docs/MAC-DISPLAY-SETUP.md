@@ -24,7 +24,7 @@ Install two free apps if you do not already have them:
 
 ## Step 1: Download OpenObject
 
-1. Go to the OpenObject page on GitHub: **https://github.com/mattonchain/openobject**
+1. Go to the OpenObject page on GitHub: **https://github.com/queueue-studios/openobject**
 2. Click the green **Code** button. It is the green button on the right, just above the list of files. (Do not use the "Code" tab near the top of the page, which is a different thing.) Then choose **Download ZIP**.
 3. Open your **Downloads** folder and double click the ZIP. It unzips into a folder named **openobject-main**.
 

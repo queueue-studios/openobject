@@ -3,7 +3,7 @@
 # Triggered by openobject-netcheck.timer, not at boot directly. Runs as root (the default) because
 # ifup/ifdown need it. The script is a no-op when the network is up, so this is safe to run often.
 Description=OpenObject Wi-Fi watchdog (re-up Wi-Fi if the frame loses its network)
-Documentation=https://github.com/mattonchain/openobject
+Documentation=https://github.com/queueue-studios/openobject
 After=network.target
 # Don't error if the checkout is absent (e.g. mid re-seed); just skip cleanly.
 ConditionPathExists=/opt/openobject/installer/net/oo-netcheck.sh

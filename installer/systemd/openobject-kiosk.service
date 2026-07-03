@@ -4,7 +4,7 @@
 # The launcher waits for the player's /healthz before opening the browser, so the panel never
 # flashes a connection-refused page on boot.
 Description=OpenObject kiosk (Chromium via cage)
-Documentation=https://github.com/mattonchain/openobject
+Documentation=https://github.com/queueue-studios/openobject
 # Order after the player; the launcher also polls /healthz, so this is best-effort, not a hard
 # dependency (the player restarts on its own and the page self-heals).
 Wants=openobject-player.service

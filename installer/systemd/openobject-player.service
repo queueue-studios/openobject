@@ -5,7 +5,7 @@
 # button); systemd brings it right back up on the new code. That is the ONLY Phase-2 change
 # to the restart path — the player side is byte-identical to Phase 1.
 Description=OpenObject player (web server + display)
-Documentation=https://github.com/mattonchain/openobject
+Documentation=https://github.com/queueue-studios/openobject
 After=network.target
 
 [Service]

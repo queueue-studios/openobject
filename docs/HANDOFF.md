@@ -3,7 +3,7 @@
 > **Document type:** Implementation spec for Claude Code.
 > **Status:** Running on real hardware. The web app (Phase 1) plus the Debian and Chromium-kiosk installer (Phase 2B) are built and verified on an actual XXL frame, with over-the-air self-update working. What's left is later milestones (single-file release image, Wi-Fi onboarding AP, real restart/shutdown). See §20 for the decision log.
 > **Local project root:** `~/Code/OpenObject`
-> **GitHub repo:** `mattonchain/openobject`, **public** since 2026-06-14 (created private 2026-06-11). Claude drives all git operations on Matt's approval.
+> **GitHub repo:** `queueue-studios/openobject`, **public** since 2026-06-14 (created private 2026-06-11). Claude drives all git operations on Matt's approval.
 > **Website:** https://openobject.io
 
 ---
