@@ -35,7 +35,7 @@ struct OpenObjectApp: App {
 
         // The menu-bar item — the display's remote, reachable even from inside the full-screen kiosk
         // (hover the top of the screen). Carries Return to Display / Show OpenObject / Stop, etc.
-        MenuBarExtra("OpenObject", systemImage: "photo") {
+        MenuBarExtra("OpenObject", image: "MenuBarIcon") {
             MenuBarContent()
                 .environmentObject(appDelegate.engine)
                 .environmentObject(appDelegate.roleStore)
