@@ -1,9 +1,23 @@
 # OpenObject Mac App: Plan and Architecture Direction
 
-> **Document type:** Forward-looking execution plan (not yet built).
-> **Status:** Planned, agreed 2026-07-01. Not started. This is the durable brief to
-> execute from; nothing here ships until the phases below are worked and each lands
-> with the usual HANDOFF + Setup Guide lockstep.
+> **Document type:** Execution plan — under active execution.
+> **Status (updated 2026-07-03):**
+> - **Phase A (engine seams) — DONE**, verified on hardware (Host/Display/Control roles,
+>   Bonjour `_openobject._tcp` advertisement, `/api/identity`, same-origin Display target).
+> - **Phase B (the `mac-app/` shell) — DONE**, verified on hardware: a native Swift app that
+>   bundles Node + a copy of `player/`, runs a Host, discovers Hosts over Bonjour, offers a
+>   first-run Access-a-Host vs Host-here choice, drives a real Chrome kiosk at the chosen
+>   Host's `/display`, and has a window + app menu + menu-bar remote. Confirmed the Mac app
+>   finds and can view/control the real XXL frame.
+> - **Phase C — IN PROGRESS.** The **signing/notarization pipeline is validated** (step 0
+>   "smoke-test"): a signed, notarized, stapled build under the **Queueue Studios LLC**
+>   Developer ID (`mac-app/scripts/sign-and-notarize.sh`). **Next, per the agreed order
+>   (HANDOFF §20, 2026-07-03):** branding (real OPEN/OBJECT icon + wordmark) → remaining
+>   polish (e.g. per-Host renaming) → the Phase C **release** (`.dmg` + Sparkle) → **Phase D docs**.
+> - **Phase D (docs) — pending**, gated on a real `.dmg` existing.
+>
+> The authoritative, detailed build log is **`HANDOFF.md` §20** (newest first); read the
+> 2026-07-03 and 2026-07-02 entries to resume cold.
 > **Relationship to the spec:** `HANDOFF.md` stays the authoritative engineering
 > spec for shipped behavior. This file is the plan; as pieces ship, the relevant
 > HANDOFF sections (and the Setup Guide) are updated in the same change, and this
