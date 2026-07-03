@@ -5,12 +5,15 @@
 > `mattonchain`, private membership, display name "Queueue Studios LLC"); repo
 > **transferred** to `queueue-studios/openobject`; attribution account `queueue-dev`
 > created; local remote re-pointed; LLC commit identity set (name "Queueue Studios LLC",
-> email the `queueue-dev` noreply). **Checkpoint 1 (URL rewiring + identity) committed.**
-> Decisions locked: **D5 = no history rewrite**, **D6 = all rights reserved + narrow
-> run-it grant**, **D7 = copyright holder → Queueue Studios LLC**. **Deferred to the
-> docs/homepage pass (checkpoint 2):** the LICENSE swap + copyright change + sweeping the
-> "noncommercial" wording, the homepage content + gh-pages republish + DNS/Pages line,
-> and CLAUDE.md + memory updates.
+> email the `queueue-dev` noreply). **Checkpoint 1 (URL rewiring + identity) committed** (`56c775a`); frame remote re-pointed
+> on the deployed unit. Decisions locked: **D5 = no history rewrite**, **D6 = all rights
+> reserved + narrow run-it grant**, **D7 = copyright → Queueue Studios LLC**. **Checkpoint
+> 2 (license + docs) done:** new proprietary `LICENSE`, copyright to the LLC, and the
+> "noncommercial" wording swept from README, the control panel About line, `package.json`
+> + lockfile, the Mac app copyright string, the homepage status line, CLAUDE.md,
+> MAC-APP-PLAN, and a HANDOFF §20 entry. **Still remaining:** the homepage gh-pages
+> **republish** + the openobject.io custom-domain / `www` CNAME **DNS** step (needs Matt
+> on GoDaddy + GitHub Pages).
 > **Relationship to the spec:** `HANDOFF.md` stays the authoritative engineering
 > spec. This file is the migration plan; as pieces land, the relevant HANDOFF
 > sections, the Setup Guide, README, and this file are updated in the same change,

@@ -3,8 +3,8 @@
   "version": "1.0.1",
   "private": true,
   "description": "OpenObject player — self-hosted local art frame for the Infinite Objects XXL.",
-  "license": "PolyForm-Noncommercial-1.0.0",
-  "author": "The Museum of Digital Art (@mymoda_io)",
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "Queueue Studios LLC",
   "type": "commonjs",
   "engines": {
     "node": ">=22.5.0"

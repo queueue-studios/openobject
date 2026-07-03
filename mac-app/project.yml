@@ -45,7 +45,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: io.openobject.OpenObject
         INFOPLIST_KEY_CFBundleDisplayName: OpenObject
         INFOPLIST_KEY_LSUIElement: "NO"   # NO = show a Dock icon (we want BOTH Dock and menu bar)
-        INFOPLIST_KEY_NSHumanReadableCopyright: "OpenObject. Source available for noncommercial use (PolyForm Noncommercial)."
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright 2026 Queueue Studios LLC. All rights reserved."
     postBuildScripts:
       # B1b: stage the pinned Node runtime + a snapshot of player/ into the built .app's Resources
       # (the engine ships INSIDE the app; the Mac can't git-pull). Always runs. Phase C moves this

@@ -14,7 +14,7 @@ depends on no outside service, and nothing expires. No cloud, no accounts, no su
 > **Status: working today.** Set it up on a Mac in a few minutes, or revive a real frame. The web
 > app (control panel and display) and a Debian-based installer are built and verified on an actual
 > XXL, which boots with no desktop straight into the art at `http://openobject.local`. The source
-> is available for **noncommercial use** (see [License](#license)).
+> is public, but all rights are reserved (see [License](#license)).
 
 ## Why
 
@@ -89,19 +89,20 @@ site/        the openobject.io landing page (static HTML, served via GitHub Page
 
 ## License
 
-**Source available for noncommercial use.** See the [PolyForm Noncommercial License 1.0.0](LICENSE).
+**Proprietary. All rights reserved.** The source is public, but OpenObject is not open source, and
+publishing it grants no license to reuse it. See the full [License](LICENSE).
 
-In plain terms: you may use, modify, and share OpenObject to revive and run **your own** frame.
-Personal and hobby use is welcome. You **may not** sell it, charge for it, or build it into a
-product, service, or other commercial or revenue venture. Because of that noncommercial limit
-it is deliberately **not** "open source" in the OSI sense. It is *source available*.
+In plain terms: you may download, install, run, and update OpenObject to power **your own** display
+or frame, for personal noncommercial use. Without a separate written license from Queueue Studios
+LLC you **may not** use it (or any of its source) in a commercial product, service, or venture,
+redistribute or host it for others, or modify and distribute it. All other rights are reserved.
 
 ## No warranty
 
 OpenObject is provided **as is**, with **no warranty of any kind**. To the fullest extent permitted
-by law, the author is **not responsible** for what you do with OpenObject, for what it does or fails
-to do, or for any resulting damage, data loss, or other harm, and makes **no guarantee** that it
-works or will keep working.
+by law, Queueue Studios LLC is **not responsible** for what you do with OpenObject, for what it does
+or fails to do, or for any resulting damage, data loss, or other harm, and makes **no guarantee**
+that it works or will keep working.
 
 **Running it on your own computer** (a Mac, for example) is low risk. It is just an app you start
 and stop, kept in its own folder, and you can delete it whenever you like. It does not wipe or

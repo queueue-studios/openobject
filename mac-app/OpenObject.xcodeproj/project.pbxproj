@@ -168,7 +168,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = OpenObject;
 				INFOPLIST_KEY_LSUIElement = NO;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "OpenObject. Source available for noncommercial use (PolyForm Noncommercial).";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2026 Queueue Studios LLC. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -322,7 +322,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = OpenObject;
 				INFOPLIST_KEY_LSUIElement = NO;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "OpenObject. Source available for noncommercial use (PolyForm Noncommercial).";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2026 Queueue Studios LLC. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

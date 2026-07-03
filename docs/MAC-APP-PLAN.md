@@ -221,8 +221,8 @@ Additive, off the playback path, safe for the frame.
 
 **Positioning statement (viewing is not owning).** A short, reassuring note that draws
 the owning/using line honestly, so artists are met with the distinction rather than
-surprised by it. Keep the voice consistent with the "source available for noncommercial
-use" language and the White Walls framing. Draft copy:
+surprised by it. Keep the voice consistent with the proprietary license (source public,
+all rights reserved) and the White Walls framing. Draft copy:
 
 > **On displaying art you love**
 > Anyone can view digital art in a browser, download it, or take a screenshot. That has
@@ -244,14 +244,13 @@ than done together:
 - **Positioning statement (§ D5): anytime.** It is a values statement, always true, and
   not gated on any shipped behavior. Land it in the README and homepage whenever docs
   are next touched, independent of the `.dmg` timeline.
-- **LICENSE: only on a business-model decision, never as part of this work.** Shipping a
-  notarized `.dmg` (or even the App Store, which is not a goal) does **not** require
-  changing the source license. Compiled binaries of PolyForm-Noncommercial source can be
-  distributed as-is. The trigger to revisit `LICENSE` is a **rights or monetization**
-  decision (charging for the app, granting different rights for the binary than the
-  source), not a distribution or technical one. Absent that, leave `LICENSE` exactly as
-  is. The one *new* license artifact the Mac app may want is separate: a short
-  **end-user note / EULA for the app itself** (an addition shipped with the binary, and
+- **LICENSE: changed 2026-07-03 (the monetization trigger fired).** As part of the
+  LLC/org migration, and ahead of paid tvOS/iPad apps, the source license moved from
+  PolyForm Noncommercial to **proprietary, all rights reserved** (source stays public,
+  with a narrow grant to run it on your own display or frame). Shipping a notarized
+  `.dmg` still does not require any further license change; compiled binaries can be
+  distributed as-is. The one *new* license artifact the Mac app may still want is
+  separate: a short **end-user note / EULA for the app itself** (shipped with the binary,
   required if the App Store is ever pursued), handled at Phase C/D, not a change to the
   repo `LICENSE`.
 - **README, then homepage: gate on shipped reality.** Update the **README** to reposition
@@ -309,8 +308,9 @@ pointing at a reachable test server. Not built now; a non-issue when tvOS arrive
   frame's runtime data is.
 - **Docs lockstep** (HANDOFF §16): any user-facing behavior that ships updates the
   Setup Guide (or the new Mac App guide) in the same change.
-- **Repo is public**, source available for noncommercial use. The next-owner mission
-  still drives design.
+- **Repo is public but proprietary** (all rights reserved; source public, not open
+  source, not licensed for reuse). The next-owner mission still drives design: owners may
+  run it to revive their own frame.
 
 ---
 

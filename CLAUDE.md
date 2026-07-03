@@ -28,8 +28,11 @@ builder-only convenience.
   placeholder rather than guessing, this is a public repo.
 - **Art never touches the repo.** Uploaded images/videos and the local library are
   gitignored runtime data, never committed (HANDOFF §8, §15).
-- **Repo is PUBLIC** (source available for noncommercial use under PolyForm
-  Noncommercial; not "open source"). The next-owner mission still drives design.
+- **Repo is PUBLIC but PROPRIETARY** (all rights reserved; source is public, **not**
+  "open source", and not licensed for reuse; see `LICENSE`). Copyright **Queueue Studios
+  LLC**. Say "source is public, all rights reserved", never "open source" or
+  "source available for noncommercial use". The next-owner mission still drives design:
+  owners may run it to revive their own frame.
 
 ## Git workflow
 - Claude runs **all** `git`/`gh` commands; Matt never types them.
