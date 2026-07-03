@@ -13,11 +13,15 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "photo")
-                .font(.system(size: 44))
-                .foregroundStyle(.secondary)
-            Text("OpenObject")
-                .font(.title.weight(.semibold))
+            // The OPEN/OBJECT wordmark. A template image so it tints to the label color:
+            // white in dark mode, black in light mode (the app follows the system appearance).
+            Image("Wordmark")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: 220)
+                .foregroundStyle(.primary)
+                .accessibilityLabel("OpenObject")
+                .padding(.bottom, 4)
 
             if showOnboarding {
                 // A focused first-run choice: just the card (the found Hosts are its buttons, so the
@@ -29,7 +33,10 @@ struct ContentView: View {
                 hostsView
             }
         }
-        .padding(40)
+        // Less padding on top so the wordmark sits higher; sides/bottom stay at 40.
+        .padding(.horizontal, 40)
+        .padding(.top, 29)
+        .padding(.bottom, 30)
         // Fixed width (420) so a long host name wraps to another line rather than stretching the
         // window sideways; height follows the content (the window grows to fit a few Hosts and the
         // list scrolls when there are many — see hostsView). Resizes aren't persisted (WindowConfigurator).
