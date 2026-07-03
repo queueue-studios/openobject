@@ -1,6 +1,7 @@
 # GitHub + Licensing Migration Plan: personal account to Queueue Studios LLC
 
-> **Document type:** Execution plan. In progress.
+> **Document type:** Execution plan. **COMPLETE (2026-07-03).** Kept as a record; can be
+> retired. The full narrative also lives in HANDOFF §20 (2026-07-03).
 > **Status (updated 2026-07-03):** Org `queueue-studios` created (business-owned by
 > `mattonchain`, private membership, display name "Queueue Studios LLC"); repo
 > **transferred** to `queueue-studios/openobject`; attribution account `queueue-dev`
@@ -11,9 +12,13 @@
 > 2 (license + docs) done:** new proprietary `LICENSE`, copyright to the LLC, and the
 > "noncommercial" wording swept from README, the control panel About line, `package.json`
 > + lockfile, the Mac app copyright string, the homepage status line, CLAUDE.md,
-> MAC-APP-PLAN, and a HANDOFF §20 entry. **Still remaining:** the homepage gh-pages
-> **republish** + the openobject.io custom-domain / `www` CNAME **DNS** step (needs Matt
-> on GoDaddy + GitHub Pages).
+> MAC-APP-PLAN, and a HANDOFF §20 entry. **Checkpoint 3 (homepage) done:** gh-pages
+> republished (`5c4f80e`); the transfer had disabled Pages + dropped the custom domain, so
+> Pages was re-enabled, the domain re-verified at the **org level** (new
+> `_github-pages-challenge-queueue-studios` TXT at GoDaddy), and `openobject.io` re-set as
+> the repo custom domain (DNS check green). **openobject.io is live under the org.** Only
+> low-priority leftover: the GoDaddy `www` CNAME may still point at `mattonchain.github.io`
+> (apex works regardless).
 > **Relationship to the spec:** `HANDOFF.md` stays the authoritative engineering
 > spec. This file is the migration plan; as pieces land, the relevant HANDOFF
 > sections, the Setup Guide, README, and this file are updated in the same change,
