@@ -4,88 +4,87 @@
 
 # OpenObject
 
-A clean, local art player you fully control. Run your own images and video full screen on a Mac
-with an everyday monitor, or use it to revive a stranded **Infinite Objects XXL**, the 26-inch
-square art frame whose original solution decayed. OpenObject runs from a web page in any browser,
-depends on no outside service, and nothing expires. No cloud, no accounts, no subscription.
+OpenObject is a self-hosted, borderless art display for your Mac. It turns any Mac and an everyday
+monitor into an edge-to-edge digital canvas you control from your phone or any browser on your
+network. No cloud, no account, no subscription.
 
-**Website:** [openobject.io](https://openobject.io)
+**[Download for Mac](https://github.com/queueue-studios/openobject/releases/latest)** · [openobject.io](https://openobject.io)
 
-> **Status: working today.** Set it up on a Mac in a few minutes, or revive a real frame. The web
-> app (control panel and display) and a Debian-based installer are built and verified on an actual
-> XXL, which boots with no desktop straight into the art at `http://openobject.local`. The source
-> is public, but all rights are reserved (see [License](#license)).
+## How it works
 
-## Why
+You upload your art, and OpenObject shows it edge to edge on a monitor. Your everyday screen becomes
+the art. You manage everything (what is in the rotation, timing, sleep schedule) from any browser on
+your network, through the control panel.
 
-The Infinite Objects XXL is a normal x86 mini PC (a MeLE Quieter 3Q) behind a square panel, not a sealed
-appliance. The original solution decayed over time and left good hardware stuck. Full credit
-to the White Walls app that powered it, the real hero of the whole setup. OpenObject is a
-software reflash that brings the hardware back under your control, with two commitments:
+Under the hood it runs as a small local art player (technically a lightweight server) on your Mac,
+and presents the art in a Chromium kiosk: no window, no menus, no toolbars, just art filling the
+screen. Everything stays on your network.
 
-1. **Self-contained on the player.** The mini PC is the always-on brain. You upload artwork
-   and control the frame's settings from a browser on your phone or any other device, and the
-   frame keeps running on its own, with or without it.
-2. **Revivable by the next owner.** This is meant as a shareable kit, so anyone with a stranded
-   XXL can follow along and bring their own unit back.
+We built OpenObject to deliberately avoid the APIs, infrastructure, and wallet connections needed to
+read art directly from the blockchain. Instead, you keep a local copy of your art and upload it.
+Everything is local. Simple, safe, and secure.
 
 ## What it does
 
-- Displays **JPEG, PNG, GIF, AVIF, WebP, SVG, MP4, MOV, WebM**, edge to edge on the square panel,
-  with no frame and no border.
-- **Library, Rotation, and Pin.** Everything you upload is kept. You choose what plays and in
-  what order (**Sequence** or **Shuffle**), and you can pin one piece to hold it permanently.
-- **Per-clip control.** One global hold duration, plus **Fit** (the whole image, the default)
-  or **Fill** (crop to fill the square).
-- **Animated art and video always loop** to fill their time and never freeze on the first
-  frame. Silent by design.
-- **Sleep Schedule** to blank the panel on a schedule, by time of day and day of week.
-- Add art by **dragging files onto the control panel** from any device. No accounts, no cloud.
-- **Connected Collections.** Beyond your own files, show a curated handful of generative and
-  on-chain artworks, like a p5.js sketch that renders itself live in the frame rather than a saved
-  image. Added by token ID and mirrored to the device, so they play offline too. Curated, not a
-  general NFT reader.
-- **Updates itself** from this repo (control panel, then *Check for updates*). No reflash.
+- Displays **JPEG, PNG, GIF, AVIF, WebP, SVG, MP4, MOV, WebM**, edge to edge, no border.
+- **Library, Rotation, and Pin.** Everything you upload is kept. You choose what plays and in what
+  order (Sequence or Shuffle), and can pin one piece to hold it permanently.
+- **Fit or Fill.** One global hold duration, plus Fit (the whole image, the default) or Fill (crop
+  to fill the screen).
+- **Animated art and video always loop** and never freeze on the first frame. Silent by design.
+- **Sleep Schedule** to rest the screen by time of day and day of week.
+- Add art by **dragging files onto the control panel** from any device.
+- **Connected Collections.** A curated handful of generative and on-chain artworks (like a p5.js
+  sketch that renders live), mirrored locally so they play offline. Curated, not a general NFT reader.
+- **Updates itself.** Check for Updates installs the latest signed version. No reinstall.
 
-## Hardware target
+## Requirements
 
-| | |
-| --- | --- |
-| Frame | Infinite Objects XXL (26-inch, 1:1 square, 1920x1920) |
-| Player | MeLE Quieter 3Q, Intel Celeron N5105 (x86-64), Wi-Fi plus Gigabit Ethernet |
-| Video path | Captive HDMI from the mini PC to the panel, untouched by the reflash |
-
-This hardware is only for reviving an actual frame. **No frame? You do not need any of it.** See [Get started](#get-started) to run OpenObject on a Mac and an everyday monitor.
+- A **Mac** (macOS 15 or later) and a monitor to display on (the Mac's own screen or an external one).
+- **Google Chrome** installed. OpenObject drives it in kiosk mode to render the art; you never see or
+  use it as a browser.
 
 ## Get started
 
-Two ways in:
+**[Download OpenObject for Mac](https://github.com/queueue-studios/openobject/releases/latest)**, open
+the `.dmg`, and drag OpenObject to Applications. The [Mac guide](docs/MAC-DISPLAY-SETUP.md) walks the
+first run.
 
-- **No frame? Use your Mac as the display.** The **[Mac display guide](docs/MAC-DISPLAY-SETUP.md)**
-  turns your Mac and an everyday monitor into a full-screen art player, step by step in plain
-  language.
-- **Reviving an Infinite Objects XXL?** The **[Setup Guide](docs/SETUP-GUIDE.md)** walks the whole
-  revival in plain language. Builders can use **[installer/](installer/README.md)**, the bench
-  runbook (wipe the eMMC, install minimal Debian, run `install.sh`, boot into the kiosk).
+> ### Have an Infinite Objects XXL frame?
+> OpenObject can revive one too. This is where OpenObject started: we built it to bring a stranded XXL
+> back to life, and kept the code and a full guide so any owner can do the same. It is an advanced,
+> hands-on path (a from-scratch install on the frame's mini PC), separate from the Mac app.
+>
+> → **[Reviving an Infinite Objects XXL](docs/SETUP-GUIDE.md)**
 
-## Repository layout
+## On displaying art you love
 
-```
-docs/        engineering spec (HANDOFF) plus the casual SETUP-GUIDE and appendixes
-player/      the OpenObject web app (Node and SQLite, no build step)
-installer/   the Debian and Chromium-kiosk installer for the frame
-assets/      branding (the OpenObject mark)
-site/        the openobject.io landing page (static HTML, served via GitHub Pages)
-```
+Anyone can view digital art in a browser, download it, or screenshot it. That has always been true,
+and it is not what OpenObject changes. Viewing art and displaying art you own are different things.
+OpenObject is built to display art you own, or otherwise have the right to display, and it is intended
+for home use. If you display art in public, please make sure you have a license to do so. We
+deliberately avoided wallet connections and their complexity: the process is simply to save a local
+copy of your art and upload it to OpenObject to display it.
+
+## One core, many ways to run it
+
+The Mac app today, an Infinite Objects XXL frame, and, ahead, Apple TV and iPad. Because the core is
+just a small local art player, it is not locked to any one device (technically minded owners can even
+run it on their own hardware).
 
 ## Documentation
 
-- **[Mac Display Guide](docs/MAC-DISPLAY-SETUP.md)**: run OpenObject on a Mac as the display, no frame needed.
-- **[Setup Guide](docs/SETUP-GUIDE.md)**: for owners reviving a unit (no engineering).
-- **[Handoff / Build Spec](docs/HANDOFF.md)**: the full engineering spec and decision log.
-- **[Installer runbook](installer/README.md)**: how the frame is provisioned.
-- **[Original software reset](docs/appendix-original-reset.md)**: returning the frame to the original
-  software, for owners who want it back.
+**On your Mac**
+- [Mac guide](docs/MAC-DISPLAY-SETUP.md): install and first run.
+
+**Reviving an Infinite Objects XXL frame** *(advanced)*
+- [Reviving an XXL frame](docs/SETUP-GUIDE.md): the full walkthrough, in plain language.
+- [Installer runbook](installer/README.md): bench provisioning (wipe, Debian, install).
+- [Returning a frame to its original software](docs/appendix-original-reset.md): untested and
+  unsupported, and only possible if you backed up first. At your own risk.
+
+**Reference**
+- [Handoff / Build Spec](docs/HANDOFF.md): the engineering spec and decision log.
 
 ## License
 
@@ -117,7 +116,7 @@ that risk yourself.
 
 OpenObject is an independent project, written from scratch. It contains no source code, assets,
 or data from the device's original manufacturer or any original software provider, and
-incorporates none of it. Installing OpenObject erases the device's storage, removing all
+incorporates none of it. Installing OpenObject on a frame erases the frame's storage, removing all
 original software and data before OpenObject is installed.
 
 OpenObject is not affiliated with, authorized by, or endorsed by the device's original

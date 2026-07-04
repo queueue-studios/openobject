@@ -3,11 +3,15 @@
 This is preserved from the original tutorial, as a courtesy, for an owner who wants to return the
 frame to the software it shipped with. It is **not part of OpenObject**.
 
-> **Heads up:** the original software relied on online services that have since wound down, so this
-> reset may not bring back a working device. If you simply want to preserve the original as it was,
-> the most complete way is a **full pre-wipe disk image** of the built-in drive (see the
-> **[backup appendix](appendix-backup-original.md)**), which captures the entire original install,
-> not just this registration reset.
+> **Untested and unsupported, at your own risk.** We have never verified any path back to the
+> original software. This registration reset only helps while the original software is still
+> installed. Once OpenObject is installed it has wiped the drive, so a true return then depends on a
+> **full pre-wipe disk image** you made beforehand (see the **[backup appendix](appendix-backup-original.md)**),
+> and we have not confirmed a restored image boots and runs. The original software also relied on
+> online services that have since wound down, so even a successful restore may not work as it once
+> did. Treat everything here as a rough outline, not a guaranteed recipe. You are on your own, and it
+> takes real comfort with disk imaging and low-level recovery. If that is not you, bring in a
+> technical helper (a technically inclined friend, or an AI coding assistant).
 
 The original software is a standard Android app running in **Waydroid** (a LineageOS Android 11
 container) on **Ubuntu Linux**. To reset its account registration (all inside the Android
