@@ -1,98 +1,69 @@
-# No Frame? Use Your Mac as the Display
+# Set up OpenObject on your Mac
 
-OpenObject was not only designed to run on an Infinite Objects XXL frame. You do NOT need the XXL or even a square screen to use it. This guide turns a Mac into the art display itself: a clean, full screen player with no browser bars or buttons, on your own monitor.
+OpenObject turns your Mac and an everyday monitor into a borderless art display: your art, edge to edge, no browser bars or buttons. You control it from any browser on your network, on your phone or another computer. Nothing leaves your network, no account, no cloud.
 
-*(If you do have an Infinite Objects XXL frame, follow the frame setup guide instead.)*
-
-You will use the Terminal app for a few copy and paste commands. Just paste each one and press Return.
-
-A few things that are normal, so they do not surprise you:
+A couple of things that are normal, so they do not surprise you:
 
 - When the display first opens, you may see the OpenObject logo for a moment while the first piece loads.
-- A piece can linger a little while the next one loads quietly in the background, then they cross fade. This is on purpose, so you never see a blank or half loaded screen.
+- A piece can linger a little while the next loads quietly in the background, then they cross fade. This is on purpose, so you never see a blank or half-loaded screen.
 
 ## Before you start
 
-Install two free apps if you do not already have them:
+- A Mac running macOS 15 (Sequoia) or later, and a monitor to display on (your Mac's own screen, or an external one).
+- Google Chrome installed. OpenObject uses it behind the scenes to render the art full screen; you never open or use it as a browser. If you do not have it, it is free from google.com/chrome.
 
-1. **Node** (the engine that runs OpenObject)
-   - Go to **nodejs.org**.
-   - Click **Get Node.js**, then choose **macOS Installer (.pkg)**.
-   - Open the downloaded file and click through the installer (Continue, Agree, Install, then your Mac password).
-2. **Google Chrome**
-   - If it is not already installed, get it from **google.com/chrome**. (Most people already have it.)
+## Install
 
-## Step 1: Download OpenObject
+1. Download OpenObject from [the download page](https://github.com/queueue-studios/openobject/releases/latest) (or from openobject.io).
+2. Open the downloaded **OpenObject.dmg**.
+3. Drag **OpenObject** onto the **Applications** folder.
+4. Open **Applications** and double-click **OpenObject**.
 
-1. Go to the OpenObject page on GitHub: **https://github.com/queueue-studios/openobject**
-2. Click the green **Code** button. It is the green button on the right, just above the list of files. (Do not use the "Code" tab near the top of the page, which is a different thing.) Then choose **Download ZIP**.
-3. Open your **Downloads** folder and double click the ZIP. It unzips into a folder named **openobject-main**.
+## First launch
 
-## Step 2: Put it in your home folder
+The first time you open it, macOS may ask a couple of one-time questions:
 
-Open **Terminal** (press Cmd and Space, type Terminal, press Return). Paste this line and press Return:
+- **"OpenObject was downloaded from the Internet. Open it?"** Click **Open**. (OpenObject is signed and notarized by Apple, so this is the standard confirmation, not a warning.)
+- **"OpenObject would like to find and connect to devices on your local network."** Click **Allow**. This is how it serves the control panel to your phone and other devices.
 
-```
-mv ~/Downloads/openobject-main ~/OpenObject
-```
+OpenObject opens a small window and starts running on your Mac.
 
-That moves the folder out of Downloads into your home folder and renames it to **OpenObject**, in one step. Nothing is copied or changed inside, just moved and renamed.
+## Add your art
 
-## Step 3: Start OpenObject
-
-In the same Terminal window, paste these one at a time, pressing Return after each.
-
-```
-cd ~/OpenObject/player
-```
-
-```
-npm install
-```
-
-Wait about fifteen seconds for it to finish. You will likely see a note like "1 high severity vulnerability." That is normal npm housekeeping and safe to ignore for a setup like this, because OpenObject runs only on your own machine and is never exposed to the public internet. Do not run `npm audit fix`.
-
-```
-npm start
-```
-
-You will see a line saying it is running. **Leave this Terminal window open.** This is your server that presents the art to your Mac's monitor.
-
-## Step 4: Add your art
-
-1. Open **Safari** and go to **http://localhost:3000**. This is your control panel. (Use Safari here, not Chrome, so Chrome stays free for the next step.)
+1. In the OpenObject window, click **Open Control Panel**. Your browser opens the control panel.
 2. Drag a few images or videos onto the upload area.
-3. Arrange them however you like.
+3. Set the order, how long each piece holds, Fit or Fill, and so on. You can do this now or later; the display updates on its own.
 
-You can click **Open display** at any time for a quick look in a normal browser tab. Reminder: you will have periods of initial load time before art displays.
+You can open the control panel from any device on your network, not just this Mac.
 
-## Step 5: Go full screen
+## Show it on your screen
 
-1. **Quit Google Chrome completely** if it is open (Cmd and Q). It also helps to close other browser windows.
-2. With Terminal open, go to the **Shell** menu in the macOS menu bar at the top of the screen and choose **New Window**. This second window lets you run the next command while the first window keeps the server running.
-3. Paste this and press Return:
+Click **Open Display**. Your monitor fills edge to edge with your art, no bars or buttons. That is your display.
 
-```
-open -a "Google Chrome" --args --kiosk "http://localhost:3000/display"
-```
+## Getting around
 
-Chrome fills the whole screen with your art, no bars or buttons. That is your display. Art rotation follows the settings you control in the OpenObject control panel.
+Once the display is full screen, the OpenObject window is hidden behind it. Your remote is the **OpenObject icon in the menu bar** (the small square at the top-right; move your mouse to the very top of the screen to reveal the menu bar over the art):
 
-If it opens a normal Chrome window instead of full screen, Chrome was still running. Quit it completely (Cmd and Q) and run the command again. If it still will not go full screen, use this version instead, which works even when Chrome is open:
+- **Return to Display** jumps back to the full-screen art.
+- **Show OpenObject** brings the window forward (to open the control panel, or stop the display).
+- **Stop Display** closes the full-screen display.
 
-```
-open -na "Google Chrome" --args --user-data-dir="/tmp/oo-kiosk" --kiosk "http://localhost:3000/display"
-```
+## Connected Collections
 
-## Turning the display on and off
+Alongside your own uploads, OpenObject includes a small, hand-picked shelf of **Connected Collections** (in the control panel's Settings). These are not standard images or videos, but generative and interactive art that runs as live code (p5.js sketches, or interactive HTML), rendered right on your screen. They are selectively curated from the personal collection of OpenObject's developers, so they play out of the box. It is a curated shelf, not a general NFT reader.
 
-- **Exit full screen:** press **Cmd and Q**.
-- **Go back to full screen:** run the command from Step 5 again.
-- **Change your art:** open the control panel in Safari (http://localhost:3000), make your changes, and the display updates on its own within a few seconds. No need to restart it.
-- **Stop OpenObject entirely:** go to the Terminal window running the server and press **Control and C**, or just close the window.
+## Everyday use
+
+- Leave OpenObject and the display running; it keeps playing on its own.
+- Change your art anytime from the control panel, on any device. The display updates within a few seconds, no restart.
+- To rest the screen overnight or while away, set a **Sleep Schedule** in Settings.
+
+## Keeping it updated
+
+In the **OpenObject** app menu, choose **Check for Updates**; if there is a newer version, it downloads and installs it.
 
 ## If something is not right
 
-- **The display only shows the OpenObject logo.** The server may not be running. Check that the Terminal window from Step 3 is still open and shows it running. If not, run `npm start` again.
-- **The command opened a normal browser window.** Chrome was already running. Quit it completely and try again, or use the "works even when Chrome is open" command above.
-- **`npm install` showed a vulnerability warning.** That is normal (see Step 3). Safe to ignore.
+- **Open Display does nothing, or asks for Chrome.** OpenObject needs Google Chrome installed. Install it from google.com/chrome and try again.
+- **The display only shows the OpenObject logo.** That is the idle screen when nothing is in the rotation yet, or the first piece is still loading. Add art, or give it a moment.
+- **You cannot find the window.** Click the OpenObject icon in the menu bar and choose **Show OpenObject**.

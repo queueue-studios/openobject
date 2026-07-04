@@ -36,7 +36,7 @@ Everything is local. Simple, safe, and secure.
 - Add art by **dragging files onto the control panel** from any device.
 - **Connected Collections.** A curated handful of generative and on-chain artworks (like a p5.js
   sketch that renders live), mirrored locally so they play offline. Curated, not a general NFT reader.
-- **Updates itself.** Check for Updates installs the latest signed version. No reinstall.
+- **Built-in updates.** Check for Updates installs the latest version, no reinstall.
 
 ## Requirements
 
