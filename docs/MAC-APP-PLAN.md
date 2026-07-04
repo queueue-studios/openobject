@@ -9,7 +9,7 @@
 >   first-run Access-a-Host vs Host-here choice, drives a real Chrome kiosk at the chosen
 >   Host's `/display`, and has a window + app menu + menu-bar remote. Confirmed the Mac app
 >   finds and can view/control the real XXL frame.
-> - **Phase C — IN PROGRESS.** The **signing/notarization pipeline is validated** (step 0
+> - **Phase C — DONE.** The **signing/notarization pipeline is validated** (step 0
 >   "smoke-test"): a signed, notarized, stapled build under the **Queueue Studios LLC**
 >   Developer ID (`mac-app/scripts/sign-and-notarize.sh`). **Branding: DONE** (app icon,
 >   menu-bar square-frame mark, and the in-app OPEN/OBJECT wordmark), and the deployment
@@ -20,9 +20,11 @@
 >   Auto), and **button-margin** polish. **Release infrastructure (C2/C3) DONE:** `build-dmg.sh`
 >   (drag-to-Applications dmg, signed/notarized/stapled) and **Sparkle** (SPM, embedded, "Check for
 >   Updates", `SUFeedURL` → openobject.io/appcast.xml, EdDSA key in Matt's keychain; `sign-and-notarize.sh`
->   signs Sparkle's nested helpers). **Next:** `release.sh` (C4) then the first **1.1.0** release
->   (GitHub Release + gh-pages appcast) → **Phase D docs**.
-> - **Phase D (docs) — pending**, gated on a real `.dmg` existing.
+>   signs Sparkle's nested helpers). **Release (C4): DONE — OpenObject 1.1.0 shipped** via
+>   `release.sh`: a notarized `OpenObject-1.1.0.dmg` on the `v1.1.0` GitHub Release (authored by the
+>   neutral `queueue-dev`, not `mattonchain`), with the Sparkle appcast live at openobject.io/appcast.xml.
+> - **Phase D (docs) — NOW UNBLOCKED** (a real `.dmg` exists): write the Mac App guide, reposition the
+>   docs so the no-frame Mac path is primary, and link the download.
 >
 > The authoritative, detailed build log is **`HANDOFF.md` §20** (newest first); read the
 > 2026-07-03 and 2026-07-02 entries to resume cold.

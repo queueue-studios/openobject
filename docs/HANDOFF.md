@@ -543,6 +543,13 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-07-04: OpenObject 1.1.0 shipped: first signed Mac app release (Phase C4)
+The Mac app is live as a notarized, self-updating `.dmg`. `release.sh 1.1.0` bumped the shared version (engine + Mac app), built Release, signed (Sparkle helpers + node + app), notarized and stapled both the app and the dmg (Apple: Accepted for each), and generated the Sparkle appcast (EdDSA-signing the dmg). A first run mislabeled the app `1.0` / build `1` because the custom Info.plist carried xcodegen's literal version defaults; fixed by referencing `$(MARKETING_VERSION)` / `$(CURRENT_PROJECT_VERSION)`, and re-ran (now `1.1.0` / build `3`).
+
+**Published identity-clean.** The GitHub Release is authored by **queueue-dev**, not Matt's personal `mattonchain`: `queueue-dev` was added as a repo collaborator (Write) and the Release created while logged in as it, so the public "released this" line shows the neutral account, matching the commit identity. (The org admin `mattonchain` still exists behind the scenes, but its membership is private and a git push is not publicly attributed, so nothing personal surfaces.) The `v1.1.0` Release carries `OpenObject-1.1.0.dmg`; the Sparkle `appcast.xml` lives on gh-pages, served at `https://openobject.io/appcast.xml` (the app's `SUFeedURL`), with its enclosure pointing at the Release asset plus the EdDSA signature.
+
+**Note:** Sparkle compares `CFBundleVersion`, which `release.sh` increments each run (monotonic; now 3). **Files.** version bumps (`player/package.json` + lockfile, `mac-app/project.yml` + `OpenObject-Info.plist` + regenerated `project.pbxproj`), `site/appcast.xml` (new), this entry. **`installer/` untouched. Setup Guide:** the Mac app now has a real download, so its guide is Phase D. (Matt, 2026-07-04.)
+
 ### 2026-07-04: Mac app release infrastructure: dmg + Sparkle (Phase C2/C3)
 Wired the two delivery pieces so a signed, self-updating release is a script away.
 
