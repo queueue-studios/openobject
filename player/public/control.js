@@ -19,6 +19,7 @@ const durDown = document.getElementById('durDown');
 const durUp = document.getElementById('durUp');
 const unitSeg = document.getElementById('unitSeg');
 const modeSeg = document.getElementById('modeSeg');
+const hostNameEl = document.getElementById('hostName');
 
 const tabLibrary = document.getElementById('tabLibrary');
 const tabRotation = document.getElementById('tabRotation');
@@ -480,6 +481,9 @@ async function loadSettings() {
   sortSelect.value = librarySort;
   libraryFilter = s.libraryFilter || 'all';
   filterSelect.value = libraryFilter;
+  // The Name field edits the raw override (empty = using the per-machine default, shown as placeholder).
+  hostNameEl.value = s.hostNameCustom || '';
+  hostNameEl.placeholder = s.hostNameDefault || 'OpenObject';
   pinnedId = s.pinnedId;
   sleepRanges = (s.sleepRanges || []).map((r) => ({ start: r.start, end: r.end, days: Array.isArray(r.days) ? r.days.slice() : [] }));
   applySleepState(s);
@@ -1299,6 +1303,9 @@ Object.keys(TABS).forEach((name) => TABS[name][0].addEventListener('click', () =
 durDown.addEventListener('click', () => { durationEl.value = Math.max(1, (Number(durationEl.value) || 1) - 1); pushDuration(); });
 durUp.addEventListener('click', () => { durationEl.value = (Number(durationEl.value) || 0) + 1; pushDuration(); });
 durationEl.addEventListener('change', pushDuration);
+// Save the Host name on blur/enter (conventional), then reload so the field reflects the stored
+// value (e.g. cleared back to the default). Trimming/length are enforced server-side.
+hostNameEl.addEventListener('change', () => { saveSettings({ hostName: hostNameEl.value }).then(() => loadSettings()); });
 
 unitSeg.querySelectorAll('button').forEach((b) =>
   b.addEventListener('click', () => { durationUnit = b.dataset.unit; setSeg(unitSeg, 'unit', durationUnit); pushDuration(); })

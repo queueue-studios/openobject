@@ -195,6 +195,12 @@
             <p class="device-note reach-lead">This panel is reachable from another device on the same network at the following addresses:</p>
             <div class="device-note reach-addrs" id="frameAddr">—</div>
           </div>
+          <!-- Name — this Host's friendly label, shown in the app's picker and over the network. Empty
+               falls back to a per-machine default (shown as the placeholder). -->
+          <div class="name-field" id="nameField">
+            <p class="device-note">This name helps you identify the device in the app and on your network.</p>
+            <input id="hostName" class="auth-input" type="text" maxlength="40" autocomplete="off" placeholder="OpenObject" aria-label="Player name">
+          </div>
         </div>
       </section>
 

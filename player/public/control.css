@@ -595,6 +595,10 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
   font: inherit;
 }
 .auth-input:focus { outline: none; border-color: #4a4a52; }
+/* Name field sits under the reachable addresses in the Network card; a hairline separates the two,
+   shown only when the addresses are (so there is no stray line on a host that has none). */
+#reach:not([hidden]) + .name-field { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+#reach:not([hidden]) + .name-field > .device-note { margin-top: 0; } /* the line's own padding sets the gap; drop the paragraph's stacked top margin */
 .login-box .update-btn { width: 100%; margin-top: 12px; }
 .auth-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
 .auth-fields { display: flex; flex-direction: column; gap: 10px; max-width: 360px; margin-top: 12px; }

@@ -538,6 +538,9 @@ function currentSettings() {
     librarySort: db.getSetting('library_sort', db.DEFAULT_LIBRARY_SORT), // Library grid order (HANDOFF §7)
     libraryFilter: db.getSetting('library_filter', 'all'), // Library view filter: all | rotation (HANDOFF §7)
     retroArcade,                        // runtime-only easter-egg flag (never persisted; see /api/arcade)
+    hostName: identity.hostName(),          // this Host's effective friendly name (custom, or the default)
+    hostNameCustom: db.getSetting('host_name', ''), // the raw override ('' = using the default); what the Name field edits
+    hostNameDefault: identity.defaultHostName(),     // the per-machine fallback, shown as the field's placeholder
   };
   s.asleep = isAsleep(s); // the live state, so the control panel can label the button Sleep/Wake by what's true now
   return s;
@@ -546,7 +549,7 @@ function currentSettings() {
 app.get('/api/settings', (_req, res) => res.json(currentSettings()));
 
 app.put('/api/settings', (req, res) => {
-  const { durationMs, mode, sleepRanges, manualBlank, librarySort, libraryFilter } = req.body || {};
+  const { durationMs, mode, sleepRanges, manualBlank, librarySort, libraryFilter, hostName } = req.body || {};
   if (durationMs !== undefined) {
     const ms = Number(durationMs);
     if (!Number.isFinite(ms) || ms < 1000) return res.status(400).json({ error: 'durationMs must be >= 1000' });
@@ -587,6 +590,16 @@ app.put('/api/settings', (req, res) => {
   if (libraryFilter !== undefined) {
     if (!LIBRARY_FILTERS.has(libraryFilter)) return res.status(400).json({ error: 'libraryFilter must be all|rotation' });
     db.setSetting('library_filter', libraryFilter);
+  }
+  if (hostName !== undefined) {
+    if (typeof hostName !== 'string') return res.status(400).json({ error: 'hostName must be a string' });
+    // Trim and cap; an empty value clears the override so hostName() falls back to the per-machine default.
+    const trimmed = hostName.trim().slice(0, 40);
+    const before = db.getSetting('host_name', '');
+    db.setSetting('host_name', trimmed);
+    // Re-advertise over Bonjour so discovery clients (the Mac app picker) see the new name without a
+    // restart. Best-effort and off the playback path: readvertise never throws.
+    if (trimmed !== before) readvertise();
   }
   res.json(currentSettings());
 });
@@ -775,6 +788,16 @@ app.use((err, _req, res, _next) => {
   res.status(400).json({ error: err.message });
 });
 
+// The live Bonjour advertisement handle, kept at module scope so a host rename (PUT /api/settings
+// hostName) can re-advertise with the new name without a restart. readvertise() stops any current
+// advertisement and publishes a fresh one from the current identity; best-effort, never throws.
+let advertisement = null;
+function readvertise() {
+  try { advertisement && advertisement.stop(); } catch { /* ignore */ }
+  const me = identity.identity();
+  advertisement = discovery.advertise({ name: me.name, port: PORT, id: me.id, version: require('./package.json').version });
+}
+
 // Cache the running commit for /healthz (HANDOFF §15) before serving; never block boot on it.
 updater.refreshCommitCache().finally(() => {
   app.listen(PORT, HOST, () => {
@@ -786,15 +809,14 @@ updater.refreshCommitCache().finally(() => {
     // Advertise this Host over Bonjour/mDNS so Displays/Controls can find it (MAC-APP-PLAN §A2).
     // Best-effort and off the playback path: discovery.advertise never throws, so a failure here
     // leaves the player serving exactly as before, just not auto-discoverable.
-    const me = identity.identity();
-    const ad = discovery.advertise({ name: me.name, port: PORT, id: me.id, version: require('./package.json').version });
+    readvertise();
 
     // Withdraw the advertisement on a clean stop (Ctrl-C, or systemd's SIGTERM on the frame) so
     // clients don't briefly see a dead Host. The supervisor short-circuits on `stopping`, so the
     // exit code here is irrelevant; a self-update restart (process.exit(RESTART_CODE)) simply
     // re-advertises on relaunch. This does not change the frame's stop/restart behavior.
     for (const sig of ['SIGINT', 'SIGTERM']) {
-      process.once(sig, () => { try { ad.stop(); } catch { /* ignore */ } process.exit(0); });
+      process.once(sig, () => { try { advertisement && advertisement.stop(); } catch { /* ignore */ } process.exit(0); });
     }
   });
 });
