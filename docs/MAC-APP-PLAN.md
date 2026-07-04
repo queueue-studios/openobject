@@ -17,8 +17,11 @@
 >   panel's Network card writes `host_name` and re-advertises over Bonjour, so multiple frames
 >   are distinguishable), plus **stale-Host pruning** (a reachability sweep hides Hosts that
 >   vanished ungracefully), a **Dock-icon Settings pane** (Auto/Light/Dark, follows the system on
->   Auto), and **button-margin** polish. **Next, per the agreed order (HANDOFF §20, 2026-07-03):**
->   the Phase C **release** (`.dmg` + Sparkle) → **Phase D docs**.
+>   Auto), and **button-margin** polish. **Release infrastructure (C2/C3) DONE:** `build-dmg.sh`
+>   (drag-to-Applications dmg, signed/notarized/stapled) and **Sparkle** (SPM, embedded, "Check for
+>   Updates", `SUFeedURL` → openobject.io/appcast.xml, EdDSA key in Matt's keychain; `sign-and-notarize.sh`
+>   signs Sparkle's nested helpers). **Next:** `release.sh` (C4) then the first **1.1.0** release
+>   (GitHub Release + gh-pages appcast) → **Phase D docs**.
 > - **Phase D (docs) — pending**, gated on a real `.dmg` existing.
 >
 > The authoritative, detailed build log is **`HANDOFF.md` §20** (newest first); read the

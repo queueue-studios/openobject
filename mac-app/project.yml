@@ -17,6 +17,13 @@ options:
     macOS: "15.0"       # macOS 15+ only (Matt, 2026-07-03); MenuBarExtra needs 13+, this is a superset
   createIntermediateGroups: true
 
+# Sparkle: the standard self-update framework for Mac apps distributed outside the App Store
+# (MAC-APP-PLAN §C3). Pulled via SPM so there's nothing to vendor; Xcode embeds + signs it.
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.6.4"
+
 settings:
   base:
     ARCHS: arm64        # Apple Silicon only for v1 (universal is a Phase C expansion if wanted)
@@ -39,15 +46,27 @@ targets:
     sources:
       - path: Sources
       - path: Assets.xcassets
+    dependencies:
+      - package: Sparkle
+    # A real Info.plist (not the auto-generated one) so we can carry Sparkle's SUFeedURL / SUPublicEDKey.
+    # xcodegen fills the standard CFBundle keys (name, id, versions) from the build settings; we add the
+    # display name, Dock-icon flag, copyright, and Sparkle keys here.
+    info:
+      path: OpenObject-Info.plist
+      properties:
+        CFBundleDisplayName: OpenObject
+        LSUIElement: false        # NO = show a Dock icon (we want BOTH Dock and menu bar)
+        NSHumanReadableCopyright: "Copyright 2026 Queueue Studios LLC. All rights reserved."
+        # Sparkle auto-update (MAC-APP-PLAN §C3). The PRIVATE half of SUPublicEDKey lives in Matt's
+        # keychain (from Sparkle's generate_keys); the appcast is served from the site (gh-pages) at a
+        # stable URL. SUPublicEDKey is a placeholder until the key is generated.
+        SUFeedURL: https://openobject.io/appcast.xml
+        SUPublicEDKey: ud/UBl/N0ycZ6iOGDGTErGIy153/JJgCfrXX/9dtOBg=
     settings:
       base:
-        GENERATE_INFOPLIST_FILE: "YES"
         PRODUCT_NAME: OpenObject
         PRODUCT_BUNDLE_IDENTIFIER: io.openobject.OpenObject
-        INFOPLIST_KEY_CFBundleDisplayName: OpenObject
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        INFOPLIST_KEY_LSUIElement: "NO"   # NO = show a Dock icon (we want BOTH Dock and menu bar)
-        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright 2026 Queueue Studios LLC. All rights reserved."
     postBuildScripts:
       # B1b: stage the pinned Node runtime + a snapshot of player/ into the built .app's Resources
       # (the engine ships INSIDE the app; the Mac can't git-pull). Always runs. Phase C moves this

@@ -543,6 +543,19 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-07-04: Mac app release infrastructure: dmg + Sparkle (Phase C2/C3)
+Wired the two delivery pieces so a signed, self-updating release is a script away.
+
+**The `.dmg` (`build-dmg.sh`).** Packages a signed `OpenObject.app` into a drag-to-Applications disk image (the app beside an `/Applications` alias), then signs, notarizes, and staples the image itself. Dependency-free (`hdiutil`). Packaging validated (mounts as "OpenObject" with the app + alias); the window layout is plain for now, a branded background is a later polish.
+
+**Sparkle (C3).** Added Sparkle 2.9 via SPM (embedded framework, nothing vendored). A **Check for Updates** menu item under About is backed by an `SPUStandardUpdaterController` (`UpdaterViewModel` in `OpenObjectApp.swift`). The Info.plist is now a real committed `OpenObject-Info.plist` (not the auto-generated one) so it can carry Sparkle's keys: `SUFeedURL = https://openobject.io/appcast.xml` (the stable gh-pages URL) and `SUPublicEDKey`. Matt generated the EdDSA keypair with Sparkle's `generate_keys`; the private half lives in his keychain (same model as the notary credential), the public half is embedded. The SPM pin (`Package.resolved`) is committed for reproducible builds.
+
+**Signing (`sign-and-notarize.sh`).** Now signs Sparkle's nested helpers (the `Downloader.xpc` / `Installer.xpc` XPC services, `Updater.app`, and `Autoupdate`), then the framework, all hardened-runtime and inner-to-outer before node and the app; without this, notarization rejects the nested code.
+
+**Decisions.** Appcast on the site (gh-pages) at a stable URL, dmg assets on GitHub Releases. First Mac release is **1.1.0** (a minor bump for the new Mac app and the engine's per-Host rename; `v1.0.0` is already tagged and the code is at 1.0.1, so 1.0.0 is off the table). Sparkle only; App Store not pursued.
+
+**Next (C4):** a `release.sh` (bump to 1.1.0, build, sign, notarize, dmg, sign the update, generate the appcast), then the outward publish (GitHub Release + gh-pages appcast). **Files.** `mac-app/scripts/build-dmg.sh` (new), `sign-and-notarize.sh`, `project.yml`, `OpenObject-Info.plist` (new), regenerated `project.pbxproj`, `Package.resolved` (new), `Sources/OpenObjectApp.swift`, this entry. **`player/` and `installer/` untouched. Setup Guide unchanged.** (Matt, 2026-07-04.)
+
 ### 2026-07-03: Mac app polish: stale-Host pruning, Dock-icon Settings, button margins (Phase C)
 Two logged polish items plus a UX fix, all Mac-app-only.
 

@@ -1,4 +1,5 @@
 import SwiftUI
+import Sparkle
 
 // OpenObject Mac app — entry point (MAC-APP-PLAN §B1; HANDOFF §20, 2026-07-01).
 //
@@ -11,6 +12,7 @@ import SwiftUI
 @main
 struct OpenObjectApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @StateObject private var updater = UpdaterViewModel()
 
     var body: some Scene {
         // A normal window → gives the app its Dock icon. Clicking the Dock icon shows this window.
@@ -31,6 +33,10 @@ struct OpenObjectApp: App {
         // reachable copy there.)
         .commands {
             DisplayCommands(display: appDelegate.display, actions: appDelegate.actions)
+            // Sparkle's "Check for Updates…" in the standard spot, just under "About OpenObject".
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") { updater.checkForUpdates() }
+            }
         }
 
         // The menu-bar item — the display's remote, reachable even from inside the full-screen kiosk
@@ -68,6 +74,17 @@ struct AppIconSettings: View {
         .padding(20)
         .frame(width: 380)
     }
+}
+
+// Wraps Sparkle's updater so a SwiftUI menu item can trigger a check (MAC-APP-PLAN §C3). Sparkle reads
+// SUFeedURL + SUPublicEDKey from Info.plist; startingUpdater:true begins Sparkle's automatic background
+// checks (scheduled, with the user's consent prompt on first run).
+final class UpdaterViewModel: ObservableObject {
+    private let controller: SPUStandardUpdaterController
+    init() {
+        controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+    }
+    func checkForUpdates() { controller.checkForUpdates(nil) }
 }
 
 // The top-left "Display" menu (shown when OpenObject is the active app). Mirrors the display controls

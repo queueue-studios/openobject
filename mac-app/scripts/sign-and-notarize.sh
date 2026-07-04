@@ -17,6 +17,23 @@ NOTARY_PROFILE="${OO_NOTARY_PROFILE:-openobject-llc}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NODE_ENTITLEMENTS="$SCRIPT_DIR/../signing/node.entitlements"
 
+# Sparkle (MAC-APP-PLAN §C3) ships nested helpers, XPC services + Autoupdate + an Updater.app, that must
+# each be signed with the hardened runtime BEFORE the framework, or notarization rejects them. Signed
+# inner-to-outer. Guarded so this still works if Sparkle is ever absent.
+SPARKLE="$APP/Contents/Frameworks/Sparkle.framework"
+if [ -d "$SPARKLE" ]; then
+  echo "[sign] Sparkle nested helpers (hardened runtime)…"
+  for item in \
+    "Versions/B/XPCServices/Downloader.xpc" \
+    "Versions/B/XPCServices/Installer.xpc" \
+    "Versions/B/Updater.app" \
+    "Versions/B/Autoupdate"; do
+    codesign --force --timestamp --options runtime --sign "$IDENTITY" "$SPARKLE/$item"
+  done
+  echo "[sign] Sparkle.framework…"
+  codesign --force --timestamp --options runtime --sign "$IDENTITY" "$SPARKLE"
+fi
+
 echo "[sign] node binary (hardened runtime + JIT entitlements)…"
 codesign --force --timestamp --options runtime \
   --entitlements "$NODE_ENTITLEMENTS" \
