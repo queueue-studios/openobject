@@ -15,8 +15,10 @@
 >   menu-bar square-frame mark, and the in-app OPEN/OBJECT wordmark), and the deployment
 >   target is now **macOS 15**. **Polish: per-Host renaming DONE** (a Name field in the control
 >   panel's Network card writes `host_name` and re-advertises over Bonjour, so multiple frames
->   are distinguishable). **Next, per the agreed order (HANDOFF §20, 2026-07-03):** any further
->   polish → the Phase C **release** (`.dmg` + Sparkle) → **Phase D docs**.
+>   are distinguishable), plus **stale-Host pruning** (a reachability sweep hides Hosts that
+>   vanished ungracefully), a **Dock-icon Settings pane** (Auto/Light/Dark, follows the system on
+>   Auto), and **button-margin** polish. **Next, per the agreed order (HANDOFF §20, 2026-07-03):**
+>   the Phase C **release** (`.dmg` + Sparkle) → **Phase D docs**.
 > - **Phase D (docs) — pending**, gated on a real `.dmg` existing.
 >
 > The authoritative, detailed build log is **`HANDOFF.md` §20** (newest first); read the

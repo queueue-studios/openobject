@@ -70,7 +70,7 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
             }
             Button { actions.openControlPanel() } label: {
-                Text("Open Control Panel").frame(maxWidth: .infinity)
+                Text("Open Control Panel").frame(maxWidth: .infinity).padding(.horizontal, 10)
             }
             .buttonStyle(.borderedProminent)
             displayControls
@@ -88,7 +88,7 @@ struct ContentView: View {
             Text(name).font(.callout).multilineTextAlignment(.center)
         }
         Button { actions.openControlPanel() } label: {
-            Text("Open Control Panel").frame(maxWidth: .infinity)
+            Text("Open Control Panel").frame(maxWidth: .infinity).padding(.horizontal, 10)
         }
         .buttonStyle(.borderedProminent)
         displayControls
@@ -114,12 +114,12 @@ struct ContentView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
             Button { actions.stopDisplay() } label: {
-                Text("Stop Display").frame(maxWidth: .infinity)
+                Text("Stop Display").frame(maxWidth: .infinity).padding(.horizontal, 10)
             }
             .buttonStyle(.bordered)
         } else {
             Button { actions.openDisplay() } label: {
-                Text("Open Display").frame(maxWidth: .infinity)
+                Text("Open Display").frame(maxWidth: .infinity).padding(.horizontal, 10)
             }
             .buttonStyle(.bordered)
             if case .failed(let message) = display.state {
@@ -161,14 +161,14 @@ struct ContentView: View {
                     Button {
                         roleStore.view(hostId: host.id, name: host.name)
                     } label: {
-                        Text("Access \(host.name)").lineLimit(1).frame(maxWidth: .infinity)
+                        Text("Access \(host.name)").lineLimit(1).frame(maxWidth: .infinity).padding(.horizontal, 10)
                     }
                     .buttonStyle(.borderedProminent)
                 }
                 Button {
                     roleStore.runAsHost()
                 } label: {
-                    Text("Host OpenObject on this Mac").frame(maxWidth: .infinity)
+                    Text("Host OpenObject on this Mac").frame(maxWidth: .infinity).padding(.horizontal, 10)
                 }
                 .buttonStyle(.bordered)
             }

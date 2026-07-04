@@ -24,6 +24,15 @@ final class HostDiscovery: ObservableObject {
 
     private var browser: NWBrowser?
 
+    // The raw browse list (what mDNS currently reports) is kept separate from the published `hosts`, so
+    // a reachability sweep can hide Hosts that vanished UNGRACEFULLY (power-yanked or crashed) before
+    // their mDNS record's TTL expires, which can take a couple of minutes. Gracefully-stopped Hosts
+    // (systemd SIGTERM, or quitting the Mac app) already send an mDNS "goodbye" and drop immediately.
+    private var browsed: [Host] = []
+    private var strikes: [String: Int] = [:]   // consecutive failed reachability probes, per Host id
+    private var probeTask: Task<Void, Never>?
+    private let strikeLimit = 2                 // hide a Host after this many consecutive failures
+
     func start() {
         guard browser == nil else { return }
         let params = NWParameters()
@@ -42,11 +51,16 @@ final class HostDiscovery: ObservableObject {
             }
         }
         browser.start(queue: .main)
+        startProbing()
     }
 
     func stop() {
+        probeTask?.cancel()
+        probeTask = nil
         browser?.cancel()
         browser = nil
+        browsed = []
+        strikes = [:]
         hosts = []
     }
 
@@ -71,7 +85,64 @@ final class HostDiscovery: ObservableObject {
             // and Ethernet), and we want a single row.
             byId[id] = host
         }
-        hosts = byId.values.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        browsed = byId.values.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        // Forget strikes for Hosts mDNS no longer reports at all (they're gone regardless).
+        let live = Set(browsed.map { $0.id })
+        strikes = strikes.filter { live.contains($0.key) }
+        publish()
+    }
+
+    // Publish the browse list minus Hosts that have failed the reachability sweep too many times.
+    private func publish() {
+        hosts = browsed.filter { (strikes[$0.id] ?? 0) < strikeLimit }
+    }
+
+    // Every ~10s, quietly check each browsed Host is still reachable; one that fails `strikeLimit`
+    // times in a row is hidden until it answers again. This prunes power-yanked/crashed Hosts faster
+    // than the mDNS TTL, without touching the browse machinery. Best-effort; a probe never throws.
+    private func startProbing() {
+        probeTask?.cancel()
+        probeTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 10_000_000_000) // 10s
+                guard let self else { return }
+                await self.sweep()
+            }
+        }
+    }
+
+    private func sweep() async {
+        for host in browsed {                    // a value copy; mid-sweep browse changes don't disturb it
+            let ok = await probe(host)
+            if ok { strikes[host.id] = 0 } else { strikes[host.id, default: 0] += 1 }
+        }
+        publish()
+    }
+
+    // A quick TCP reachability check to the Host's endpoint. Ready = reachable; a failure or a 3s
+    // timeout = not. A dedicated serial queue drives both the connection and the timeout, so the two
+    // can't race to resume the continuation twice.
+    private func probe(_ host: Host) async -> Bool {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+            let queue = DispatchQueue(label: "io.openobject.probe")
+            let connection = NWConnection(to: host.endpoint, using: .tcp)
+            var finished = false
+            let finish: (Bool) -> Void = { ok in
+                if finished { return }
+                finished = true
+                connection.cancel()
+                continuation.resume(returning: ok)
+            }
+            connection.stateUpdateHandler = { state in
+                switch state {
+                case .ready: finish(true)
+                case .failed, .cancelled: finish(false)
+                default: break
+                }
+            }
+            queue.asyncAfter(deadline: .now() + 3) { finish(false) }
+            connection.start(queue: queue)
+        }
     }
 
     private static func string(_ record: NWTXTRecord, _ key: String) -> String? {

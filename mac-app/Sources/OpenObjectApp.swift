@@ -42,6 +42,31 @@ struct OpenObjectApp: App {
                 .environmentObject(appDelegate.display)
                 .environmentObject(appDelegate.actions)
         }
+
+        // Preferences (app menu → Settings…, Cmd-comma): the Dock app icon.
+        Settings {
+            AppIconSettings()
+        }
+    }
+}
+
+// Settings pane: the Dock icon — Auto (follow the system appearance), or a fixed Light/Dark. Labeled
+// "Dock icon" so future settings sit alongside it (moving to tabs once there's more than one).
+struct AppIconSettings: View {
+    @AppStorage(AppIcon.key) private var iconStyle = AppIcon.white.rawValue
+
+    var body: some View {
+        Form {
+            Picker("Dock icon", selection: $iconStyle) {
+                Text("Auto").tag(AppIcon.auto.rawValue)
+                Text("Light").tag(AppIcon.white.rawValue)
+                Text("Dark").tag(AppIcon.black.rawValue)
+            }
+            .pickerStyle(.radioGroup)
+            .onChange(of: iconStyle) { AppIcon.apply() }
+        }
+        .padding(20)
+        .frame(width: 380)
     }
 }
 

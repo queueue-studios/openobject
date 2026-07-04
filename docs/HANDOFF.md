@@ -543,6 +543,17 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-07-03: Mac app polish: stale-Host pruning, Dock-icon Settings, button margins (Phase C)
+Two logged polish items plus a UX fix, all Mac-app-only.
+
+**Prune stale Hosts (discovery).** The picker rebuilds from the live mDNS browse set, so gracefully-stopped Hosts (systemd SIGTERM, or quitting the Mac app; both send an mDNS "goodbye") already drop at once. The gap was UNgraceful departures (power-yanked or crashed), which linger until the mDNS TTL expires (a couple of minutes). `HostDiscovery` now runs a lightweight reachability sweep every ~10s: a 3s-timeout TCP probe (on a serial queue, so the timeout and the connection cannot double-resume the continuation) to each browsed Host, hiding one that fails twice in a row. It publishes the browse list minus the struck ids; a strike resets when a Host answers again or the browser drops it. Best-effort and additive; a probe never throws.
+
+**Dock-icon Settings (Auto/Light/Dark).** The app icon can now be chosen in a proper **Settings** pane (app menu, Cmd-comma) labeled "Dock icon": **Auto** (follows the system appearance, updating live via `AppleInterfaceThemeChangedNotification`), **Light** (the default), or **Dark**. It is a runtime `NSApplication.applicationIconImage` swap, persisted in UserDefaults and re-applied on launch, so it affects only the **Dock** (and Cmd-Tab) while running; the Finder/Launchpad icon stays the bundle's white icon. macOS does not round or inset a runtime icon image, so `DockIconWhite`/`DockIconBlack` are pre-rounded copies of the app-icon masters, inset to the macOS icon grid (art at 824 of 1024) so they match neighboring Dock icons in size. An earlier iteration put this in the menu-bar menu, full-bleed (which showed oversized) and White/Black only; Matt moved it to Settings, relabeled to Auto/Light/Dark, made Light the default, and dropped the explanatory text.
+
+**Button margins.** The window's full-width action buttons (Access &lt;Host&gt;, Open Control Panel, Open/Stop Display, Host on this Mac) gained horizontal label padding so a long Host name no longer crowds the button edge.
+
+**Verified:** the app compiles and builds clean; the on-device checks (Dock-icon size vs neighbors, Auto following Light/Dark, the stale-Host prune) are Matt's build. **Files.** `mac-app/Sources/HostDiscovery.swift`, `AppDelegate.swift` (AppIcon + appearance observer), `OpenObjectApp.swift` (Settings scene + pane), `ContentView.swift` (button padding), `mac-app/Assets.xcassets/DockIcon{White,Black}.imageset` (new), this entry. **`player/` and `installer/` untouched. Setup Guide unchanged** (the Mac app is not documented until the `.dmg`). (Matt, 2026-07-03.)
+
 ### 2026-07-03: Per-Host renaming via a Name field in the control panel (Phase C polish)
 The first Phase C polish item. An owner can now give a Host a friendly name so multiple frames do not all read "OpenObject Frame" in the Mac app picker. This is a **host-side rename**: the engine already persisted `host_name`, it just had no writer. A Mac-app-native rename was rejected (the app never authenticates to a remote Host, it only discovers and launches Chrome, so it would mean new auth plumbing); the control panel is the natural home, works for a frame too, and every client then reflects the name via Bonjour and `/api/identity`.
 
