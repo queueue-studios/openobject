@@ -427,7 +427,7 @@ async function togglePin(item) {
 }
 
 async function remove(item) {
-  if (!confirm(`Delete "${item.original_name}" from the Library?\nThis removes the file from the frame.`)) return;
+  if (!confirm(`Delete "${item.original_name}" from the Library?\nThis removes the file from OpenObject.`)) return;
   await fetch(`/api/library/${item.id}`, { method: 'DELETE' });
   await refresh();
 }
@@ -1499,7 +1499,7 @@ async function setOrChangePassword(pwInput, confirmInput, okMsg) {
 }
 
 async function turnOffPassword() {
-  if (!confirm('Turn off the password? Anyone on your network will be able to control the frame again.')) return;
+  if (!confirm('Turn off the password? Anyone on your network will be able to make changes again.')) return;
   const r = await fetch('/api/auth/password', { method: 'DELETE' });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) return authCardMsg(j.error || 'Could not turn it off.');
