@@ -5,7 +5,7 @@ engineering knowledge needed. If you've never seen the build spec, you're in the
 
 **Home base:** [openobject.io](https://openobject.io)
 
-> **No Infinite Objects frame?** This guide is specifically for reviving the XXL hardware. If you just want to run OpenObject on a Mac (no frame, your Mac as the display), follow **[No Frame? Use Your Mac as the Display](MAC-DISPLAY-SETUP.md)** instead.
+> **Most people don't need this guide.** OpenObject is a Mac app: download it and your Mac drives the display. That is the main way to use it, covered in **[Set up OpenObject on your Mac](MAC-DISPLAY-SETUP.md)**. This guide is a separate, advanced job: reviving **Infinite Objects XXL** hardware with a from-scratch install on the frame's mini PC.
 
 ## So you want to try this?
 
@@ -33,7 +33,7 @@ A few honest caveats:
 What you get today: OpenObject makes the XXL a **highly effective, accessible digital frame**.
 Your own images and video, edge to edge, run from your phone. It is **not** a general blockchain or
 NFT reader, though it now has **curated support for a few specific collections** (see
-"Connected Collections" below). Beyond that, maybe more lands later, maybe not. **No promises.**
+"Connected Collections" below).
 
 > **No warranty.** OpenObject is provided as is, with no warranty of any kind. Installing it wipes
 > your device and there is no supported way back. You take that risk yourself. The full notice is
@@ -60,10 +60,9 @@ NFT reader, though it now has **curated support for a few specific collections**
 
 ## Installing OpenObject (one time)
 
-> **Heads-up: today this is a hands-on install.** You put a minimal Debian Linux on the frame, then
-> run the OpenObject installer over it. It is not yet a single flash-and-go image (that is the
-> goal). The complete, current step-by-step lives in the **[installer runbook](../installer/README.md)**.
-> The outline below is just the shape of it.
+> **Heads-up: this is a hands-on install.** You put a minimal Debian Linux on the frame, then
+> run the OpenObject installer over it. The complete, current step-by-step lives in the
+> **[installer runbook](../installer/README.md)**. The outline below is just the shape of it.
 
 > **Important: don't touch the two screws above the mini PC.** While you're working at the back of
 > the frame, leave alone the two screws on the bracket just above the MeLE mini PC. Loosening or

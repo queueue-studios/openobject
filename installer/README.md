@@ -2,12 +2,10 @@
 
 This provisions a **minimal Debian** install into an OpenObject appliance: it boots with no
 desktop straight into **Chromium (kiosk) on `/display`**, reachable at
-**`http://openobject.local`**. On the device, **systemd** runs the player and the kiosk,
-replacing the Phase-1 `player/supervisor.js` (HANDOFF §15).
+**`http://openobject.local`**. On the device, **systemd** runs the player and the kiosk.
 
-**Status:** Phase 2, first working installer. Installs via the standard Debian installer +
-this script. The one-file flashable **release image** (HANDOFF §15) and the no-keyboard
-**setup-AP / captive portal** (HANDOFF §11) are later milestones.
+It is a hands-on install: run the standard Debian installer, then this script (not a single
+flashable image).
 
 ```
 installer/
@@ -26,9 +24,8 @@ installer/
   desktop, no window manager, cursor hidden, no screen blanking. It launches **Chromium** in
   `--kiosk` pointed at the local `/display` page.
 - **systemd** is the device's supervisor. `openobject-player.service` runs `node server.js`
-  with `OO_SUPERVISED=1` and `Restart=always`; the player still just **exits with code 75** to
-  request a relaunch after a self-update or the **Restart** button, exactly as in Phase 1, so
-  the restart/self-update mechanism is unchanged, only the thing that relaunches it differs.
+  with `OO_SUPERVISED=1` and `Restart=always`; the player **exits with code 75** to request a
+  relaunch (after a self-update or the **Restart** button), and systemd brings it back.
 - **Runtime data** (library, uploads, browser profile) lives under **`/var/lib/openobject/`**,
   outside the code checkout at **`/opt/openobject`**, so self-update and re-seeding never risk
   the art (HANDOFF §8, §15).
@@ -123,10 +120,9 @@ Chromium one-off flags (no file edit needed) via the kiosk service environment, 
 
 ## Notes & fallbacks
 
-- **Self-update** is wired (origin points at GitHub) but only goes live once the repo is
-  **public**, while it's private a `git fetch` can't authenticate, so *Check for updates*
-  reports gracefully (we set `GIT_TERMINAL_PROMPT=0` so it fails fast rather than hanging). The
-  **Restart** mechanism it relies on works now.
+- **Self-update:** origin points at the public GitHub repo, so *Check for updates* fetches
+  `origin/main` and fast-forwards. (`GIT_TERMINAL_PROMPT=0` keeps any auth hiccup failing fast
+  rather than hanging.)
 - **Wi-Fi firmware:** Debian 12.4+ netinst bundles non-free firmware, so the onboard Wi-Fi
   should work in the installer. If not, a known-good USB Wi-Fi dongle is the documented fallback
   (HANDOFF §3); capture the chip id in step 0 so we can name the exact firmware package.
