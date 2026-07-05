@@ -4,18 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>OpenObject</title>
-  <meta name="description" content="A clean, local art player you fully control. Run your own images and video full screen on a Mac and a monitor, or revive an Infinite Objects XXL frame. No cloud, no subscription.">
+  <meta name="description" content="A simple, elegant way to display digital art on your Mac. OpenObject turns any Mac and an everyday monitor into an edge-to-edge art display you control from any browser. No cloud, no account, no subscription.">
 
   <!-- Social sharing -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="OpenObject">
-  <meta property="og:description" content="A clean, local art player you fully control. Run your own art full screen on a Mac and a monitor, or revive an Infinite Objects XXL frame.">
+  <meta property="og:description" content="A simple, elegant way to display digital art on your Mac. Turn any Mac and an everyday monitor into an edge-to-edge art display you control from any browser.">
   <meta property="og:url" content="https://openobject.io">
   <meta property="og:image" content="https://raw.githubusercontent.com/queueue-studios/openobject/main/assets/branding/openobject-logo-512.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@OpenObject_io">
   <meta name="twitter:title" content="OpenObject">
-  <meta name="twitter:description" content="A clean, local art player you fully control. Run your own art full screen on a Mac, or revive an Infinite Objects XXL frame.">
+  <meta name="twitter:description" content="A simple, elegant way to display digital art on your Mac. Your art, edge to edge, controlled from any browser.">
   <meta name="twitter:image" content="https://raw.githubusercontent.com/queueue-studios/openobject/main/assets/branding/openobject-logo-512.png">
 
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -101,7 +101,7 @@
       font-weight:600;
       letter-spacing:-.01em;
       margin:0 auto 14px;
-      max-width:18ch;
+      max-width:20ch;
       color:#f3f5f7;
     }
     .lede{
@@ -211,31 +211,15 @@
     .features b{display:block;color:#f0f2f4;font-weight:600;margin-bottom:3px;font-size:15.5px}
     .features span{color:var(--muted);font-size:14.5px;line-height:1.55}
 
-    /* ---------- terminal ---------- */
-    .terminal{
-      background:#070809;
-      border:1px solid var(--border);
+    /* ---------- callout ---------- */
+    .callout{
+      background:var(--panel);
+      border:1px solid var(--border-soft);
       border-radius:12px;
-      padding:0;
-      overflow:hidden;
-      margin:6px 0 16px;
+      padding:20px 22px;
+      margin-top:6px;
     }
-    .term-bar{
-      display:flex;gap:7px;
-      padding:11px 14px;
-      border-bottom:1px solid var(--border-soft);
-      background:rgba(255,255,255,.02);
-    }
-    .term-bar i{width:11px;height:11px;border-radius:50%;background:#2b2e33}
-    .terminal pre{
-      margin:0;
-      padding:16px 18px;
-      overflow-x:auto;
-      font:14px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-      color:#cfd3d8;
-    }
-    .terminal .p{color:var(--accent);user-select:none}
-    .terminal .c{color:var(--faint)}
+    .callout p:last-child{margin-bottom:0}
 
     /* ---------- footer ---------- */
     footer{
@@ -310,33 +294,33 @@
         </div>
       </div>
 
-      <p class="tagline">A clean, local art player you fully control.</p>
-      <p class="lede">Run your own images and video full screen on a Mac and an everyday monitor, or use it to revive a stranded Infinite Objects XXL. It runs from a web page in any browser, depends on no outside service, and nothing expires. No account, no cloud, no subscription.</p>
+      <p class="tagline">A simple, elegant way to display digital art on your Mac.</p>
+      <p class="lede">OpenObject turns any Mac and an everyday monitor into an edge-to-edge digital canvas you control from your phone or any browser on your network. No cloud, no account, no subscription.</p>
 
       <div class="cta">
-        <a class="btn btn-primary" href="https://github.com/queueue-studios/openobject/blob/main/docs/MAC-DISPLAY-SETUP.md">Run it on your Mac</a>
+        <a class="btn btn-primary" href="https://github.com/queueue-studios/openobject/releases/latest">Download for Mac</a>
         <a class="btn" href="https://github.com/queueue-studios/openobject">
           <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
           View it on GitHub
         </a>
       </div>
 
-      <p class="status">Runs on your Mac, or on a real frame &middot; Source public, all rights reserved</p>
+      <p class="status">macOS 15+ &middot; Google Chrome required</p>
     </header>
 
     <hr class="rule">
 
     <section>
       <h2>What is OpenObject?</h2>
-      <p>OpenObject is a small, self-hosted art player. Point a screen at it and it shows your own images and video, full screen, on a loop, controlled from a web page. It runs entirely on the device, online or off. Nothing phones home, and nothing expires.</p>
+      <p>OpenObject is a small, self-hosted art player for your Mac. It turns your everyday monitor into a full-screen digital art canvas, looping through your images and videos, controlled from any browser on your local network. It runs entirely on your Mac, online or off. Nothing phones home, and nothing expires. It even sidesteps the blockchain: instead of wallet connections and on-chain lookups, you keep a local copy of your art and upload it directly.</p>
       <p>It started as a rescue for one specific piece of hardware: the Infinite Objects XXL, a lovely 26-inch square digital art frame that is really just a little PC behind the panel. A lot of those frames went unused. OpenObject brings the hardware back under your control, and it runs just as happily on a Mac with an everyday monitor.</p>
       <p class="credit">Full credit to the White Walls app that originally drove these frames. It was the real heart of the whole setup. The backend services it relied on wound down, which left the hardware no longer able to function as originally intended. That is where OpenObject comes in.</p>
     </section>
 
     <section>
       <h2>Who it's for</h2>
-      <p>If you want your own images and video playing full screen on a screen of your own, this is for you, whether that screen is a Mac with an everyday monitor or an Infinite Objects XXL gathering dust. It is built so the next person can follow along and do it themselves.</p>
-      <p class="sub">You do not need to be a developer, just comfortable following a careful guide. Running it on a Mac takes a few minutes; reviving a frame is more involved. Each path has its own step-by-step guide in plain language.</p>
+      <p>If you want your own images and video playing full screen on a screen of your own, this is for you. The everyday setup is a Mac and an everyday monitor; the same core can also revive an Infinite Objects XXL gathering dust. It is built so the next person can follow along and do it themselves.</p>
+      <p class="sub">Running it on a Mac takes a few minutes: download the app and open it. Reviving a frame is more involved. Each path has its own step-by-step guide in plain language.</p>
     </section>
 
     <section>
@@ -348,30 +332,33 @@
         <li><b>Always in motion</b><span>Animated art and video loop to fill their time and never freeze on the first frame. Silent by design.</span></li>
         <li><b>Sleep Schedule</b><span>Blank the screen on a schedule you set per day, overnight or while you're out.</span></li>
         <li><b>Drag and drop</b><span>Add art straight from your phone or laptop. No accounts, no cloud, no subscription.</span></li>
-        <li><b>Connected Collections</b><span>Beyond your own files, show a curated set of generative and on-chain artworks, like a p5.js sketch that renders live. Curated, not a general NFT reader.</span></li>
-        <li><b>Updates itself</b><span>Pull the latest straight from GitHub with a tap. No reflashing the device.</span></li>
-        <li><b>Yours to keep</b><span>It all runs on the device. If the internet goes out, your art keeps playing.</span></li>
+        <li><b>Built-in updates</b><span>Check for Updates installs the latest version.</span></li>
+        <li><b>Works offline</b><span>It all runs on your Mac. If the internet goes out, your art keeps playing.</span></li>
       </ul>
     </section>
 
     <section>
+      <h2>On displaying art you love</h2>
+      <p>Anyone can view digital art in a browser, download it, or screenshot it. That has always been true, and it is not what OpenObject changes. Viewing art and displaying art you own are different things. OpenObject is built to display art you own, or otherwise have the right to display, in your own home. If you display art in public, please make sure you have a license to do so.</p>
+    </section>
+
+    <section>
       <h2>Getting started</h2>
-      <p>Two ways in.</p>
-      <p><b>No frame? Use your Mac as the display.</b> The <a href="https://github.com/queueue-studios/openobject/blob/main/docs/MAC-DISPLAY-SETUP.md">Mac display guide</a> turns your Mac and an everyday monitor into a full-screen art player, step by step. The short version, once you have <a href="https://nodejs.org">Node</a> and the code:</p>
-      <div class="terminal">
-        <div class="term-bar" aria-hidden="true"><i></i><i></i><i></i></div>
-        <pre><code><span class="c"># grab the code, then:</span>
-<span class="p">$</span> cd player
-<span class="p">$</span> npm install
-<span class="p">$</span> npm start</code></pre>
+      <p>Download OpenObject, open the <code>.dmg</code>, and drag it to your Applications folder. Open it, and your Mac starts serving the display and the control panel. The <a href="https://github.com/queueue-studios/openobject/blob/main/docs/MAC-DISPLAY-SETUP.md">Mac guide</a> walks the first run.</p>
+      <div class="cta" style="justify-content:flex-start;margin-top:4px">
+        <a class="btn btn-primary" href="https://github.com/queueue-studios/openobject/releases/latest">Download for Mac</a>
       </div>
-      <p class="sub">Then open <a href="http://localhost:3000">http://localhost:3000</a>. The guide covers installing Node and downloading OpenObject, the parts this snippet skips.</p>
-      <p><b>Reviving an Infinite Objects XXL?</b> The <a href="https://github.com/queueue-studios/openobject/blob/main/docs/SETUP-GUIDE.md">Setup Guide</a> walks the whole revival in plain English, from wiping the original software to booting straight into your art.</p>
+      <p class="sub" style="margin-top:18px">Have a stranded Infinite Objects XXL? OpenObject can revive one too. It's an advanced, hands-on path, separate from the Mac app. The <a href="https://github.com/queueue-studios/openobject/blob/main/docs/SETUP-GUIDE.md">XXL Frame Guide</a> walks the whole revival in plain English, from wiping the original software to booting straight into your art.</p>
+    </section>
+
+    <section>
+      <h2>One core, many ways to run it</h2>
+      <p>The Mac app today, an Infinite Objects XXL frame, and, ahead, Apple TV and iPad. Because the core is just a small local art player, it isn't locked to any one device.</p>
     </section>
 
     <section>
       <h2>A fair warning</h2>
-      <p>OpenObject is shared as is, with no warranty of any kind. Running it on your own Mac is low risk: it is just an app you start and can delete, and it does not touch the rest of your machine. Reviving an Infinite Objects frame is the part with real risk: it wipes the device, with no supported way back, and might not work on your exact unit. For that path, the honest advice is to treat the frame as already a paperweight with nothing to lose. That is exactly how this started.</p>
+      <p>OpenObject is shared as is, with no warranty of any kind. Running it on your Mac is simple: it's just an app you start and can delete, and it doesn't touch the rest of your machine. Reviving an Infinite Objects frame is the part with real risk: it wipes the device, with no supported way back, and might not work on your exact unit. For that path, the honest advice is to treat the frame as already a paperweight with nothing to lose. That is exactly how this started.</p>
       <p class="sub">The good news is that it runs on real hardware today, and a lot of care went into smoothing the path so you hit fewer walls than the first time around.</p>
     </section>
 
@@ -380,7 +367,7 @@
 
       <nav class="footlinks">
         <a href="https://github.com/queueue-studios/openobject">GitHub</a>
-        <a href="https://github.com/queueue-studios/openobject/blob/main/docs/SETUP-GUIDE.md">Setup Guide</a>
+        <a href="https://github.com/queueue-studios/openobject/blob/main/docs/MAC-DISPLAY-SETUP.md">Mac Guide</a>
         <a class="x-link" href="https://x.com/OpenObject_io">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
           Find us on X
