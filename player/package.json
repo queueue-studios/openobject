@@ -1,6 +1,6 @@
 {
   "name": "openobject-player",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "OpenObject player — self-hosted local art frame for the Infinite Objects XXL.",
   "license": "SEE LICENSE IN LICENSE",

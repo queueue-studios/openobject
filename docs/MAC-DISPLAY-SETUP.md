@@ -21,10 +21,10 @@ A couple of things that are normal, so they do not surprise you:
 
 ## First launch
 
-The first time you open it, macOS may ask a couple of one-time questions:
+The first time you open it, macOS asks about local network access, and may confirm the app once:
 
-- **"OpenObject was downloaded from the Internet. Open it?"** Click **Open**. (OpenObject is signed and notarized by Apple, so this is the standard confirmation, not a warning.)
-- **"OpenObject would like to find and connect to devices on your local network."** Click **Allow**. This is how it serves the control panel to your phone and other devices.
+- If you see a prompt that OpenObject was **downloaded from the Internet** and asks if you're sure you want to open it, click **Open**. OpenObject is signed and notarized by Apple, so this is the routine one-time confirmation for a downloaded app, not a warning. (You won't see this if you built or copied it locally.)
+- **"Allow "OpenObject" to find devices on local networks?"** Click **Allow**. This is how OpenObject serves the control panel to your phone and other devices, and finds a frame if you have one. The prompt's boilerplate about collecting data "from devices on your networks" is Apple's standard wording for this permission; OpenObject only uses it to reach your own devices on your own network, and nothing leaves it.
 
 OpenObject opens a small window and starts running on your Mac.
 

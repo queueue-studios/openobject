@@ -29,8 +29,8 @@ settings:
     ARCHS: arm64        # Apple Silicon only for v1 (universal is a Phase C expansion if wanted)
     ONLY_ACTIVE_ARCH: "NO"
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "1.1.0"   # matches the engine; Phase C's release workflow auto-syncs this
-    CURRENT_PROJECT_VERSION: "3"
+    MARKETING_VERSION: "1.1.1"   # matches the engine; Phase C's release workflow auto-syncs this
+    CURRENT_PROJECT_VERSION: "4"
     # Local/unsigned for now so it builds and runs without a Developer ID. Phase C sets the real
     # signing identity (Queueue Studios LLC), hardened runtime, and entitlements.
     CODE_SIGN_STYLE: Manual
