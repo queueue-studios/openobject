@@ -103,7 +103,7 @@ by law, Queueue Studios LLC is **not responsible** for what you do with OpenObje
 or fails to do, or for any resulting damage, data loss, or other harm, and makes **no guarantee**
 that it works or will keep working.
 
-**Running it on your own computer** (a Mac, for example) is low risk. It is just an app you start
+**Running it on your own computer** (a Mac, for example) is simple. It is just an app you start
 and stop, kept in its own folder, and you can delete it whenever you like. It does not wipe or
 alter the rest of your machine.
 
