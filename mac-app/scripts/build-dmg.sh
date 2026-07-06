@@ -14,11 +14,13 @@ set -euo pipefail
 # may prompt once to allow controlling Finder). Otherwise dependency-free: hdiutil, sips, SetFile,
 # osascript are all built into macOS.
 #
-# Layout knobs (Finder points; the background is 2x, so points = background pixels / 2):
-#   OO_DMG_WIN="720 440"       window content size
+# Layout knobs (Finder points; the background is 2x, so points = background pixels / 2). Defaults
+# follow Matt's shared installer standard: a 648x396 pt content area (aspect 1.636:1), authored @2x
+# as a 1296x792 px background tagged 144 dpi, icons centered vertically and symmetric about x=324:
+#   OO_DMG_WIN="648 396"       window content size
 #   OO_DMG_ICON_SIZE=128       icon size (the larger, Firefox-style icons)
-#   OO_DMG_APP_POS="200 220"   app icon center (left of the arrow)
-#   OO_DMG_APPS_POS="520 220"  Applications icon center (right of the arrow)
+#   OO_DMG_APP_POS="168 199"   app icon center (left of the arrow)
+#   OO_DMG_APPS_POS="480 199"  Applications icon center (right of the arrow)
 # Set OO_DMG_SKIP_NOTARIZE=1 to build the styled image only (no codesign/notarize/staple) for fast
 # visual iteration on the layout.
 #
@@ -39,14 +41,14 @@ VOLICON="$DMG_ASSETS/volume-icon.icns"
 [ -f "$BG" ] || { echo "[dmg] missing background: $BG" >&2; exit 1; }
 [ -f "$VOLICON" ] || { echo "[dmg] missing volume icon: $VOLICON" >&2; exit 1; }
 
-read -r WIN_W WIN_H <<<"${OO_DMG_WIN:-720 440}"
+read -r WIN_W WIN_H <<<"${OO_DMG_WIN:-648 396}"
 # AppleScript window bounds include the title bar, so add it back or the content area (where the
 # background is drawn) ends up shorter than the art, clipping its bottom and pushing the centered
 # icons low. Tune with OO_DMG_CHROME if the bottom is still cropped or has a gap.
 CHROME="${OO_DMG_CHROME:-32}"
 ICON_SIZE="${OO_DMG_ICON_SIZE:-128}"
-read -r APP_X APP_Y <<<"${OO_DMG_APP_POS:-200 220}"
-read -r APPS_X APPS_Y <<<"${OO_DMG_APPS_POS:-520 220}"
+read -r APP_X APP_Y <<<"${OO_DMG_APP_POS:-168 199}"
+read -r APPS_X APPS_Y <<<"${OO_DMG_APPS_POS:-480 199}"
 APP_NAME="$(basename "$APP")"   # OpenObject.app
 
 # --- stage the volume contents: app, Applications alias, background, volume icon ---
@@ -60,8 +62,8 @@ cp -R "$APP" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
 mkdir "$STAGE/.background"
 cp "$BG" "$STAGE/.background/background.png"
-# Normalize the background DPI so ImageIO (and therefore Finder) draws it at 720x440 pt as a 2x
-# Retina background: point size = pixels * 72 / dpi, so 1440x880 @ 144 dpi -> 720x440 pt. Exported
+# Normalize the background DPI so ImageIO (and therefore Finder) draws it at 648x396 pt as a 2x
+# Retina background: point size = pixels * 72 / dpi, so 1296x792 @ 144 dpi -> 648x396 pt. Exported
 # art often carries a print dpi (e.g. 300), which makes Finder draw the picture too small; force 144
 # on our working copy only, never touching mac-app/dmg/background.png.
 sips -s dpiWidth 144 -s dpiHeight 144 "$STAGE/.background/background.png" >/dev/null
