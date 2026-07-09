@@ -121,6 +121,23 @@ function initDb() {
   if (!ccols.has('choice')) db.exec('ALTER TABLE collection_state ADD COLUMN choice TEXT');
   if (!ccols.has('controls')) db.exec('ALTER TABLE collection_state ADD COLUMN controls TEXT');
 
+  // Folder Collections (HANDOFF §17): a saved local folder shown as an either/or Display Source, a
+  // sibling of the Library (not Library rows). Phase A serves the folder in place; its files are never
+  // copied into the Library. `play_order` is the per-folder Sequence/Shuffle override (SELECTs alias it
+  // back to `order`, which is a SQL reserved word); `fit` applies to the whole folder. The active source
+  // is the `display_source` setting ('library' or a folder id), so switching is a one-value flip.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS folder_collections (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      path       TEXT NOT NULL UNIQUE,
+      name       TEXT NOT NULL,
+      artist     TEXT,
+      fit        TEXT NOT NULL DEFAULT 'fit',        -- fit|fill, whole-folder (HANDOFF §6, §17)
+      play_order TEXT NOT NULL DEFAULT 'sequence',   -- sequence|shuffle, per-folder override (§7, §17)
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+
   // The Library "Title" sort first shipped under the key "name" (its old label, 4a5bc26). Migrate a
   // persisted value so an existing setting keeps working after the rename; the API no longer accepts "name".
   if (getSetting('library_sort') === 'name') setSetting('library_sort', 'title');
@@ -295,6 +312,45 @@ function deleteLibraryItem(id) {
   return row;
 }
 
+// ── Folder Collections (HANDOFF §17) ────────────────────────────────
+// Saved local folders shown as an either/or Display Source. Rows expose `order` (aliased from the
+// `play_order` column, since `order` is a SQL reserved word); everything else maps straight through.
+const FOLDER_COLS = 'id, path, name, artist, fit, play_order AS "order", created_at';
+
+function listFolderCollections() {
+  return getDb().prepare(`SELECT ${FOLDER_COLS} FROM folder_collections ORDER BY id ASC`).all();
+}
+function getFolderCollection(id) {
+  return getDb().prepare(`SELECT ${FOLDER_COLS} FROM folder_collections WHERE id = ?`).get(Number(id)) || null;
+}
+function getFolderCollectionByPath(p) {
+  return getDb().prepare(`SELECT ${FOLDER_COLS} FROM folder_collections WHERE path = ?`).get(String(p)) || null;
+}
+function addFolderCollection({ path: p, name, artist, fit, order }) {
+  const info = getDb()
+    .prepare('INSERT INTO folder_collections (path, name, artist, fit, play_order) VALUES (?, ?, ?, ?, ?)')
+    .run(String(p), String(name), artist ?? null, fit === 'fill' ? 'fill' : 'fit', order === 'shuffle' ? 'shuffle' : 'sequence');
+  return getFolderCollection(Number(info.lastInsertRowid));
+}
+// Patch only the fields present. A blank name is ignored (the column is NOT NULL; callers substitute
+// the folder's basename before clearing), so the folder always keeps a display name.
+function updateFolderCollection(id, fields) {
+  if (!getFolderCollection(id)) return null;
+  const d = getDb();
+  const norm = (v) => { const s = String(v == null ? '' : v).trim(); return s === '' ? null : s; };
+  if (fields.name !== undefined) { const n = norm(fields.name); if (n) d.prepare('UPDATE folder_collections SET name = ? WHERE id = ?').run(n, Number(id)); }
+  if (fields.artist !== undefined) d.prepare('UPDATE folder_collections SET artist = ? WHERE id = ?').run(norm(fields.artist), Number(id));
+  if (fields.fit !== undefined) d.prepare('UPDATE folder_collections SET fit = ? WHERE id = ?').run(fields.fit === 'fill' ? 'fill' : 'fit', Number(id));
+  if (fields.order !== undefined) d.prepare('UPDATE folder_collections SET play_order = ? WHERE id = ?').run(fields.order === 'shuffle' ? 'shuffle' : 'sequence', Number(id));
+  return getFolderCollection(id);
+}
+function deleteFolderCollection(id) {
+  const row = getFolderCollection(id);
+  if (!row) return null;
+  getDb().prepare('DELETE FROM folder_collections WHERE id = ?').run(Number(id));
+  return row;
+}
+
 module.exports = {
   initDb,
   getDb,
@@ -316,6 +372,12 @@ module.exports = {
   setLibraryRotation,
   reorderRotation,
   deleteLibraryItem,
+  listFolderCollections,
+  getFolderCollection,
+  getFolderCollectionByPath,
+  addFolderCollection,
+  updateFolderCollection,
+  deleteFolderCollection,
   INSTALL_SAMPLE_COLLECTION,
   DATA_DIR,
   UPLOADS_DIR,

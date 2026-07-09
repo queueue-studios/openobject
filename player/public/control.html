@@ -93,18 +93,26 @@
             </div>
           </div>
         </div>
-        <div class="set-group">
+        <div class="set-group" id="orderGroup">
           <span class="set-label">Order</span>
           <div class="seg" id="modeSeg" role="group" aria-label="Rotation order">
             <button type="button" data-mode="sequence">Sequence</button>
             <button type="button" data-mode="shuffle">Shuffle</button>
           </div>
         </div>
+        <!-- Display Source (HANDOFF §17): Library (default) or one saved Folder Collection. Selecting a
+             folder makes it the live source; folders are set up in Settings → Folder Collections. -->
+        <div class="set-group" id="sourceGroup">
+          <span class="set-label">Source</span>
+          <select id="sourceSelect" class="lib-ctrl-select" aria-label="What to display"></select>
+        </div>
       </section>
 
       <p id="rotHint" class="rot-hint" hidden></p>
       <div id="rotList" class="rot-list"></div>
       <p id="rotEmpty" class="empty" hidden>No pieces in the rotation yet — add some from the Library tab.</p>
+      <!-- Folder Collection as the source (HANDOFF §17): a read-only summary replaces the per-piece list. -->
+      <div id="folderSummary" class="folder-summary" hidden></div>
     </section>
 
     <section class="panel" id="panelSettings" role="tabpanel" aria-labelledby="tabSettings" hidden>
@@ -140,6 +148,24 @@
         </div>
         <div class="card-body" id="connectedBody">
           <div id="connectedList" class="cc-list"></div>
+        </div>
+      </section>
+
+      <!-- Folder Collections (HANDOFF §17): set up a local folder to show as an either/or source. Setup
+           lives here (a twin of Connected Collections); the folder is activated in the Rotation tab.
+           Collapsible: another list that can grow, so its header folds the body away. -->
+      <section class="device" id="foldersCard">
+        <div class="card-head">
+          <button type="button" class="card-toggle" id="foldersToggle" aria-expanded="true" aria-controls="foldersBody">
+            <span class="card-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="section-title">Folder Collections</span>
+          </button>
+          <span class="cc-count" id="fcCount"></span>
+        </div>
+        <div class="card-body" id="foldersBody">
+          <div id="foldersList" class="cc-list"></div>
+          <button type="button" class="sleep-add" id="fcAddBtn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Add folder</button>
+          <p class="fc-hint" id="fcHint" hidden></p>
         </div>
       </section>
 
@@ -246,6 +272,24 @@
       <div class="cx-foot">
         <button type="button" id="cxCancel" class="update-btn">Cancel</button>
         <button type="button" id="cxAdd" class="update-btn primary" disabled>Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Choose a folder: a small server-side folder browser (HANDOFF §17), sandboxed to the folder root. -->
+  <div id="fpOverlay" class="cx-overlay" hidden>
+    <div id="fpBox" class="cx-box" role="dialog" aria-label="Choose a folder">
+      <div class="cx-head">
+        <span class="cx-title">Choose a folder</span>
+        <button type="button" class="cx-close" id="fpClose" aria-label="Close">✕</button>
+      </div>
+      <div class="fp-path" id="fpPath"></div>
+      <div id="fpList" class="fp-list"></div>
+      <div class="fp-current" id="fpCurrent"></div>
+      <div id="fpMsg" class="cx-msg" hidden></div>
+      <div class="cx-foot">
+        <button type="button" id="fpCancel" class="update-btn">Cancel</button>
+        <button type="button" id="fpUse" class="update-btn primary" disabled>Use this folder</button>
       </div>
     </div>
   </div>

@@ -78,6 +78,24 @@ const connectedList = document.getElementById('connectedList');
 const ccUnhideAll = document.getElementById('ccUnhideAll');
 const ccCount = document.getElementById('ccCount');
 
+// Folder Collections (HANDOFF §17): the Rotation-tab source control + the Settings card + the picker.
+const sourceSelect = document.getElementById('sourceSelect');
+const orderGroup = document.getElementById('orderGroup');
+const folderSummary = document.getElementById('folderSummary');
+const foldersListEl = document.getElementById('foldersList');
+const fcCount = document.getElementById('fcCount');
+const fcAddBtn = document.getElementById('fcAddBtn');
+const fcHint = document.getElementById('fcHint');
+const fpOverlay = document.getElementById('fpOverlay');
+const fpBox = document.getElementById('fpBox');
+const fpPath = document.getElementById('fpPath');
+const fpList = document.getElementById('fpList');
+const fpCurrent = document.getElementById('fpCurrent');
+const fpMsg = document.getElementById('fpMsg');
+const fpClose = document.getElementById('fpClose');
+const fpCancel = document.getElementById('fpCancel');
+const fpUse = document.getElementById('fpUse');
+
 const UNIT_MS = { seconds: 1000, minutes: 60000, hours: 3600000 };
 
 // Inline icons (no webfont dependency — the frame runs offline).
@@ -103,6 +121,8 @@ let collectionsList = []; // supported connected collections (from /api/collecti
 let collectionsBySlug = {}; // slug → collection, for connected card subtitles
 let cxSlug = null; // collection selected in the add-connected modal
 let cxResolved = null; // last previewed { tokenId, title, image }
+let foldersData = { source: 'library', folders: [], root: '' }; // Folder Collections + active source (HANDOFF §17)
+let fpPathCur = null; // the folder the picker is currently viewing
 
 const fmtBytes = (n) => {
   if (n < 1024) return n + ' B';
@@ -1042,9 +1062,234 @@ async function waitForRestart(before) {
 // loadSettings first (it sets pinnedId/mode the renderers read), then the two lists.
 async function refresh() {
   // loadSettings sets pinnedId/mode and loadCollections fills collectionsBySlug — both are read
-  // by the library/rotation renderers, so they run first.
-  await Promise.all([loadSettings(), loadCollections()]);
+  // by the library/rotation renderers, so they run first. loadFolders fills the Folder Collections
+  // list + current source; renderSource runs LAST (after loadRotation) so folder mode overrides the
+  // per-piece rotation list with a read-only summary (HANDOFF §17).
+  await Promise.all([loadSettings(), loadCollections(), loadFolders()]);
   await Promise.all([loadLibrary(), loadRotation()]);
+  renderSource();
+}
+
+// ── Folder Collections (HANDOFF §17) ─────────────────────────────
+// Setup lives in Settings (a twin of the Connected Collections card); a folder is made the live
+// source in the Rotation tab. Everything about a folder (Name, Artist, Fit, Order) is edited here and
+// nowhere else; the Rotation tab only selects it.
+async function loadFolders() {
+  try { foldersData = await fetch('/api/folders').then((r) => r.json()); }
+  catch { foldersData = { source: 'library', folders: [], root: '' }; }
+  renderFolderCard();
+}
+
+function renderFolderCard() {
+  const list = foldersData.folders || [];
+  fcCount.textContent = list.length ? `${list.length} folder${list.length === 1 ? '' : 's'}` : '';
+  if (!list.length) {
+    foldersListEl.innerHTML = '<p class="cc-empty">No folders yet. Choose one below to show it instead of the Library.</p>';
+    return;
+  }
+  foldersListEl.replaceChildren(...list.map((f) => {
+    const row = document.createElement('div');
+    row.className = 'cc-row';
+    const fitOpts = [['fit', 'Fit'], ['fill', 'Fill']].map(([v, l]) => `<option value="${v}"${f.fit === v ? ' selected' : ''}>${l}</option>`).join('');
+    const orderOpts = [['sequence', 'Sequence'], ['shuffle', 'Shuffle']].map(([v, l]) => `<option value="${v}"${f.order === v ? ' selected' : ''}>${l}</option>`).join('');
+    const countText = `${f.count} piece${f.count === 1 ? '' : 's'}`;
+    const artistPart = f.artist ? escapeHtml(f.artist) + ' · ' : '';
+    // Display: title, then the artist ONLY when set (no placeholder). The piece count doubles as the
+    // "open this folder in Finder" link (in place of showing the path); unreachable shows plain text.
+    const sub = f.reachable
+      ? `${artistPart}<button type="button" class="fc-open" title="Open this folder">${countText}</button>`
+      : `${artistPart}<span class="fc-unreach">can't be reached</span>`;
+    row.innerHTML = `
+      <span class="cc-meta fc-meta">
+        <span class="cc-name fc-name" title="Rename">${escapeHtml(f.name)}</span>
+        <span class="cc-sub">${sub}</span>
+      </span>
+      <span class="cc-controls">
+        <span class="cc-ctrl"><span class="cc-ctrl-label">Fit</span><select class="cc-ctrl-select fc-fit" aria-label="Fit for ${escapeHtml(f.name)}">${fitOpts}</select></span>
+        <span class="cc-ctrl"><span class="cc-ctrl-label">Order</span><select class="cc-ctrl-select fc-order" aria-label="Order for ${escapeHtml(f.name)}">${orderOpts}</select></span>
+      </span>
+      <button class="cc-hide fc-remove">Remove</button>`;
+    row.querySelector('.fc-fit').addEventListener('change', (e) => patchFolder(f.id, { fit: e.target.value }));
+    row.querySelector('.fc-order').addEventListener('change', (e) => patchFolder(f.id, { order: e.target.value }));
+    row.querySelector('.fc-name').addEventListener('click', () => enterFolderEdit(row, f));
+    const openBtn = row.querySelector('.fc-open');
+    if (openBtn) openBtn.addEventListener('click', () => openFolderInFinder(f.id));
+    row.querySelector('.fc-remove').addEventListener('click', () => removeFolder(f));
+    return row;
+  }));
+}
+
+// Reveal a folder in the host's file manager (Finder), the quickest way to see what's inside.
+async function openFolderInFinder(id) {
+  await fetch(`/api/folders/${id}/open`, { method: 'POST' }).catch(() => {});
+}
+
+// Click a folder's name to edit its Name + Artist in place (mirrors the Library card, HANDOFF §7): the
+// name/sub swap for a Name input and an "Artist (optional)" input beside it, with Save/Cancel (the Fit/
+// Order controls tuck away to make room). Save persists via PATCH; Cancel/Esc discards; Enter saves. A
+// blank name falls back to the folder's own basename (server-side).
+function enterFolderEdit(row, folder) {
+  const meta = row.querySelector('.fc-meta');
+  const controls = row.querySelector('.cc-controls');
+  const removeBtn = row.querySelector('.fc-remove');
+  if (controls) controls.hidden = true;   // free the row so the two inputs + Save/Cancel have space
+  if (removeBtn) removeBtn.hidden = true;
+  meta.classList.add('editing');
+  const base = (folder.path || '').split('/').filter(Boolean).pop() || 'Folder';
+  meta.innerHTML = `
+    <input class="meta-input fc-title" type="text" maxlength="80" aria-label="Folder name" placeholder="${escapeHtml(base)}" value="${escapeHtml(folder.name || '')}">
+    <input class="meta-input fc-artist-input" type="text" maxlength="80" aria-label="Artist" placeholder="Artist (optional)" value="${escapeHtml(folder.artist || '')}">
+    <span class="fc-edit-actions">
+      <button type="button" class="cc-hide fc-edit-cancel">Cancel</button>
+      <button type="button" class="cc-hide fc-edit-save">Save</button>
+    </span>`;
+  const titleInput = meta.querySelector('.fc-title');
+  const artistInput = meta.querySelector('.fc-artist-input');
+  const save = () => patchFolder(folder.id, { name: titleInput.value, artist: artistInput.value });
+  meta.querySelector('.fc-edit-save').addEventListener('click', save);
+  meta.querySelector('.fc-edit-cancel').addEventListener('click', () => renderFolderCard());
+  meta.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); save(); }
+    else if (e.key === 'Escape') { e.preventDefault(); renderFolderCard(); }
+  });
+  titleInput.focus();
+  titleInput.select();
+}
+
+async function patchFolder(id, patch) {
+  await fetch(`/api/folders/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) });
+  await refresh(); // re-render the card + the Rotation summary if this is the live folder
+}
+
+async function removeFolder(f) {
+  if (!confirm(`Remove the Folder Collection "${f.name}"? Your files are not touched.`)) return;
+  await fetch(`/api/folders/${f.id}`, { method: 'DELETE' });
+  await refresh();
+}
+
+// Rotation tab: the Source dropdown (Library / each saved folder) + folder-mode visibility. Called at
+// the end of refresh(), after loadRotation, so folder mode overrides the per-piece list (HANDOFF §17).
+function renderSource() {
+  const list = foldersData.folders || [];
+  const source = foldersData.source || 'library';
+  // Library first, a divider, then the saved folders sorted by name (dropdown only — the Settings list
+  // keeps its own order). An <hr> in a <select> draws a separator on modern browsers and is ignored on
+  // older ones, so it degrades cleanly.
+  const byName = [...list].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  const opts = ['<option value="library">Library</option>'];
+  if (byName.length) opts.push('<hr>');
+  for (const f of byName) opts.push(`<option value="${f.id}">${escapeHtml(f.name)}${f.reachable && f.count ? ` · ${f.count} piece${f.count === 1 ? '' : 's'}` : ''}</option>`);
+  sourceSelect.innerHTML = opts.join('');
+  const active = source !== 'library' ? list.find((f) => String(f.id) === String(source)) : null;
+  sourceSelect.value = active ? String(active.id) : 'library';
+  const inFolder = !!active;
+  orderGroup.hidden = inFolder;   // a folder carries its own order (edited in Settings), not the global one
+  rotList.hidden = inFolder;
+  folderSummary.hidden = !inFolder;
+  if (inFolder) {
+    rotHint.hidden = true;
+    rotEmpty.hidden = true;
+    rotCount.textContent = active.reachable && active.count ? String(active.count) : '';
+    renderFolderSummary(active);
+  }
+}
+
+function renderFolderSummary(f) {
+  const fit = f.fit === 'fill' ? 'Fill' : 'Fit';
+  const order = f.order === 'shuffle' ? 'Shuffle' : 'Sequence';
+  const sub = f.artist ? `<span class="fs-sub">${escapeHtml(f.artist)}</span>` : '';
+  // Fit/Fill · Sequence/Shuffle · count — small muted bulleted text (no pills), pushed to the right.
+  const facts = f.reachable
+    ? `${fit} · ${order} · ${f.count} piece${f.count === 1 ? '' : 's'}`
+    : "Can't be reached";
+  folderSummary.innerHTML = `
+    <div class="fs-head"><button type="button" class="fs-name" id="fsName" title="Manage in Settings">${escapeHtml(f.name)}</button>${sub}<span class="fs-pill">Folder</span></div>
+    <div class="fs-facts${f.reachable ? '' : ' fs-facts-warn'}">${facts}</div>`;
+  document.getElementById('fsName').addEventListener('click', gotoFolderSettings);
+}
+
+// The folder name in the Rotation summary jumps to its setup in Settings (expanding the card).
+function gotoFolderSettings() {
+  switchTab('settings');
+  const toggle = document.getElementById('foldersToggle');
+  if (toggle.getAttribute('aria-expanded') === 'false') toggle.click(); // expand if collapsed
+  document.getElementById('foldersCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Folder picker (server-side subfolder browser) ────────────────
+async function openPicker() {
+  fpShowMsg('');
+  await fpBrowse(null); // start at the sandbox root
+  fpOverlay.hidden = false;
+}
+function closePicker() { fpOverlay.hidden = true; }
+function fpShowMsg(t) { fpMsg.textContent = t || ''; fpMsg.hidden = !t; }
+
+async function fpBrowse(p) {
+  let view;
+  try { view = await fetch('/api/folders/browse' + (p ? '?path=' + encodeURIComponent(p) : '')).then((r) => r.json()); }
+  catch { return fpShowMsg('Could not read that folder.'); }
+  if (view.error) return fpShowMsg(view.error);
+  fpShowMsg('');
+  fpPathCur = view.path;
+  fpPath.textContent = view.path;
+  const rows = [];
+  if (view.parent) rows.push({ up: true, path: view.parent });
+  for (const d of view.dirs) rows.push({ name: d, path: view.path.replace(/\/+$/, '') + '/' + d });
+  if (!rows.length) {
+    fpList.innerHTML = '<p class="fp-none">No subfolders here.</p>';
+  } else {
+    fpList.replaceChildren(...rows.map((r) => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'fp-item' + (r.up ? ' fp-up' : '');
+      el.textContent = r.up ? '⬑  Up a level' : '📁  ' + r.name;
+      el.addEventListener('click', () => fpBrowse(r.path));
+      return el;
+    }));
+  }
+  fpCurrent.textContent = view.mediaCount
+    ? `This folder has ${view.mediaCount} compatible file${view.mediaCount === 1 ? '' : 's'}.`
+    : 'No compatible files directly in this folder yet.';
+  fpUse.disabled = !!view.atRoot; // don't add the whole root; navigate into a folder first
+}
+
+async function usePickedFolder() {
+  if (!fpPathCur) return;
+  const r = await fetch('/api/folders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: fpPathCur }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) return fpShowMsg(j.error || 'Could not add that folder.');
+  closePicker();
+  await refresh();
+}
+
+// "Choose folder…" uses the host's NATIVE file dialog (HANDOFF §17): on macOS the Finder chooser pops
+// on the machine running the player and can navigate the whole Mac. Non-macOS falls back to the small
+// in-browser browser (openPicker). The request blocks while the dialog is open, so disable the button.
+async function chooseFolder() {
+  fcAddBtn.disabled = true;
+  try {
+    const r = await fetch('/api/folders/pick', { method: 'POST' });
+    const j = await r.json().catch(() => ({}));
+    if (j.unsupported) return openPicker();  // no native dialog here → in-browser browser
+    if (j.remote) return showFolderPickHint(); // opened from another device — the chooser opens on the host
+    if (j.cancelled) return;                 // user dismissed the dialog
+    if (r.status === 409) return;            // already added — it's already in the list
+    if (!r.ok) return alert(j.error || 'Could not add that folder.');
+    await refresh();
+  } finally {
+    fcAddBtn.disabled = false;
+  }
+}
+
+// Opened from another device (a phone, another computer): the native chooser opens on the host, so
+// show a brief note on attempt (never a standing "not supported" banner). It clears itself.
+let fcHintTimer;
+function showFolderPickHint() {
+  fcHint.textContent = 'Folders are added from the computer running OpenObject. Open this page there to choose one.';
+  fcHint.hidden = false;
+  clearTimeout(fcHintTimer);
+  fcHintTimer = setTimeout(() => { fcHint.hidden = true; }, 9000);
 }
 
 // ── Connected collections ────────────────────────────
@@ -1313,6 +1558,15 @@ unitSeg.querySelectorAll('button').forEach((b) =>
 modeSeg.querySelectorAll('button').forEach((b) =>
   b.addEventListener('click', () => { mode = b.dataset.mode; setSeg(modeSeg, 'mode', mode); saveSettings({ mode }); loadRotation(); })
 );
+
+// Folder Collections (HANDOFF §17): switch the Display Source, and the folder picker.
+sourceSelect.addEventListener('change', async () => { await saveSettings({ displaySource: sourceSelect.value }); await refresh(); });
+fcAddBtn.addEventListener('click', chooseFolder);
+fpClose.addEventListener('click', closePicker);
+fpCancel.addEventListener('click', closePicker);
+fpUse.addEventListener('click', usePickedFolder);
+fpOverlay.addEventListener('click', (e) => { if (e.target === fpOverlay) closePicker(); });
+window.addEventListener('keydown', (e) => { if (!fpOverlay.hidden && e.key === 'Escape') { e.preventDefault(); closePicker(); } });
 sortSelect.addEventListener('change', () => setLibrarySort(sortSelect.value));
 filterSelect.addEventListener('change', () => setLibraryFilter(filterSelect.value));
 blankBtn.addEventListener('click', toggleBlank);
@@ -1358,10 +1612,22 @@ function wireCollapse(cardId, toggleId) {
 }
 wireCollapse('sleepCard', 'sleepToggle');
 wireCollapse('connectedCard', 'connectedToggle');
+wireCollapse('foldersCard', 'foldersToggle');
 wireCollapse('wifiCard', 'wifiToggle');
 
 // Keep the Sleep Schedule status line and the week strip's "now" marker current as time passes.
 setInterval(() => { if (!panelSettings.hidden) { renderSleepStatus(); renderStrip(); } }, 60000);
+
+// Keep the Folder Collections counts current as files are added/removed on disk (the display already
+// re-scans on its own 5s poll; this keeps the control panel's counts in step). Skipped while a folder
+// row is being edited or the Source dropdown is focused, so a live re-render never interrupts you.
+setInterval(async () => {
+  if (!(foldersData.folders && foldersData.folders.length)) return; // nothing to keep in step
+  const a = document.activeElement;
+  if (a && (foldersListEl.contains(a) || a === sourceSelect)) return; // mid-interaction — leave it be
+  await loadFolders(); // refreshes the card + its count
+  renderSource();       // refreshes the Source dropdown counts + the Rotation summary
+}, 10000);
 
 checkUpdateBtn.addEventListener('click', checkUpdate);
 applyUpdateBtn.addEventListener('click', applyUpdate);

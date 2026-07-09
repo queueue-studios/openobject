@@ -192,6 +192,25 @@ The supported collections live in the **Settings** tab, under
 adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect or snowfall. This is new and **curated**: only collections that have been
 specifically added will work, so it won't read just any link yet.
 
+**Folder Collections** *(in the **Settings** tab)*. Have a whole folder of art on your computer, say
+hundreds of clips, that you'd rather not upload one at a time? A **Folder Collection** points OpenObject
+straight at that folder and plays it in place. *(This works when a **computer is running OpenObject as
+the display**. Showing a folder on the XXL frame itself is coming in a later update.)*
+
+- **Set one up:** Settings, **Folder Collections**, **Add folder**, then pick the folder in the dialog
+  that opens. OpenObject counts the compatible files in it (the same image and video types as uploads;
+  anything else is ignored). Click the name to give it a **name** and optional **artist**, and choose
+  **Fit or Fill** and **Sequence or Shuffle** for the whole folder. Nothing is copied; the files play
+  right where they are.
+- **Show it:** on the **Rotation** tab, use the **Source** dropdown to switch from **Library** to your
+  folder. Your Library rotation pauses and the folder plays instead; switch back to **Library** any time
+  and your rotation returns exactly as you left it. Only one source shows at a time.
+- **It stays current:** add or remove files in the folder and OpenObject picks up the change on its own,
+  no re-adding. Click a folder's **piece count** to open it and see what's inside.
+
+Folders you save are remembered, so you can switch between them (and back to your Library) from the
+Source dropdown any time.
+
 **Sleep Schedule** *(in the **Settings** tab)*. Optionally have the screen rest on a schedule. Add up
 to **three sleep times**, and for each one tap the **days** it applies to, so a weekday rest, a
 weekend lie-in, and an "I'm at the office" block can all live side by side. Set the times on a normal
@@ -203,8 +222,9 @@ back up on its own. **Want it off right now?** Tap **Sleep** at the top of the c
 button reads **Wake** while the screen is off. If you tap **Wake** during a scheduled sleep, the art
 stays on until the next scheduled sleep.
 
-The **Sleep Schedule**, **Connected Collections**, **Password**, and **Network** sections **start
-collapsed** to keep the Settings tab short. Tap a header to open one, and it stays the way you leave it.
+The **Sleep Schedule**, **Connected Collections**, **Folder Collections**, **Password**, and **Network**
+sections **start collapsed** to keep the Settings tab short. Tap a header to open one, and it stays the
+way you leave it.
 
 **Power** *(Settings tab)*. **Restart** restarts the OpenObject software, handy if the app seems
 stuck. **Reboot** restarts the whole frame, and **Shut down** turns it off. If a control ever

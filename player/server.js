@@ -35,6 +35,7 @@ const db = require('./src/db');
 const { classify } = require('./src/formats');
 const updater = require('./src/updater');
 const collections = require('./src/collections');
+const folders = require('./src/folders');
 const seed = require('./src/seed');
 const identity = require('./src/identity');
 const discovery = require('./src/discovery');
@@ -121,6 +122,21 @@ app.use(express.json());
 app.use(express.static(PUBLIC_DIR));
 app.use('/assets', express.static(ASSETS_DIR));
 app.use('/uploads', express.static(db.UPLOADS_DIR));
+
+// Folder Collection media (HANDOFF §17, Phase A): stream a file straight from a registered local
+// folder, in place (never copied into the Library). Public like /uploads — the kiosk display fetches
+// it, and it stays reachable with a control-panel password set (kiosk content). The path is locked
+// down in folders.resolveMedia (single segment, compliant, directly inside the folder), with
+// res.sendFile(root) as the containment backstop; range requests (video scrubbing) fall out of sendFile.
+app.get('/folder-media/:id/:file', (req, res) => {
+  const folder = db.getFolderCollection(Number(req.params.id));
+  if (!folder) return res.status(404).end();
+  const hit = folders.resolveMedia(folder, req.params.file);
+  if (!hit) return res.status(404).end();
+  res.sendFile(hit.name, { root: hit.root, dotfiles: 'deny' }, (err) => {
+    if (err && !res.headersSent) res.status(404).end();
+  });
+});
 
 // Mirrored connected-art bundles (src/collections.js). Served same-origin so the
 // art runs and the display can frame it; locked to our own resources, just allowing the inline
@@ -453,6 +469,128 @@ app.post('/api/collections/:slug/add', ah(async (req, res) => {
 }));
 
 // ── Rotation curation (HANDOFF §7) — membership rides on the library row; order is its own call ──
+// ── Folder Collections (HANDOFF §17, Phase A) ───────────────────────
+// The active Folder Collection id if a folder is the Display Source and still exists, else null
+// (falling back to the Library). One place for the "is a folder live?" check.
+function folderSourceId() {
+  const src = db.getSetting('display_source', 'library');
+  if (!src || src === 'library') return null;
+  const f = db.getFolderCollection(Number(src));
+  return f ? f.id : null;
+}
+
+// A friendly, home-relative path for display (e.g. ~/Videos/Sample Clips).
+const HOME_DIR = os.homedir();
+const displayPath = (p) => (p === HOME_DIR ? '~' : p.startsWith(HOME_DIR + path.sep) ? '~' + p.slice(HOME_DIR.length) : p);
+
+// List saved folders (each with a live piece count + reachability + which is active) and the source.
+app.get('/api/folders', (_req, res) => {
+  const activeId = folderSourceId();
+  res.json({
+    source: db.getSetting('display_source', 'library'),
+    root: folders.FOLDER_ROOT,
+    folders: db.listFolderCollections().map((f) => {
+      const reachable = folders.reachable(f.path);
+      return { ...f, reachable, count: reachable ? folders.count(f.path) : 0, active: f.id === activeId, displayPath: displayPath(f.path) };
+    }),
+  });
+});
+
+// Browse the host's folders (sandboxed to folders.FOLDER_ROOT) so the owner can pick one without typing.
+app.get('/api/folders/browse', (req, res) => {
+  const view = folders.browse(req.query.path);
+  if (!view) return res.status(400).json({ error: 'that folder is outside the allowed area or unreadable' });
+  res.json(view);
+});
+
+// Register a folder (staging — it does not change the display until selected as the source, §17).
+app.post('/api/folders', (req, res) => {
+  const { path: p, name, artist, fit, order } = req.body || {};
+  const v = folders.validateFolderPath(p);
+  if (v.error) return res.status(400).json({ error: v.error });
+  if (fit !== undefined && !FITS.has(fit)) return res.status(400).json({ error: 'fit must be fit|fill' });
+  if (order !== undefined && !MODES.has(order)) return res.status(400).json({ error: 'order must be sequence|shuffle' });
+  if (db.getFolderCollectionByPath(v.path)) return res.status(409).json({ error: 'that folder is already added' });
+  const cleanName = (typeof name === 'string' && name.trim()) ? name.trim().slice(0, 80) : path.basename(v.path);
+  const cleanArtist = (typeof artist === 'string' && artist.trim()) ? artist.trim().slice(0, 80) : null;
+  res.status(201).json(db.addFolderCollection({ path: v.path, name: cleanName, artist: cleanArtist, fit, order }));
+});
+
+// Edit a folder's Name / Artist / Fit / Order (all staging; the folder is configured here and nowhere
+// else, §17). A blank name falls back to the folder's own basename.
+app.patch('/api/folders/:id', (req, res) => {
+  const folder = db.getFolderCollection(Number(req.params.id));
+  if (!folder) return res.status(404).json({ error: 'not found' });
+  const { name, artist, fit, order } = req.body || {};
+  if (fit !== undefined && !FITS.has(fit)) return res.status(400).json({ error: 'fit must be fit|fill' });
+  if (order !== undefined && !MODES.has(order)) return res.status(400).json({ error: 'order must be sequence|shuffle' });
+  const fields = { artist, fit, order };
+  if (name !== undefined) fields.name = (typeof name === 'string' && name.trim()) ? name.trim().slice(0, 80) : path.basename(folder.path);
+  res.json(db.updateFolderCollection(folder.id, fields));
+});
+
+// Delete a folder definition. If it was the live source, fall back to the Library so the display never
+// points at a folder that no longer exists.
+app.delete('/api/folders/:id', (req, res) => {
+  const folder = db.getFolderCollection(Number(req.params.id));
+  if (!folder) return res.status(404).json({ error: 'not found' });
+  db.deleteFolderCollection(folder.id);
+  folders.forget(folder.path);
+  if (String(db.getSetting('display_source', 'library')) === String(folder.id)) db.setSetting('display_source', 'library');
+  res.json({ ok: true });
+});
+
+// True when the request comes from the machine running the player itself (loopback) — i.e. the
+// browser is open ON the host. The native folder chooser opens on the host, so it's only usable then.
+function isLocalRequest(req) {
+  const ip = (req.ip || req.socket.remoteAddress || '').replace(/^::ffff:/, '');
+  return ip === '127.0.0.1' || ip === '::1';
+}
+
+// Pick a folder with the host's NATIVE file dialog (HANDOFF §17): on macOS the standard "choose
+// folder" chooser via AppleScript, which opens on the machine running the player (where the folder
+// lives) and can navigate the whole Mac. A human at the machine chooses, so this path is not limited
+// to the browse sandbox. The chooser opens ON THE HOST, so a request from another device (a phone or
+// another computer) returns `remote:true` instead of popping a dialog nobody is in front of; the
+// control panel then shows a brief on-attempt note. Non-macOS returns `unsupported` (the in-browser
+// browser fallback). A local request blocks until the user picks or cancels.
+app.post('/api/folders/pick', ah(async (req, res) => {
+  if (process.platform !== 'darwin') return res.json({ unsupported: true });
+  if (!isLocalRequest(req)) return res.json({ remote: true });
+  const script = 'POSIX path of (choose folder with prompt "Choose a folder for OpenObject to display")';
+  let picked;
+  try {
+    picked = await new Promise((resolve, reject) => {
+      execFile('osascript', ['-e', script], { timeout: 180000 }, (err, stdout, stderr) => {
+        if (err) { err.stderr = stderr; return reject(err); }
+        resolve(String(stdout).trim());
+      });
+    });
+  } catch (e) {
+    if (/User canceled/i.test((e && (e.stderr || e.message)) || '')) return res.json({ cancelled: true });
+    return res.status(500).json({ error: 'Could not open the folder chooser.' });
+  }
+  if (!picked) return res.json({ cancelled: true });
+  picked = picked.replace(/\/+$/, ''); // osascript returns a trailing slash
+  let st;
+  try { st = fs.statSync(picked); } catch { return res.status(400).json({ error: 'That folder could not be read.' }); }
+  if (!st.isDirectory()) return res.status(400).json({ error: 'That is not a folder.' });
+  const dup = db.getFolderCollectionByPath(picked);
+  if (dup) return res.status(409).json({ error: 'that folder is already added', id: dup.id });
+  res.status(201).json(db.addFolderCollection({ path: picked, name: path.basename(picked), artist: null, fit: 'fit', order: 'sequence' }));
+}));
+
+// Reveal a folder in the host's file manager (Finder on macOS), so the owner can see what's in it.
+// Best-effort and non-blocking; opens on the machine running the player (where the folder lives).
+app.post('/api/folders/:id/open', (req, res) => {
+  const folder = db.getFolderCollection(Number(req.params.id));
+  if (!folder) return res.status(404).json({ error: 'not found' });
+  const opener = process.platform === 'darwin' ? 'open' : process.platform === 'linux' ? 'xdg-open' : null;
+  if (!opener) return res.status(400).json({ error: 'not supported here' });
+  execFile(opener, [folder.path], () => {}); // fire and forget
+  res.json({ ok: true });
+});
+
 app.get('/api/rotation', (_req, res) => {
   res.json(db.listRotation()); // curated members in order (not pin-collapsed; that's display-only)
 });
@@ -541,6 +679,7 @@ function currentSettings() {
     hostName: identity.hostName(),          // this Host's effective friendly name (custom, or the default)
     hostNameCustom: db.getSetting('host_name', ''), // the raw override ('' = using the default); what the Name field edits
     hostNameDefault: identity.defaultHostName(),     // the per-machine fallback, shown as the field's placeholder
+    displaySource: db.getSetting('display_source', 'library'), // 'library' or a folder id (HANDOFF §17)
   };
   s.asleep = isAsleep(s); // the live state, so the control panel can label the button Sleep/Wake by what's true now
   return s;
@@ -549,7 +688,7 @@ function currentSettings() {
 app.get('/api/settings', (_req, res) => res.json(currentSettings()));
 
 app.put('/api/settings', (req, res) => {
-  const { durationMs, mode, sleepRanges, manualBlank, librarySort, libraryFilter, hostName } = req.body || {};
+  const { durationMs, mode, sleepRanges, manualBlank, librarySort, libraryFilter, hostName, displaySource } = req.body || {};
   if (durationMs !== undefined) {
     const ms = Number(durationMs);
     if (!Number.isFinite(ms) || ms < 1000) return res.status(400).json({ error: 'durationMs must be >= 1000' });
@@ -601,6 +740,15 @@ app.put('/api/settings', (req, res) => {
     // restart. Best-effort and off the playback path: readvertise never throws.
     if (trimmed !== before) readvertise();
   }
+  if (displaySource !== undefined) {
+    // The either/or switch (HANDOFF §17): 'library' (default) or a saved folder id. Selecting a folder
+    // makes it the live source at once; the Library rotation is preserved untouched underneath.
+    const src = String(displaySource);
+    if (src !== 'library' && !db.getFolderCollection(Number(src))) {
+      return res.status(400).json({ error: 'displaySource must be "library" or a folder id' });
+    }
+    db.setSetting('display_source', src);
+  }
   res.json(currentSettings());
 });
 
@@ -649,6 +797,22 @@ const withConnectedFlags = (item) => {
 
 app.get('/api/display', (_req, res) => {
   const settings = currentSettings();
+  // Folder Collection as the Display Source (HANDOFF §17): play that folder's compliant files in
+  // place, timed by the global duration, ordered by the folder's own Sequence/Shuffle (the Library's
+  // rotation and order stay untouched underneath). Pin does not apply in folder mode.
+  const activeId = folderSourceId();
+  if (activeId != null) {
+    const folder = db.getFolderCollection(activeId);
+    return res.json({
+      items: folders.itemsFor(folder),
+      durationMs: settings.durationMs,
+      mode: MODES.has(folder.order) ? folder.order : DEFAULT_MODE,
+      pinnedId: null,
+      asleep: settings.asleep,
+      retroArcade: settings.retroArcade,
+      source: 'folder',
+    });
+  }
   const pinned = settings.pinnedId != null ? db.getLibraryItem(settings.pinnedId) : null;
   res.json({
     items: (pinned ? [pinned] : db.listRotation()).map(withConnectedFlags),
@@ -657,6 +821,7 @@ app.get('/api/display', (_req, res) => {
     pinnedId: settings.pinnedId,
     asleep: settings.asleep,
     retroArcade: settings.retroArcade, // hidden self-playing demo: the display swaps to the canvas
+    source: 'library',
   });
 });
 

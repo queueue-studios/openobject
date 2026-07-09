@@ -133,13 +133,13 @@ function render(layer, item, onReady) {
     el.playsInline = true;
     el.autoplay = true;
     el.addEventListener('loadeddata', onReady, { once: true });
-    el.src = '/uploads/' + item.filename;
+    el.src = item.src || ('/uploads/' + item.filename);
     el.play().catch(() => {});
   } else {
     el = document.createElement('img'); // stills + animated (GIF/WebP/AVIF) + SVG (SMIL) hold/loop
     el.addEventListener('load', onReady, { once: true });
     el.addEventListener('error', onReady, { once: true });
-    el.src = '/uploads/' + item.filename;
+    el.src = item.src || ('/uploads/' + item.filename);
   }
   layer.replaceChildren(el);
   // Safety net so the loop can't wedge if the readiness event never fires. Stills and video settle

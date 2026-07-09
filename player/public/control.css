@@ -507,6 +507,8 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 /* Rotation list — the curated, ordered subset on the panel */
 .rot-hint { color: var(--muted); font-size: 13px; margin: 0 2px 14px; }
 .rot-list { display: flex; flex-direction: column; gap: 8px; }
+/* .rot-list forces display:flex; let it hide (with its pieces) while a Folder Collection is the source. */
+.rot-list[hidden] { display: none; }
 .rot-row {
   display: flex;
   align-items: center;
@@ -698,3 +700,47 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .cc-hide { appearance: none; border: 1px solid var(--line); background: var(--panel-2); color: var(--muted); border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 12px; cursor: pointer; flex: none; }
 .cc-hide:hover { color: var(--text); border-color: #4a4a52; }
 .cc-empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+
+/* ── Folder Collections (HANDOFF §17) ────────────────────────────── */
+/* Folder card row: reuses .cc-row layout; adds an inline name/artist edit and a muted path line. */
+.fc-name { cursor: pointer; }
+.fc-name:hover { text-decoration: underline; }
+/* The piece count doubles as the "open this folder in Finder" link (in place of showing the path). */
+.fc-open { appearance: none; border: 0; background: none; padding: 0; font: inherit; color: #6fcf97; cursor: pointer; }
+.fc-open:hover { text-decoration: underline; }
+.fc-unreach { color: var(--danger); }
+/* Inline Name + Artist edit (mirrors the Library card): name/sub swap for two inputs side by side. */
+.fc-meta.editing { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.fc-meta.editing .meta-input { width: 160px; max-width: 46vw; }
+.cc-controls[hidden] { display: none; }  /* .cc-controls forces display:flex; let it hide during edit */
+.fc-edit-actions { display: inline-flex; gap: 6px; }
+.fc-edit-save { color: #b6f0c2; }
+.fc-edit-save:hover { background: #1c3a26; color: #d6ffe0; }
+/* Rotation-tab read-only summary shown while a folder is the live source. */
+.folder-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; padding: 14px 16px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; }
+.folder-summary[hidden] { display: none; }
+.fs-head { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; min-width: 0; }
+.fs-name { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 16px; color: var(--text); cursor: pointer; }
+.fs-name:hover { color: #6fcf97; }
+.fs-sub { font-size: 13px; color: var(--muted); }
+/* A "FOLDER" kind pill, akin to the "CONNECTED" pill (.rot-pill-connected): same shape + accent. */
+.fs-pill { flex: none; align-self: center; padding: 1px 7px; border-radius: 999px; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: #9fe1cb; background: var(--panel-2); border: 1px solid #2f4a44; }
+.fs-facts { flex: none; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.fs-facts-warn { color: var(--danger); }
+/* Folder picker modal: the subfolder browser (reuses .cx-overlay / .cx-box). */
+.fp-path { font-size: 12px; color: var(--muted); word-break: break-all; margin-bottom: 8px; }
+.fp-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; overflow: hidden auto; max-height: 46vh; }
+.fp-item { appearance: none; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: var(--panel-2); color: var(--text); font: inherit; font-size: 14px; padding: 10px 12px; cursor: pointer; }
+.fp-item:last-child { border-bottom: 0; }
+.fp-item:hover { background: #26262b; }
+.fp-up { color: var(--muted); }
+.fp-none { color: var(--muted); font-size: 13px; padding: 14px; text-align: center; margin: 0; }
+.fp-current { font-size: 13px; color: var(--muted); margin-top: 12px; }
+/* Brief on-attempt note when "Choose folder" is used from another device (the chooser opens on the host). */
+.fc-hint { margin: 10px 2px 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.fc-hint[hidden] { display: none; }
+/* .set-group forces display:flex, which beats the plain [hidden] attribute; restore it so the Order
+   group can hide while a folder is the source (HANDOFF §17). */
+.set-group[hidden] { display: none; }
+/* Match the Source dropdown's height to the Order segmented control it sits beside. */
+#sourceSelect { height: 35px; padding: 0 10px; box-sizing: border-box; }
