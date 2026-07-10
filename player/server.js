@@ -867,6 +867,7 @@ app.get('/api/system', (_req, res) => {
   res.json({
     supervised: SUPERVISED, // this Host can soft-restart itself (relaunch available) → show Restart
     isDevice: process.platform === 'linux', // this Host can OS-power (the frame) → show Reboot / Shut down
+    role: identity.deviceRole(), // 'frame' (the XXL appliance) or 'standalone'; drives the Folder Collections UI fork (§17 Phase B)
     port: PORT,
     // openobject.local resolves only where mDNS is configured (the installed frame, which is Linux),
     // not on a Mac/standalone, so only advertise it there; the control panel hides the line otherwise.
@@ -957,6 +958,9 @@ app.use((err, _req, res, _next) => {
 // hostName) can re-advertise with the new name without a restart. readvertise() stops any current
 // advertisement and publishes a fresh one from the current identity; best-effort, never throws.
 let advertisement = null;
+// The live LAN browse handle (frame only): the frame browses for the Mac that serves a Folder
+// Collection (§17 Phase B). Null on a standalone Host, which is the server, not the consumer.
+let discoveryBrowser = null;
 function readvertise() {
   try { advertisement && advertisement.stop(); } catch { /* ignore */ }
   const me = identity.identity();
@@ -976,12 +980,24 @@ updater.refreshCommitCache().finally(() => {
     // leaves the player serving exactly as before, just not auto-discoverable.
     readvertise();
 
+    // On the frame (OO_ROLE=frame), also BROWSE for other Hosts so a Folder Collection served by a
+    // Mac can be discovered and selected (HANDOFF §17 Phase B). Only the frame consumes: a standalone
+    // Mac Host is the server and does its browsing in the Mac app, not here. Best-effort and off the
+    // playback path, exactly like advertising.
+    if (identity.deviceRole() === 'frame') {
+      discoveryBrowser = discovery.browse({ selfId: identity.identity().id });
+    }
+
     // Withdraw the advertisement on a clean stop (Ctrl-C, or systemd's SIGTERM on the frame) so
     // clients don't briefly see a dead Host. The supervisor short-circuits on `stopping`, so the
     // exit code here is irrelevant; a self-update restart (process.exit(RESTART_CODE)) simply
     // re-advertises on relaunch. This does not change the frame's stop/restart behavior.
     for (const sig of ['SIGINT', 'SIGTERM']) {
-      process.once(sig, () => { try { advertisement && advertisement.stop(); } catch { /* ignore */ } process.exit(0); });
+      process.once(sig, () => {
+        try { advertisement && advertisement.stop(); } catch { /* ignore */ }
+        try { discoveryBrowser && discoveryBrowser.stop(); } catch { /* ignore */ }
+        process.exit(0);
+      });
     }
   });
 });

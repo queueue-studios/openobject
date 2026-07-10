@@ -69,4 +69,15 @@ function identity() {
   return { id: hostId(), name: hostName() };
 }
 
-module.exports = { identity, hostId, hostName, defaultHostName };
+// This instance's DEVICE role (HANDOFF §17 Phase B). 'frame' when this is the shipped XXL frame
+// appliance (the installer sets OO_ROLE=frame in the systemd unit); 'standalone' otherwise (a Mac,
+// a Linux desktop, or a dev run). This is an EXPLICIT env, deliberately not platform-sniffing, so a
+// Linux-desktop-as-display stays a standalone Host and never silently becomes a frame client. It is
+// a different axis from /api/identity's architecture role ('host'), which every OpenObject server
+// always is: the frame is still a full Host with its own Library; 'frame' only adds the Folder
+// Collections client behavior (it SELECTS a Mac's shared folder instead of picking a local one).
+function deviceRole() {
+  return process.env.OO_ROLE === 'frame' ? 'frame' : 'standalone';
+}
+
+module.exports = { identity, hostId, hostName, defaultHostName, deviceRole };

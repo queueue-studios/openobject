@@ -60,4 +60,73 @@ function advertise({ name, port, id, version }) {
   };
 }
 
-module.exports = { advertise, SERVICE_TYPE };
+// Browse for OTHER Hosts on the LAN — the client side of discovery (a frame finding the Mac that
+// serves a Folder Collection, HANDOFF §17 Phase B; later the Mac app finding frames). Keeps a live
+// registry of discovered `_openobject._tcp` services keyed by their mDNS instance name (fqdn),
+// carrying the identity from the TXT records (id/name/version/role). Excludes THIS host by its id so
+// a Host never lists itself. Best-effort and crash-proof exactly like advertise(): any failure logs
+// and leaves an empty registry, never throws. Returns a handle with .list() and .stop().
+function browse({ selfId } = {}) {
+  let bonjour = null;
+  let browser = null;
+  const seen = new Map(); // fqdn -> { id, name, version, role, host, port, addresses, fqdn, lastSeen }
+
+  const shape = (service) => {
+    const txt = service.txt || {};
+    return {
+      id: txt.id ? String(txt.id) : null,
+      name: txt.name ? String(txt.name) : (service.name || null),
+      version: txt.version ? String(txt.version) : null,
+      role: txt.role ? String(txt.role) : null,          // the TXT's architecture role (usually 'host')
+      host: service.host || null,
+      port: service.port || null,
+      addresses: Array.isArray(service.addresses) ? service.addresses : [],
+      fqdn: service.fqdn || null,
+      lastSeen: Date.now(),
+    };
+  };
+
+  try {
+    const { Bonjour } = require('bonjour-service');
+    // Same second-arg error handler as advertise(): without it, an async mDNS socket error (e.g. a
+    // network that forbids multicast) would be re-thrown and crash the player.
+    bonjour = new Bonjour(undefined, (err) => console.warn('[discovery] mDNS socket error (continuing without discovery):', err && err.message));
+    browser = bonjour.find({ type: SERVICE_TYPE });
+    browser.on('up', (service) => {
+      try {
+        const rec = shape(service);
+        if (selfId && rec.id && rec.id === String(selfId)) return; // never list ourself
+        if (!rec.fqdn) return;
+        seen.set(rec.fqdn, rec);
+        console.log(`[discovery] found "${rec.name}" at ${rec.addresses[0] || rec.host || '?'}:${rec.port}`);
+      } catch (err) {
+        console.warn('[discovery] browse (up) error:', err && err.message);
+      }
+    });
+    browser.on('down', (service) => {
+      if (service && service.fqdn && seen.delete(service.fqdn)) {
+        console.log(`[discovery] host gone: ${service.fqdn}`);
+      }
+    });
+    browser.on('error', (err) => console.warn('[discovery] browse error:', err && err.message));
+    console.log(`[discovery] browsing for _${SERVICE_TYPE}._tcp hosts on the LAN`);
+  } catch (err) {
+    console.warn('[discovery] Bonjour browse unavailable, continuing without it:', err && err.message);
+    bonjour = null;
+  }
+
+  return {
+    // A snapshot of the currently-visible Hosts (excluding self). Never throws.
+    list() {
+      return [...seen.values()];
+    },
+    // Stop browsing and release the socket. Never throws.
+    stop() {
+      try { if (browser && typeof browser.stop === 'function') browser.stop(); } catch { /* ignore */ }
+      try { if (bonjour) bonjour.destroy(); } catch { /* ignore */ }
+      bonjour = null;
+    },
+  };
+}
+
+module.exports = { advertise, browse, SERVICE_TYPE };
