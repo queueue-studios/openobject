@@ -1223,6 +1223,12 @@ function renderSource() {
       macSearchStartedAt = 0;
       sourceHint.hidden = true;
       sourceHint.textContent = '';
+    } else if (foldersData.outdatedMac) {
+      // A Mac is on the LAN but running an OpenObject too old for what the frame needs (§17): nudge an
+      // update rather than the "app must be open" hint. Generic wording, reused by any future feature.
+      macSearchStartedAt = 0;
+      sourceHint.hidden = false;
+      sourceHint.textContent = 'A newer version of OpenObject is available for your Mac. Please update the app.';
     } else {
       if (macSearchStartedAt === 0) macSearchStartedAt = Date.now();
       const elapsed = Date.now() - macSearchStartedAt;

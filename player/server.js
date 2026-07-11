@@ -85,6 +85,27 @@ const FITS = new Set(['fit', 'fill']);
 // lazily, so the current set of Hosts is always reflected. Both are inert on a standalone Host.
 let discoveryBrowser = null;
 const remote = remoteFolders.create({ hostsProvider: () => (discoveryBrowser ? discoveryBrowser.list() : []) });
+
+// The oldest Mac OpenObject version the FRAME fully supports. A discovered Mac older than this gets a
+// gentle "a newer version is available" nudge (§17) instead of a misleading "no Mac found". A GENERAL
+// signal: any future feature that needs a newer Mac just bumps this one constant. 1.3.0 = the first
+// release that shares folders to the frame. Deliberately NOT compared to the frame's OWN version: the
+// frame rides main, always ahead of the Mac's releases, so "older than the frame" would nag forever.
+const MIN_MAC_VERSION = '1.3.0';
+function macVersionLt(a, b) {
+  const parse = (v) => String(v || '0').split('.').map((s) => parseInt(s, 10) || 0);
+  const pa = parse(a), pb = parse(b);
+  for (let i = 0; i < 3; i++) { if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) < (pb[i] || 0); }
+  return false;
+}
+// The name of a discovered Mac too old for what the frame needs (see MIN_MAC_VERSION), or null.
+// role === 'host' targets Macs (the frame excludes itself from its own browse; today every instance
+// advertises 'host', but this stays correct if roles ever diverge).
+function outdatedMacName() {
+  const stale = (discoveryBrowser ? discoveryBrowser.list() : [])
+    .find((h) => h.role === 'host' && h.version && macVersionLt(h.version, MIN_MAC_VERSION));
+  return stale ? (stale.name || 'a Mac') : null;
+}
 // The frame's ephemeral cache for a remote folder's media (§17 Phase B). Wiped on construction (engine
 // start), on switching/leaving folders, and by a manual Clear. Inert on a standalone Host (never fed).
 const folderCache = folderCacheMod.create({
@@ -577,7 +598,7 @@ app.get('/api/folders', ah(async (_req, res) => {
         count: k.count, reachable: false, active: true, host: k.hostName,
       });
     }
-    return res.json({ source, remote: true, folders: out });
+    return res.json({ source, remote: true, folders: out, outdatedMac: outdatedMacName() });
   }
   const activeId = folderSourceId();
   res.json({
