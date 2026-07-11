@@ -138,7 +138,16 @@ function create({ hostsProvider, ttlMs = 4000 } = {}) {
     return null;
   }
 
-  return { list, resolve, items };
+  // The last-known record for a ref, captured in the manifest cache while the display was playing it
+  // (name/artist/fit/order/count from when the Host was last reachable). Lets the control panel keep a
+  // selected-but-now-offline folder on screen, greyed and NAMED, instead of dropping it to a bare
+  // "unreachable" line (§17 error state 2). Sync cache read; null if the frame never reached it.
+  function lastKnown(ref) {
+    const prev = manifests.get(ref);
+    return prev && prev.folder ? prev.folder : null;
+  }
+
+  return { list, resolve, items, lastKnown };
 }
 
 module.exports = { create, makeRef, parseRef, folderKey, parseFolderKey, baseFor, SCHEME };

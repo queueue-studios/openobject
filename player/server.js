@@ -563,13 +563,21 @@ app.get('/api/folders', ah(async (_req, res) => {
   const source = db.getSetting('display_source', 'library');
   if (identity.deviceRole() === 'frame') {
     const list = await remote.list();
-    return res.json({
-      source, remote: true,
-      folders: list.map((f) => ({
-        id: f.ref, name: f.name, artist: f.artist, fit: f.fit, order: f.order,
-        count: f.count, reachable: f.reachable, active: f.ref === source, host: f.hostName,
-      })),
-    });
+    const out = list.map((f) => ({
+      id: f.ref, name: f.name, artist: f.artist, fit: f.fit, order: f.order,
+      count: f.count, reachable: f.reachable, active: f.ref === source, host: f.hostName,
+    }));
+    // If the selected folder's Mac has dropped off the LAN it is absent from the live list above.
+    // Re-add it from the last-known manifest (greyed, reachable:false) so the panel keeps it on screen
+    // WITH its name instead of reverting to a nameless "unreachable" line (§17 error state 2).
+    if (remoteFolders.parseRef(source) && !out.some((f) => f.id === source)) {
+      const k = remote.lastKnown(source);
+      if (k) out.push({
+        id: source, name: k.name, artist: k.artist, fit: k.fit, order: k.order,
+        count: k.count, reachable: false, active: true, host: k.hostName,
+      });
+    }
+    return res.json({ source, remote: true, folders: out });
   }
   const activeId = folderSourceId();
   res.json({

@@ -112,7 +112,7 @@
 
       <p id="rotHint" class="rot-hint" hidden></p>
       <div id="rotList" class="rot-list"></div>
-      <p id="rotEmpty" class="empty" hidden>Add art from the Library tab.</p>
+      <p id="rotEmpty" class="empty" hidden>Select art from the Library tab.</p>
       <!-- Folder Collection as the source (HANDOFF §17): a read-only summary replaces the per-piece list. -->
       <div id="folderSummary" class="folder-summary" hidden></div>
     </section>
@@ -165,18 +165,20 @@
           <span class="cc-count" id="fcCount"></span>
         </div>
         <div class="card-body" id="foldersBody">
-          <div id="foldersList" class="cc-list"></div>
-          <button type="button" class="sleep-add" id="fcAddBtn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Add folder</button>
-          <p class="fc-hint" id="fcHint" hidden></p>
+          <!-- Mac: manage local folders here (twin of Connected Collections). -->
+          <div id="foldersManage">
+            <div id="foldersList" class="cc-list"></div>
+            <button type="button" class="sleep-add" id="fcAddBtn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Add folder</button>
+            <p class="fc-hint" id="fcHint" hidden></p>
+          </div>
+          <!-- Frame: folders are managed on the Mac, so this section holds the local play cache instead
+               (§17 Phase B). loadFolders() shows this group and hides the manage group on the frame. -->
+          <div id="foldersFrame" hidden>
+            <p class="fc-hint">Folder Collections are set up in the Control Panel on your Mac.</p>
+            <p class="fc-hint" id="fcCacheUsage">—</p>
+            <button type="button" id="fcCacheClearBtn" class="update-btn">Clear cache</button>
+          </div>
         </div>
-      </section>
-
-      <!-- Folder cache (§17 Phase B) — frame-only: how much of the selected Mac folder is buffered
-           locally on the frame, plus a Clear. loadSystem() reveals it only when this host is the frame. -->
-      <section class="device" id="folderCacheCard" hidden>
-        <div class="section-title">Folder cache</div>
-        <p class="fc-hint" id="fcCacheUsage">—</p>
-        <button type="button" id="fcCacheClearBtn" class="update-btn">Clear cache</button>
       </section>
 
       <!-- Software Update — pull the latest OpenObject from GitHub, all from the browser (HANDOFF §15) -->

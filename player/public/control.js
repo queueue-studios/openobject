@@ -1019,11 +1019,9 @@ async function loadSystem() {
   frameAddr.innerHTML = addrs.map((a) => `<span class="reach-addr">${a}</span>`).join('') || '—';
   reachEl.hidden = addrs.length === 0;
 
-  // Folder cache card (§17 Phase B): only the frame buffers a Mac folder, so it shows only there.
+  // Only the frame buffers a Mac folder; deviceIsFrame gates the cache-meter refresh (the cache UI
+  // now lives inside the Folder Collections card, populated by loadFolders, §17 Phase B).
   deviceIsFrame = s.role === 'frame';
-  const cacheCard = document.getElementById('folderCacheCard');
-  if (cacheCard) cacheCard.hidden = !deviceIsFrame;
-  if (deviceIsFrame) loadFolderCache();
 }
 
 // Poll /healthz until the player is back up and a predicate holds (a new commit after an update,
@@ -1097,18 +1095,22 @@ async function loadFolderCache() {
   try {
     const u = await fetch('/api/folder-cache').then((r) => r.json());
     el.textContent = u.bytes > 0
-      ? `Buffered ${fmtCacheSize(u.bytes)} of up to ${fmtCacheSize(u.capBytes)}.`
-      : 'Empty. A Mac folder buffers here while it plays, and clears on reboot.';
+      ? `Buffered ${fmtCacheSize(u.bytes)} of ${fmtCacheSize(u.capBytes)}. Cache clears on reboot.`
+      : 'Cache currently empty.';
   } catch { /* leave the last value on a transient error */ }
 }
 
 async function loadFolders() {
   try { foldersData = await fetch('/api/folders').then((r) => r.json()); }
   catch { foldersData = { source: 'library', folders: [], root: '' }; }
-  // On the frame the Source lists folders SERVED BY a Mac (foldersData.remote): they are managed on
-  // the Mac, so the local management card is hidden here and folders are only selected in Rotation.
-  const card = document.getElementById('foldersCard');
-  if (card) card.hidden = !!foldersData.remote;
+  // The Folder Collections card is present on both roles, but its body differs: a Mac MANAGES local
+  // folders; the frame's folders are managed on the Mac, so the card holds the local play cache
+  // instead (§17 Phase B). The card itself stays collapsible + collapsed-by-default via wireCollapse.
+  const manage = document.getElementById('foldersManage');
+  const frameGroup = document.getElementById('foldersFrame');
+  if (manage) manage.hidden = !!foldersData.remote;
+  if (frameGroup) frameGroup.hidden = !foldersData.remote;
+  if (foldersData.remote) { fcCount.textContent = ''; loadFolderCache(); }
   renderFolderCard();
 }
 
@@ -1215,22 +1217,25 @@ function renderSource() {
   sourceSelect.innerHTML = opts.join('');
   const active = source !== 'library' ? list.find((f) => String(f.id) === String(source)) : null;
   sourceSelect.value = active ? String(active.id) : 'library';
+  sourceSelect.classList.toggle('offline', !!(active && !active.reachable)); // grey a selected folder whose Mac is offline
   // Frame with no Mac sharing folders (§17 Phase B, error state 1): explain how to get some, rather
   // than leaving a bare Library-only dropdown. Only in remote mode; a standalone Host never shows it.
   const sourceHint = document.getElementById('sourceHint');
   if (sourceHint) {
     const noMac = !!foldersData.remote && list.length === 0;
-    sourceHint.textContent = noMac ? 'Open the OpenObject app on your Mac to share a folder.' : '';
+    sourceHint.textContent = noMac ? 'To display a Folder Collection, the OpenObject app must be open on your Mac.' : '';
     sourceHint.hidden = !noMac;
   }
-  // Frame: a remote folder is selected but its Mac is not reachable right now (§17 error state 2). The
-  // display keeps showing whatever it cached; here we flag it rather than silently reverting to Library.
+  // Frame: a remote folder is selected but unreachable AND we have no last-known details for it (rare;
+  // the server normally supplies the folder greyed via the list above, §17 error state 2). Fallback:
+  // flag it without a name rather than silently reverting to Library.
   if (!!foldersData.remote && source !== 'library' && !active) {
     if (sourceHint) sourceHint.hidden = true;
     orderGroup.hidden = true; rotList.hidden = true; rotHint.hidden = true; rotEmpty.hidden = true;
     rotCount.textContent = '';
     folderSummary.hidden = false;
-    folderSummary.innerHTML = '<div class="fs-facts fs-facts-warn">Can\'t reach your Mac. Is it awake and running OpenObject?</div>';
+    folderSummary.classList.add('fs-offline');
+    folderSummary.innerHTML = '<div class="fs-facts fs-facts-offline">Mac unreachable. Make sure it is awake and the OpenObject app is open.</div>';
     return;
   }
   const inFolder = !!active;
@@ -1249,19 +1254,23 @@ function renderFolderSummary(f) {
   const fit = f.fit === 'fill' ? 'Fill' : 'Fit';
   const order = f.order === 'shuffle' ? 'Shuffle' : 'Sequence';
   const sub = f.artist ? `<span class="fs-sub">${escapeHtml(f.artist)}</span>` : '';
-  // Fit/Fill · Sequence/Shuffle · count — small muted bulleted text (no pills), pushed to the right.
-  const facts = f.reachable
-    ? `${fit} · ${order} · ${f.count} piece${f.count === 1 ? '' : 's'}`
-    : "Can't be reached";
-  // On the frame a folder is managed on the Mac, so its name is plain text (no jump to a local
-  // Settings card) with a tooltip naming the Mac; on a standalone Host it links to Settings.
+  // On the frame a folder is managed on the Mac, so its name is plain text (no jump to a local Settings
+  // card) with a tooltip naming the Mac; on a standalone Host it links to Settings. When that Mac is
+  // unreachable the folder is greyed (offline) and the facts line becomes the unreachable message.
   const remote = !!foldersData.remote;
+  const offline = remote && !f.reachable;
+  const facts = offline
+    ? 'Mac unreachable. Make sure it is awake and the OpenObject app is open.'
+    : f.reachable
+      ? `${fit} · ${order} · ${f.count} piece${f.count === 1 ? '' : 's'}`
+      : "Can't be reached";
   const nameEl = remote
     ? `<span class="fs-name fs-name-static"${f.host ? ` title="Shared by ${escapeHtml(f.host)}"` : ''}>${escapeHtml(f.name)}</span>`
     : `<button type="button" class="fs-name" id="fsName" title="Manage in Settings">${escapeHtml(f.name)}</button>`;
+  folderSummary.classList.toggle('fs-offline', offline);
   folderSummary.innerHTML = `
     <div class="fs-head">${nameEl}${sub}<span class="fs-pill">Folder</span></div>
-    <div class="fs-facts${f.reachable ? '' : ' fs-facts-warn'}">${facts}</div>`;
+    <div class="fs-facts${offline ? ' fs-facts-offline' : f.reachable ? '' : ' fs-facts-warn'}">${facts}</div>`;
   if (!remote) document.getElementById('fsName').addEventListener('click', gotoFolderSettings);
 }
 

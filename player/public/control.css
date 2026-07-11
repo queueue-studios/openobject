@@ -730,6 +730,11 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 /* Frame: the folder name is managed on the Mac, so it is plain text, not a Settings link. */
 .fs-name-static { cursor: default; }
 .fs-name-static:hover { color: var(--text); }
+/* Frame: a selected folder whose Mac is unreachable is shown greyed (offline), plus a plain message. */
+.lib-ctrl-select.offline { color: var(--muted); }
+.folder-summary.fs-offline .fs-name { color: var(--muted); }
+.folder-summary.fs-offline .fs-pill { color: var(--muted); border-color: var(--line); background: transparent; }
+.fs-facts-offline { color: var(--muted); }
 /* Folder picker modal: the subfolder browser (reuses .cx-overlay / .cx-box). */
 .fp-path { font-size: 12px; color: var(--muted); word-break: break-all; margin-bottom: 8px; }
 .fp-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; overflow: hidden auto; max-height: 46vh; }
@@ -742,6 +747,8 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 /* Brief on-attempt note when "Choose folder" is used from another device (the chooser opens on the host). */
 .fc-hint { margin: 10px 2px 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
 .fc-hint[hidden] { display: none; }
+/* Frame Folder cache (§17 Phase B): gap the Clear button from the usage line, like Software Update. */
+#fcCacheClearBtn { margin-top: 14px; }
 /* .set-group forces display:flex, which beats the plain [hidden] attribute; restore it so the Order
    group can hide while a folder is the source (HANDOFF §17). */
 .set-group[hidden] { display: none; }
