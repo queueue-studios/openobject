@@ -928,7 +928,8 @@ app.get('/api/display', ah(async (_req, res) => {
           src: `/folder-media/${key}/${encodeURIComponent(it.filename)}`,
         })),
         durationMs: settings.durationMs,
-        mode: MODES.has(man.folder.order) ? man.folder.order : DEFAULT_MODE,
+        // Order follows the frame's OWN Rotation setting (like duration), not the folder record (§17).
+        mode: settings.mode,
         pinnedId: null,
         asleep: settings.asleep,
         retroArcade: settings.retroArcade,
@@ -938,15 +939,15 @@ app.get('/api/display', ah(async (_req, res) => {
   }
 
   // Local Folder Collection as the Display Source (HANDOFF §17): play that folder's compliant files in
-  // place, timed by the global duration, ordered by the folder's own Sequence/Shuffle (the Library's
-  // rotation and order stay untouched underneath). Pin does not apply in folder mode.
+  // place, timed by the global duration and ordered by the Rotation tab's Sequence/Shuffle (same as the
+  // duration; the folder no longer carries its own order). Pin does not apply in folder mode.
   const activeId = folderSourceId();
   if (activeId != null) {
     const folder = db.getFolderCollection(activeId);
     return res.json({
       items: folders.itemsFor(folder),
       durationMs: settings.durationMs,
-      mode: MODES.has(folder.order) ? folder.order : DEFAULT_MODE,
+      mode: settings.mode,
       pinnedId: null,
       asleep: settings.asleep,
       retroArcade: settings.retroArcade,

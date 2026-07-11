@@ -1126,7 +1126,6 @@ function renderFolderCard() {
     const row = document.createElement('div');
     row.className = 'cc-row';
     const fitOpts = [['fit', 'Fit'], ['fill', 'Fill']].map(([v, l]) => `<option value="${v}"${f.fit === v ? ' selected' : ''}>${l}</option>`).join('');
-    const orderOpts = [['sequence', 'Sequence'], ['shuffle', 'Shuffle']].map(([v, l]) => `<option value="${v}"${f.order === v ? ' selected' : ''}>${l}</option>`).join('');
     const countText = `${f.count} piece${f.count === 1 ? '' : 's'}`;
     const artistPart = f.artist ? escapeHtml(f.artist) + ' · ' : '';
     // Display: title, then the artist ONLY when set (no placeholder). The piece count doubles as the
@@ -1141,11 +1140,9 @@ function renderFolderCard() {
       </span>
       <span class="cc-controls">
         <span class="cc-ctrl"><span class="cc-ctrl-label">Fit</span><select class="cc-ctrl-select fc-fit" aria-label="Fit for ${escapeHtml(f.name)}">${fitOpts}</select></span>
-        <span class="cc-ctrl"><span class="cc-ctrl-label">Order</span><select class="cc-ctrl-select fc-order" aria-label="Order for ${escapeHtml(f.name)}">${orderOpts}</select></span>
       </span>
       <button class="cc-hide fc-remove">Remove</button>`;
     row.querySelector('.fc-fit').addEventListener('change', (e) => patchFolder(f.id, { fit: e.target.value }));
-    row.querySelector('.fc-order').addEventListener('change', (e) => patchFolder(f.id, { order: e.target.value }));
     row.querySelector('.fc-name').addEventListener('click', () => enterFolderEdit(row, f));
     const openBtn = row.querySelector('.fc-open');
     if (openBtn) openBtn.addEventListener('click', () => openFolderInFinder(f.id));
@@ -1160,8 +1157,8 @@ async function openFolderInFinder(id) {
 }
 
 // Click a folder's name to edit its Name + Artist in place (mirrors the Library card, HANDOFF §7): the
-// name/sub swap for a Name input and an "Artist (optional)" input beside it, with Save/Cancel (the Fit/
-// Order controls tuck away to make room). Save persists via PATCH; Cancel/Esc discards; Enter saves. A
+// name/sub swap for a Name input and an "Artist (optional)" input beside it, with Save/Cancel (the Fit
+// control tucks away to make room). Save persists via PATCH; Cancel/Esc discards; Enter saves. A
 // blank name falls back to the folder's own basename (server-side).
 function enterFolderEdit(row, folder) {
   const meta = row.querySelector('.fc-meta');
@@ -1202,6 +1199,12 @@ async function removeFolder(f) {
   await refresh();
 }
 
+// Frame-only: while no Mac has been discovered yet, show a brief "Looking for your Mac…" cue (like a
+// device picker) before settling into the actionable "app must be open" hint (§17 Phase B).
+const MAC_SEARCH_GRACE_MS = 12000;
+let macSearchStartedAt = 0;
+let macSearchTimer = null;
+
 // Rotation tab: the Source dropdown (Library / each saved folder) + folder-mode visibility. Called at
 // the end of refresh(), after loadRotation, so folder mode overrides the per-piece list (HANDOFF §17).
 function renderSource() {
@@ -1218,13 +1221,29 @@ function renderSource() {
   const active = source !== 'library' ? list.find((f) => String(f.id) === String(source)) : null;
   sourceSelect.value = active ? String(active.id) : 'library';
   sourceSelect.classList.toggle('offline', !!(active && !active.reachable)); // grey a selected folder whose Mac is offline
-  // Frame with no Mac sharing folders (§17 Phase B, error state 1): explain how to get some, rather
-  // than leaving a bare Library-only dropdown. Only in remote mode; a standalone Host never shows it.
+  // Frame with no Mac sharing folders (§17 Phase B, error state 1): while discovery is still warming up
+  // show a brief "Looking for your Mac…" cue (like a device picker), then settle into the actionable hint
+  // if none turns up. The empty-list poll keeps running (below), so a Mac that appears mid-search folds in
+  // on its own. Only in remote mode; a standalone Host never shows any of this.
   const sourceHint = document.getElementById('sourceHint');
   if (sourceHint) {
     const noMac = !!foldersData.remote && list.length === 0;
-    sourceHint.textContent = noMac ? 'To display a Folder Collection, the OpenObject app must be open on your Mac.' : '';
-    sourceHint.hidden = !noMac;
+    clearTimeout(macSearchTimer);
+    if (!noMac) {
+      macSearchStartedAt = 0;
+      sourceHint.hidden = true;
+      sourceHint.textContent = '';
+    } else {
+      if (macSearchStartedAt === 0) macSearchStartedAt = Date.now();
+      const elapsed = Date.now() - macSearchStartedAt;
+      sourceHint.hidden = false;
+      if (elapsed < MAC_SEARCH_GRACE_MS) {
+        sourceHint.textContent = 'Looking for your Mac…';
+        macSearchTimer = setTimeout(renderSource, MAC_SEARCH_GRACE_MS - elapsed + 50);
+      } else {
+        sourceHint.textContent = 'To display a Folder Collection, the OpenObject app must be open on your Mac.';
+      }
+    }
   }
   // Frame: a remote folder is selected but unreachable AND we have no last-known details for it (rare;
   // the server normally supplies the folder greyed via the list above, §17 error state 2). Fallback:
@@ -1239,7 +1258,7 @@ function renderSource() {
     return;
   }
   const inFolder = !!active;
-  orderGroup.hidden = inFolder;   // a folder carries its own order (edited in Settings), not the global one
+  orderGroup.hidden = false;   // Order (Sequence/Shuffle) applies to folders too now, like the duration (§17)
   rotList.hidden = inFolder;
   folderSummary.hidden = !inFolder;
   if (inFolder) {
@@ -1252,7 +1271,6 @@ function renderSource() {
 
 function renderFolderSummary(f) {
   const fit = f.fit === 'fill' ? 'Fill' : 'Fit';
-  const order = f.order === 'shuffle' ? 'Shuffle' : 'Sequence';
   const sub = f.artist ? `<span class="fs-sub">${escapeHtml(f.artist)}</span>` : '';
   // On the frame a folder is managed on the Mac, so its name is plain text (no jump to a local Settings
   // card) with a tooltip naming the Mac; on a standalone Host it links to Settings. When that Mac is
@@ -1262,7 +1280,7 @@ function renderFolderSummary(f) {
   const facts = offline
     ? 'Mac unreachable. Make sure it is awake and the OpenObject app is open.'
     : f.reachable
-      ? `${fit} · ${order} · ${f.count} piece${f.count === 1 ? '' : 's'}`
+      ? `${fit} · ${f.count} piece${f.count === 1 ? '' : 's'}`
       : "Can't be reached";
   const nameEl = remote
     ? `<span class="fs-name fs-name-static"${f.host ? ` title="Shared by ${escapeHtml(f.host)}"` : ''}>${escapeHtml(f.name)}</span>`
@@ -1689,7 +1707,9 @@ setInterval(() => { if (!panelSettings.hidden) { renderSleepStatus(); renderStri
 // row is being edited or the Source dropdown is focused, so a live re-render never interrupts you.
 setInterval(async () => {
   if (deviceIsFrame) loadFolderCache(); // keep the frame's cache meter current as the buffer fills
-  if (!(foldersData.folders && foldersData.folders.length)) return; // nothing to keep in step
+  // The frame keeps polling even when empty so a just-shared Mac folder appears on its own (§17 #2); a
+  // standalone Host has nothing to auto-discover, so it still short-circuits.
+  if (!deviceIsFrame && !(foldersData.folders && foldersData.folders.length)) return;
   const a = document.activeElement;
   if (a && (foldersListEl.contains(a) || a === sourceSelect)) return; // mid-interaction — leave it be
   await loadFolders(); // refreshes the card + its count
