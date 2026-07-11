@@ -229,6 +229,10 @@ function authGate(req, res, next) {
   if (!authRequired()) return next();
   if (!req.path.startsWith('/api/')) return next();
   if (AUTH_OPEN.has(req.path)) return next();
+  // Folder Collections shared to LAN Displays (§17 Phase B) are open and path-free, exactly like
+  // /api/display and /folder-media: a frame reads them with no credential. The prefix covers the
+  // per-folder /:id/items. They expose only names/counts and compliant filenames, never a path.
+  if (req.path === '/api/shared-folders' || req.path.startsWith('/api/shared-folders/')) return next();
   if (isAuthed(req)) return next();
   return res.status(401).json({ error: 'auth required' });
 }
@@ -482,6 +486,38 @@ function folderSourceId() {
 // A friendly, home-relative path for display (e.g. ~/Videos/Sample Clips).
 const HOME_DIR = os.homedir();
 const displayPath = (p) => (p === HOME_DIR ? '~' : p.startsWith(HOME_DIR + path.sep) ? '~' + p.slice(HOME_DIR.length) : p);
+
+// Folder Collections shared to LAN Displays (§17 Phase B). Open and PATH-FREE, unlike /api/folders
+// below (which is gated and returns displayPath): a frame reads this with no credential to list the
+// folders this host is serving and show them in its own Rotation Source dropdown. Media bytes come
+// from the existing public /folder-media; per-folder item manifests from /:id/items.
+app.get('/api/shared-folders', (_req, res) => {
+  const me = identity.identity();
+  res.json({
+    host: { id: me.id, name: me.name }, // so a client can confirm which host answered at this address
+    folders: db.listFolderCollections().map((f) => {
+      const reachable = folders.reachable(f.path);
+      return {
+        id: f.id, name: f.name, artist: f.artist, fit: f.fit, order: f.order,
+        count: reachable ? folders.count(f.path) : 0, reachable,
+        // deliberately NO path: this endpoint is credential-free and must never leak the filesystem.
+      };
+    }),
+  });
+});
+
+// The item manifest for one shared folder (§17 Phase B), path-free: the same display-item shape the
+// local rotation already uses (id / filename / format / kind / fit / src), so a frame builds its
+// rotation and its cache keys from it directly. `src` is host-relative (/folder-media/<id>/<file>);
+// the frame prepends this host's base URL to fetch the bytes, then serves its own cache copy.
+app.get('/api/shared-folders/:id/items', (req, res) => {
+  const folder = db.getFolderCollection(Number(req.params.id));
+  if (!folder) return res.status(404).json({ error: 'no such folder' });
+  res.json({
+    id: folder.id, name: folder.name, artist: folder.artist, fit: folder.fit, order: folder.order,
+    items: folders.itemsFor(folder),
+  });
+});
 
 // List saved folders (each with a live piece count + reachability + which is active) and the source.
 app.get('/api/folders', (_req, res) => {
