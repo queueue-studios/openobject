@@ -28,6 +28,21 @@ function parseRef(ref) {
   return { hostId, folderId };
 }
 
+// A URL-safe key mapping a Host+folder to ONE path segment for the frame's media route and cache.
+// hostId is a UUID (no dots) and folderId a number, so `<hostId>.<folderId>` splits cleanly on the
+// last dot. This is what /folder-media/<key>/<file> carries on the frame (§17: same route shape as
+// Phase A, where <key> was a local folder id).
+function folderKey(hostId, folderId) { return `${hostId}.${folderId}`; }
+function parseFolderKey(key) {
+  const s = String(key);
+  const dot = s.lastIndexOf('.');
+  if (dot < 0) return null;
+  const hostId = s.slice(0, dot);
+  const folderId = Number(s.slice(dot + 1));
+  if (!hostId || !Number.isInteger(folderId)) return null;
+  return { hostId, folderId };
+}
+
 // The base URL to reach a discovered Host. Prefer an IPv4 address (link-local IPv6 needs a scope id
 // we do not have); fall back to the next address, then to `<host>.local` (mDNS) when the address list
 // is empty (some Hosts advertise the service without inline A records, seen in the CP1 on-network
@@ -77,6 +92,7 @@ async function fetchShared(host) {
 function create({ hostsProvider, ttlMs = 4000 } = {}) {
   let cache = { at: 0, folders: [] };
   let inflight = null;
+  const manifests = new Map(); // ref -> { at, folder, items, reachable } (per-folder item lists)
 
   async function refresh() {
     const hosts = (typeof hostsProvider === 'function' ? hostsProvider() : []) || [];
@@ -100,7 +116,29 @@ function create({ hostsProvider, ttlMs = 4000 } = {}) {
     return folders.find((f) => f.ref === ref) || null;
   }
 
-  return { list, resolve };
+  // The item manifest for a remote folder (filenames + format), from its Host's open, path-free
+  // /api/shared-folders/:id/items. Short TTL cache so the display's ~5s poll does not re-fetch each
+  // time. On a fetch failure it returns the LAST-KNOWN manifest flagged reachable:false (so the frame
+  // keeps showing what it has cached, §17 error state 2), or null if nothing is known yet.
+  async function items(ref) {
+    const prev = manifests.get(ref);
+    if (prev && Date.now() - prev.at < ttlMs) return prev;
+    const folder = await resolve(ref);
+    if (folder) {
+      try {
+        const res = await fetch(`${folder.base}/api/shared-folders/${folder.folderId}/items`, { signal: AbortSignal.timeout(3000) });
+        if (!res.ok) throw new Error('status ' + res.status);
+        const body = await res.json();
+        const entry = { at: Date.now(), folder, items: Array.isArray(body.items) ? body.items : [], reachable: true };
+        manifests.set(ref, entry);
+        return entry;
+      } catch { /* fall through to last-known */ }
+    }
+    if (prev) return { ...prev, reachable: false };
+    return null;
+  }
+
+  return { list, resolve, items };
 }
 
-module.exports = { create, makeRef, parseRef, baseFor, SCHEME };
+module.exports = { create, makeRef, parseRef, folderKey, parseFolderKey, baseFor, SCHEME };

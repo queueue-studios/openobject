@@ -40,6 +40,7 @@ const seed = require('./src/seed');
 const identity = require('./src/identity');
 const discovery = require('./src/discovery');
 const remoteFolders = require('./src/remote-folders');
+const folderCacheMod = require('./src/folder-cache');
 const RESTART_CODE = require('./src/restart-code');
 
 // Set by the supervisor (HANDOFF §15). When supervised, the player may exit to auto-relaunch
@@ -84,6 +85,15 @@ const FITS = new Set(['fit', 'fill']);
 // lazily, so the current set of Hosts is always reflected. Both are inert on a standalone Host.
 let discoveryBrowser = null;
 const remote = remoteFolders.create({ hostsProvider: () => (discoveryBrowser ? discoveryBrowser.list() : []) });
+// The frame's ephemeral cache for a remote folder's media (§17 Phase B). Wiped on construction (engine
+// start), on switching/leaving folders, and by a manual Clear. Inert on a standalone Host (never fed).
+const folderCache = folderCacheMod.create({
+  dir: path.join(db.DATA_DIR, 'folder-cache'),
+  resolveBase: async (hostId, folderId) => {
+    const f = await remote.resolve(remoteFolders.makeRef(hostId, folderId));
+    return f ? f.base : null;
+  },
+});
 // Library grid sort: recent (default) | oldest | title | artist. recent/oldest/title are SQL orders in
 // db.listLibrary; "artist" is resolved here (libraryByArtist) because a connected piece's artist lives in
 // the registry, not the DB row. This set just validates the persisted choice (HANDOFF §7). Every order
@@ -135,7 +145,25 @@ app.use('/uploads', express.static(db.UPLOADS_DIR));
 // it, and it stays reachable with a control-panel password set (kiosk content). The path is locked
 // down in folders.resolveMedia (single segment, compliant, directly inside the folder), with
 // res.sendFile(root) as the containment backstop; range requests (video scrubbing) fall out of sendFile.
-app.get('/folder-media/:id/:file', (req, res) => {
+app.get('/folder-media/:id/:file', ah(async (req, res) => {
+  // Frame (§17 Phase B): :id is a remote folder key (<hostId>.<folderId>), served from the ephemeral
+  // cache, fetching from the Mac on a miss. A cap/floor overflow is proxy-streamed without caching.
+  if (identity.deviceRole() === 'frame') {
+    const hit = await folderCache.get(req.params.id, req.params.file);
+    if (!hit) return res.status(404).end();
+    if (hit.localPath) {
+      return res.sendFile(path.basename(hit.localPath), { root: path.dirname(hit.localPath), dotfiles: 'deny' }, (err) => {
+        if (err && !res.headersSent) res.status(404).end();
+      });
+    }
+    let up;
+    try { up = await fetch(hit.streamUrl, { signal: AbortSignal.timeout(20000) }); } catch { return res.status(504).end(); }
+    if (!up || !up.ok || !up.body) return res.status(502).end();
+    const ct = up.headers.get('content-type'); if (ct) res.setHeader('Content-Type', ct);
+    const len = up.headers.get('content-length'); if (len) res.setHeader('Content-Length', len);
+    return require('stream').Readable.fromWeb(up.body).pipe(res);
+  }
+  // Local Folder Collection (Phase A): stream straight from the registered folder.
   const folder = db.getFolderCollection(Number(req.params.id));
   if (!folder) return res.status(404).end();
   const hit = folders.resolveMedia(folder, req.params.file);
@@ -143,7 +171,7 @@ app.get('/folder-media/:id/:file', (req, res) => {
   res.sendFile(hit.name, { root: hit.root, dotfiles: 'deny' }, (err) => {
     if (err && !res.headersSent) res.status(404).end();
   });
-});
+}));
 
 // Mirrored connected-art bundles (src/collections.js). Served same-origin so the
 // art runs and the display can frame it; locked to our own resources, just allowing the inline
@@ -811,6 +839,10 @@ app.put('/api/settings', (req, res) => {
       return res.status(400).json({ error: 'displaySource must be "library" or a folder id' });
     }
     db.setSetting('display_source', src);
+    // Leaving a remote folder (to Library, a local folder, or nothing): wipe the frame's cache so no
+    // folder files linger at rest (§17). A switch to ANOTHER remote folder is wiped by setActive on the
+    // next /api/display poll; here we only cover leaving remote-folder mode.
+    if (identity.deviceRole() === 'frame' && !remoteFolders.parseRef(src)) folderCache.clear();
   }
   res.json(currentSettings());
 });
@@ -858,9 +890,37 @@ const withConnectedFlags = (item) => {
   };
 };
 
-app.get('/api/display', (_req, res) => {
+app.get('/api/display', ah(async (_req, res) => {
   const settings = currentSettings();
-  // Folder Collection as the Display Source (HANDOFF §17): play that folder's compliant files in
+
+  // Frame: a REMOTE Mac folder as the source (§17 Phase B). Fetch its manifest from the Mac and rewrite
+  // each item's media URL to the frame's OWN cache route (/folder-media/<folderKey>/<file>), so the
+  // display plays only from the frame's cache, never the network (§9). Mark the cache active (it wipes
+  // on a change of folder). If the Mac is unreachable with nothing cached yet, fall through to the
+  // Library so the screen is never blank (§17 error state 2).
+  const remoteRef = identity.deviceRole() === 'frame' ? remoteFolders.parseRef(settings.displaySource) : null;
+  if (remoteRef) {
+    const man = await remote.items(settings.displaySource);
+    if (man && man.items.length) {
+      const key = remoteFolders.folderKey(remoteRef.hostId, remoteRef.folderId);
+      folderCache.setActive(key);
+      const fit = man.folder.fit === 'fill' ? 'fill' : 'fit';
+      return res.json({
+        items: man.items.map((it) => ({
+          id: it.id, filename: it.filename, format: it.format, kind: it.kind, fit,
+          src: `/folder-media/${key}/${encodeURIComponent(it.filename)}`,
+        })),
+        durationMs: settings.durationMs,
+        mode: MODES.has(man.folder.order) ? man.folder.order : DEFAULT_MODE,
+        pinnedId: null,
+        asleep: settings.asleep,
+        retroArcade: settings.retroArcade,
+        source: 'folder',
+      });
+    }
+  }
+
+  // Local Folder Collection as the Display Source (HANDOFF §17): play that folder's compliant files in
   // place, timed by the global duration, ordered by the folder's own Sequence/Shuffle (the Library's
   // rotation and order stay untouched underneath). Pin does not apply in folder mode.
   const activeId = folderSourceId();
@@ -886,7 +946,7 @@ app.get('/api/display', (_req, res) => {
     retroArcade: settings.retroArcade, // hidden self-playing demo: the display swaps to the canvas
     source: 'library',
   });
-});
+}));
 
 // ── Self-update from GitHub (HANDOFF §15) ───────────────────────────
 // Owner-initiated, never automatic, never in the playback path. All git logic lives in
