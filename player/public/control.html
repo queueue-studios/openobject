@@ -171,6 +171,14 @@
         </div>
       </section>
 
+      <!-- Folder cache (§17 Phase B) — frame-only: how much of the selected Mac folder is buffered
+           locally on the frame, plus a Clear. loadSystem() reveals it only when this host is the frame. -->
+      <section class="device" id="folderCacheCard" hidden>
+        <div class="section-title">Folder cache</div>
+        <p class="fc-hint" id="fcCacheUsage">—</p>
+        <button type="button" id="fcCacheClearBtn" class="update-btn">Clear cache</button>
+      </section>
+
       <!-- Software Update — pull the latest OpenObject from GitHub, all from the browser (HANDOFF §15) -->
       <section class="update">
         <div class="section-title">Software Update</div>

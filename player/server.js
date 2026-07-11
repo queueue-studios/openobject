@@ -582,6 +582,12 @@ app.get('/api/folders', ah(async (_req, res) => {
   });
 }));
 
+// Folder cache status + manual Clear (§17 Phase B) for the frame's control panel: how much of a Mac
+// folder is buffered locally vs the cap, and a Clear (the next play refills). Inert on a standalone
+// Host (its cache is never fed), so it simply reads zero there.
+app.get('/api/folder-cache', (_req, res) => res.json(folderCache.usage()));
+app.post('/api/folder-cache/clear', (_req, res) => { folderCache.clear(); res.json(folderCache.usage()); });
+
 // Browse the host's folders (sandboxed to folders.FOLDER_ROOT) so the owner can pick one without typing.
 app.get('/api/folders/browse', (req, res) => {
   const view = folders.browse(req.query.path);

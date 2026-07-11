@@ -122,6 +122,7 @@ let collectionsBySlug = {}; // slug → collection, for connected card subtitles
 let cxSlug = null; // collection selected in the add-connected modal
 let cxResolved = null; // last previewed { tokenId, title, image }
 let foldersData = { source: 'library', folders: [], root: '' }; // Folder Collections + active source (HANDOFF §17)
+let deviceIsFrame = false; // /api/system.role === 'frame' (§17 Phase B): drives the frame-only Folder cache card
 let fpPathCur = null; // the folder the picker is currently viewing
 
 const fmtBytes = (n) => {
@@ -1017,6 +1018,12 @@ async function loadSystem() {
   // One address per line under the lead instruction.
   frameAddr.innerHTML = addrs.map((a) => `<span class="reach-addr">${a}</span>`).join('') || '—';
   reachEl.hidden = addrs.length === 0;
+
+  // Folder cache card (§17 Phase B): only the frame buffers a Mac folder, so it shows only there.
+  deviceIsFrame = s.role === 'frame';
+  const cacheCard = document.getElementById('folderCacheCard');
+  if (cacheCard) cacheCard.hidden = !deviceIsFrame;
+  if (deviceIsFrame) loadFolderCache();
 }
 
 // Poll /healthz until the player is back up and a predicate holds (a new commit after an update,
@@ -1074,6 +1081,27 @@ async function refresh() {
 // Setup lives in Settings (a twin of the Connected Collections card); a folder is made the live
 // source in the Rotation tab. Everything about a folder (Name, Artist, Fit, Order) is edited here and
 // nowhere else; the Rotation tab only selects it.
+// Format a byte count for the Folder cache meter: GB for a real folder, MB/KB for smaller.
+function fmtCacheSize(n) {
+  n = Number(n) || 0;
+  if (n >= 1024 ** 3) return `${(n / 1024 ** 3).toFixed(1)} GB`;
+  if (n >= 1024 ** 2) return `${Math.round(n / 1024 ** 2)} MB`;
+  if (n >= 1024) return `${Math.round(n / 1024)} KB`;
+  return `${n} B`;
+}
+
+// Folder cache usage (frame only): how much of the selected Mac folder is buffered locally right now.
+async function loadFolderCache() {
+  const el = document.getElementById('fcCacheUsage');
+  if (!el) return;
+  try {
+    const u = await fetch('/api/folder-cache').then((r) => r.json());
+    el.textContent = u.bytes > 0
+      ? `Buffered ${fmtCacheSize(u.bytes)} of up to ${fmtCacheSize(u.capBytes)}.`
+      : 'Empty. A Mac folder buffers here while it plays, and clears on reboot.';
+  } catch { /* leave the last value on a transient error */ }
+}
+
 async function loadFolders() {
   try { foldersData = await fetch('/api/folders').then((r) => r.json()); }
   catch { foldersData = { source: 'library', folders: [], root: '' }; }
@@ -1651,6 +1679,7 @@ setInterval(() => { if (!panelSettings.hidden) { renderSleepStatus(); renderStri
 // re-scans on its own 5s poll; this keeps the control panel's counts in step). Skipped while a folder
 // row is being edited or the Source dropdown is focused, so a live re-render never interrupts you.
 setInterval(async () => {
+  if (deviceIsFrame) loadFolderCache(); // keep the frame's cache meter current as the buffer fills
   if (!(foldersData.folders && foldersData.folders.length)) return; // nothing to keep in step
   const a = document.activeElement;
   if (a && (foldersListEl.contains(a) || a === sourceSelect)) return; // mid-interaction — leave it be
@@ -1659,6 +1688,10 @@ setInterval(async () => {
 }, 10000);
 
 checkUpdateBtn.addEventListener('click', checkUpdate);
+document.getElementById('fcCacheClearBtn')?.addEventListener('click', async () => {
+  await fetch('/api/folder-cache/clear', { method: 'POST' }).catch(() => {});
+  loadFolderCache();
+});
 applyUpdateBtn.addEventListener('click', applyUpdate);
 dismissUpdateBtn.addEventListener('click', dismissUpdate);
 restartBtn.addEventListener('click', () => armPowerAction('Restarting', 5, doRestart));

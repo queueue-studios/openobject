@@ -17,6 +17,11 @@ ExecStart=/usr/bin/node /opt/openobject/player/server.js
 
 # Tells the player an auto-relaunch is available, so self-update / Restart may exit-to-restart.
 Environment=OO_SUPERVISED=1
+# This host IS the XXL frame: activates the Folder Collections client behavior (HANDOFF §17 Phase B),
+# so it reads a Mac's shared folder over the LAN (discover, cache, play) instead of picking a local
+# one. Explicit and frame-only (the installer only runs on the frame); a Mac or dev host, which never
+# runs this unit, stays a standalone Host. Applying this to an existing frame is an install.sh re-run.
+Environment=OO_ROLE=frame
 # Listen on :80 so the control panel is plain http://openobject.local (no port), per the docs.
 Environment=PORT=80
 Environment=HOST=0.0.0.0
