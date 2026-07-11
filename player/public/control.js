@@ -1259,7 +1259,7 @@ function renderSource() {
 }
 
 function renderFolderSummary(f) {
-  const fit = f.fit === 'fill' ? 'Fill' : 'Fit';
+  const fillPill = f.fit === 'fill' ? '<span class="rot-pill">Fill</span>' : ''; // mirror the Library FILL pill (Fit = default, unmarked)
   const sub = f.artist ? `<span class="fs-sub">${escapeHtml(f.artist)}</span>` : '';
   // On the frame a folder is managed on the Mac, so its name is plain text (no jump to a local Settings
   // card) with a tooltip naming the Mac; on a standalone Host it links to Settings. When that Mac is
@@ -1269,14 +1269,14 @@ function renderFolderSummary(f) {
   const facts = offline
     ? 'Mac unreachable. Make sure it is awake and the OpenObject app is open.'
     : f.reachable
-      ? `${fit} · ${f.count} piece${f.count === 1 ? '' : 's'}`
+      ? `${f.count} piece${f.count === 1 ? '' : 's'}`
       : "Can't be reached";
   const nameEl = remote
     ? `<span class="fs-name fs-name-static"${f.host ? ` title="Shared by ${escapeHtml(f.host)}"` : ''}>${escapeHtml(f.name)}</span>`
     : `<button type="button" class="fs-name" id="fsName" title="Manage in Settings">${escapeHtml(f.name)}</button>`;
   folderSummary.classList.toggle('fs-offline', offline);
   folderSummary.innerHTML = `
-    <div class="fs-head">${nameEl}${sub}<span class="fs-pill">Folder</span></div>
+    <div class="fs-head">${nameEl}${sub}<span class="fs-pill">Folder</span>${fillPill}</div>
     <div class="fs-facts${offline ? ' fs-facts-offline' : f.reachable ? '' : ' fs-facts-warn'}">${facts}</div>`;
   if (!remote) document.getElementById('fsName').addEventListener('click', gotoFolderSettings);
 }

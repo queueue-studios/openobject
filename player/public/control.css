@@ -720,7 +720,7 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .folder-summary[hidden] { display: none; }
 .fs-head { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; min-width: 0; }
 .fs-name { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 14px; color: var(--text); cursor: pointer; } /* matches a rotation piece's name (.rot-title) */
-.fs-name:hover { color: #6fcf97; }
+.fs-name:hover { text-decoration: underline; } /* clickable-text convention (matches .fc-name / the About links) */
 .fs-sub { font-size: 12px; color: var(--muted); } /* matches a rotation piece's artist (.rot-sub) */
 /* A "FOLDER" kind pill, akin to the "CONNECTED" pill (.rot-pill-connected): same shape + accent. */
 .fs-pill { flex: none; align-self: center; padding: 1px 7px; border-radius: 999px; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: #9fe1cb; background: var(--panel-2); border: 1px solid #2f4a44; }
@@ -728,7 +728,7 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .fs-facts-warn { color: var(--danger); }
 /* Frame: the folder name is managed on the Mac, so it is plain text, not a Settings link. */
 .fs-name-static { cursor: default; }
-.fs-name-static:hover { color: var(--text); }
+.fs-name-static:hover { text-decoration: none; } /* frame: the name is not a link, so no hover cue */
 /* Frame: a selected folder whose Mac is unreachable is shown greyed (offline), plus a plain message. */
 .lib-ctrl-select.offline { color: var(--muted); }
 .folder-summary.fs-offline .fs-name { color: var(--muted); }
