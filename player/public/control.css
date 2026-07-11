@@ -727,6 +727,9 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .fs-pill { flex: none; align-self: center; padding: 1px 7px; border-radius: 999px; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: #9fe1cb; background: var(--panel-2); border: 1px solid #2f4a44; }
 .fs-facts { flex: none; font-size: 13px; color: var(--muted); white-space: nowrap; }
 .fs-facts-warn { color: var(--danger); }
+/* Frame: the folder name is managed on the Mac, so it is plain text, not a Settings link. */
+.fs-name-static { cursor: default; }
+.fs-name-static:hover { color: var(--text); }
 /* Folder picker modal: the subfolder browser (reuses .cx-overlay / .cx-box). */
 .fp-path { font-size: 12px; color: var(--muted); word-break: break-all; margin-bottom: 8px; }
 .fp-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; overflow: hidden auto; max-height: 46vh; }

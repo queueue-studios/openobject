@@ -1077,10 +1077,15 @@ async function refresh() {
 async function loadFolders() {
   try { foldersData = await fetch('/api/folders').then((r) => r.json()); }
   catch { foldersData = { source: 'library', folders: [], root: '' }; }
+  // On the frame the Source lists folders SERVED BY a Mac (foldersData.remote): they are managed on
+  // the Mac, so the local management card is hidden here and folders are only selected in Rotation.
+  const card = document.getElementById('foldersCard');
+  if (card) card.hidden = !!foldersData.remote;
   renderFolderCard();
 }
 
 function renderFolderCard() {
+  if (foldersData.remote) return; // frame: folders are managed on the Mac; this local card stays hidden
   const list = foldersData.folders || [];
   fcCount.textContent = list.length ? `${list.length} folder${list.length === 1 ? '' : 's'}` : '';
   if (!list.length) {
@@ -1182,6 +1187,14 @@ function renderSource() {
   sourceSelect.innerHTML = opts.join('');
   const active = source !== 'library' ? list.find((f) => String(f.id) === String(source)) : null;
   sourceSelect.value = active ? String(active.id) : 'library';
+  // Frame with no Mac sharing folders (§17 Phase B, error state 1): explain how to get some, rather
+  // than leaving a bare Library-only dropdown. Only in remote mode; a standalone Host never shows it.
+  const sourceHint = document.getElementById('sourceHint');
+  if (sourceHint) {
+    const noMac = !!foldersData.remote && list.length === 0;
+    sourceHint.textContent = noMac ? 'Open the OpenObject app on your Mac to share a folder.' : '';
+    sourceHint.hidden = !noMac;
+  }
   const inFolder = !!active;
   orderGroup.hidden = inFolder;   // a folder carries its own order (edited in Settings), not the global one
   rotList.hidden = inFolder;
@@ -1202,10 +1215,16 @@ function renderFolderSummary(f) {
   const facts = f.reachable
     ? `${fit} · ${order} · ${f.count} piece${f.count === 1 ? '' : 's'}`
     : "Can't be reached";
+  // On the frame a folder is managed on the Mac, so its name is plain text (no jump to a local
+  // Settings card) with a tooltip naming the Mac; on a standalone Host it links to Settings.
+  const remote = !!foldersData.remote;
+  const nameEl = remote
+    ? `<span class="fs-name fs-name-static"${f.host ? ` title="Shared by ${escapeHtml(f.host)}"` : ''}>${escapeHtml(f.name)}</span>`
+    : `<button type="button" class="fs-name" id="fsName" title="Manage in Settings">${escapeHtml(f.name)}</button>`;
   folderSummary.innerHTML = `
-    <div class="fs-head"><button type="button" class="fs-name" id="fsName" title="Manage in Settings">${escapeHtml(f.name)}</button>${sub}<span class="fs-pill">Folder</span></div>
+    <div class="fs-head">${nameEl}${sub}<span class="fs-pill">Folder</span></div>
     <div class="fs-facts${f.reachable ? '' : ' fs-facts-warn'}">${facts}</div>`;
-  document.getElementById('fsName').addEventListener('click', gotoFolderSettings);
+  if (!remote) document.getElementById('fsName').addEventListener('click', gotoFolderSettings);
 }
 
 // The folder name in the Rotation summary jumps to its setup in Settings (expanding the card).
