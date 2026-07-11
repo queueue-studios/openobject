@@ -57,6 +57,7 @@ let timer = null;
 let started = false;
 let lastShowAt = 0; // when the last crossfade began — guards the hidden-layer cleanup against a live fade
 let shuffleQueue = [];
+let itemsListSig = ''; // ids of the current items in order; the shuffle bag resets only when this changes
 let sleeping = false; // Sleep Hours / manual Blank: showing the dimmed mark (HANDOFF §13)
 let shiftTimer = null; // slow pixel-shift while asleep (anti-burn-in)
 let arcadeOn = false; // Retro Arcade demo is taking the stage (easter egg)
@@ -281,7 +282,11 @@ function apply(state) {
   // A pinned piece collapses the rotation to just itself — held permanently (HANDOFF §7).
   const pinned = state.pinnedId != null ? state.items.find((i) => i.id === state.pinnedId) : null;
   items = pinned ? [pinned] : state.items;
-  shuffleQueue = [];
+  // Reset the shuffle bag ONLY when the item set/order actually changes (pin, rotation edit, folder
+  // switch, folder files added/removed). Wiping it on every unchanged ~5s poll restarted the pass
+  // before it finished, degrading Shuffle to independent random with early repeats (§7).
+  const nextSig = items.map((i) => i.id).join('|');
+  if (nextSig !== itemsListSig) { shuffleQueue = []; itemsListSig = nextSig; }
 
   if (items.length === 0) return showIdle();
 
