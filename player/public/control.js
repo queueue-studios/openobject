@@ -1195,6 +1195,16 @@ function renderSource() {
     sourceHint.textContent = noMac ? 'Open the OpenObject app on your Mac to share a folder.' : '';
     sourceHint.hidden = !noMac;
   }
+  // Frame: a remote folder is selected but its Mac is not reachable right now (§17 error state 2). The
+  // display keeps showing whatever it cached; here we flag it rather than silently reverting to Library.
+  if (!!foldersData.remote && source !== 'library' && !active) {
+    if (sourceHint) sourceHint.hidden = true;
+    orderGroup.hidden = true; rotList.hidden = true; rotHint.hidden = true; rotEmpty.hidden = true;
+    rotCount.textContent = '';
+    folderSummary.hidden = false;
+    folderSummary.innerHTML = '<div class="fs-facts fs-facts-warn">Can\'t reach your Mac. Is it awake and running OpenObject?</div>';
+    return;
+  }
   const inFolder = !!active;
   orderGroup.hidden = inFolder;   // a folder carries its own order (edited in Settings), not the global one
   rotList.hidden = inFolder;

@@ -82,6 +82,28 @@ function create({ dir, resolveBase }) {
     try { return await resolveBase(p.hostId, p.folderId); } catch { return null; }
   }
 
+  // Cache one file if it is not already present and there is budget. Best-effort, never throws.
+  async function warmFile(folderKey, folderId, file, base) {
+    if (fs.existsSync(cachePath(folderKey, file))) return;
+    if (!underBudget()) return; // over budget: leave the overflow to stream-through at play time
+    await fetchToCache(folderKey, folderId, file, base);
+  }
+
+  // Prefetch a folder's files IN ORDER, one at a time (gentle, sequential, §9 progressive sync), until
+  // the folder is fully cached, the budget is hit, or the folder is switched away. Fire-and-forget and
+  // idempotent (one loop at a time), so /api/display can call it every poll to fold in newly-added files.
+  let prefetching = false;
+  async function prefetch(folderKey, folderId, files, base) {
+    if (prefetching || folderKey !== activeKey) return;
+    prefetching = true;
+    try {
+      for (const file of files) {
+        if (folderKey !== activeKey || !underBudget()) break;
+        await warmFile(folderKey, folderId, file, base);
+      }
+    } finally { prefetching = false; }
+  }
+
   return {
     // Mark which remote folder is live; on a CHANGE, wipe the previous folder's cache (leaving folder
     // mode or switching folders, §17). Only one folder is ever active (the either/or), so a wipe is the
@@ -94,12 +116,9 @@ function create({ dir, resolveBase }) {
     clear() { wipe(); activeKey = null; },
     usage() { return { bytes, capBytes: CAP_BYTES }; },
 
-    // Ensure a file is cached if there is budget (the prefetch worker, CP4b). Best-effort, no throw.
-    async warm(folderKey, folderId, file, base) {
-      if (fs.existsSync(cachePath(folderKey, file))) return;
-      if (!underBudget()) return; // over budget: leave the overflow to stream-through at play time
-      await fetchToCache(folderKey, folderId, file, base);
-    },
+    // Cache one file (used ad hoc) and prefetch a whole folder ahead of playback (both best-effort).
+    warm: warmFile,
+    prefetch,
 
     // Serve a file for /folder-media on the frame. Returns { localPath } (from cache, or just cached),
     // { streamUrl } (over budget: proxy-stream the overflow), or null (Host unreachable / fetch failed).

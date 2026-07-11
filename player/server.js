@@ -904,6 +904,9 @@ app.get('/api/display', ah(async (_req, res) => {
     if (man && man.items.length) {
       const key = remoteFolders.folderKey(remoteRef.hostId, remoteRef.folderId);
       folderCache.setActive(key);
+      // Warm the cache ahead of playback so clips play locally (§9), folding in newly-added files on
+      // each poll. Fire-and-forget: the display response returns immediately.
+      folderCache.prefetch(key, remoteRef.folderId, man.items.map((it) => it.filename), man.folder.base);
       const fit = man.folder.fit === 'fill' ? 'fill' : 'fit';
       return res.json({
         items: man.items.map((it) => ({
