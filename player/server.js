@@ -39,6 +39,7 @@ const folders = require('./src/folders');
 const seed = require('./src/seed');
 const identity = require('./src/identity');
 const discovery = require('./src/discovery');
+const remoteFolders = require('./src/remote-folders');
 const RESTART_CODE = require('./src/restart-code');
 
 // Set by the supervisor (HANDOFF §15). When supervised, the player may exit to auto-relaunch
@@ -77,6 +78,12 @@ const DEFAULT_DURATION_MS = 8000;
 const DEFAULT_MODE = 'sequence';
 const MODES = new Set(['sequence', 'shuffle']);
 const FITS = new Set(['fit', 'fill']);
+
+// Phase B (frame): a Display client's live view of folders served by OTHER Hosts over the LAN (§17).
+// `discoveryBrowser` is populated on the frame in the listen block far below; `remote` reads it
+// lazily, so the current set of Hosts is always reflected. Both are inert on a standalone Host.
+let discoveryBrowser = null;
+const remote = remoteFolders.create({ hostsProvider: () => (discoveryBrowser ? discoveryBrowser.list() : []) });
 // Library grid sort: recent (default) | oldest | title | artist. recent/oldest/title are SQL orders in
 // db.listLibrary; "artist" is resolved here (libraryByArtist) because a connected piece's artist lives in
 // the registry, not the DB row. This set just validates the persisted choice (HANDOFF §7). Every order
@@ -519,18 +526,33 @@ app.get('/api/shared-folders/:id/items', (req, res) => {
   });
 });
 
-// List saved folders (each with a live piece count + reachability + which is active) and the source.
-app.get('/api/folders', (_req, res) => {
+// List folders for the Rotation Source dropdown. On a standalone Host these are the LOCAL saved
+// folders (managed here). On the FRAME they are the folders SERVED BY a Mac over the LAN (§17 Phase
+// B): the same response shape so the dropdown renders unchanged, but sourced from remote-folders and
+// carrying no local-only fields (path/displayPath). Management (add/edit) is a Mac-side action, so
+// the frame's control panel hides that card; `remote:true` lets it show the "no Mac found" hint.
+app.get('/api/folders', ah(async (_req, res) => {
+  const source = db.getSetting('display_source', 'library');
+  if (identity.deviceRole() === 'frame') {
+    const list = await remote.list();
+    return res.json({
+      source, remote: true,
+      folders: list.map((f) => ({
+        id: f.ref, name: f.name, artist: f.artist, fit: f.fit, order: f.order,
+        count: f.count, reachable: f.reachable, active: f.ref === source, host: f.hostName,
+      })),
+    });
+  }
   const activeId = folderSourceId();
   res.json({
-    source: db.getSetting('display_source', 'library'),
+    source,
     root: folders.FOLDER_ROOT,
     folders: db.listFolderCollections().map((f) => {
       const reachable = folders.reachable(f.path);
       return { ...f, reachable, count: reachable ? folders.count(f.path) : 0, active: f.id === activeId, displayPath: displayPath(f.path) };
     }),
   });
-});
+}));
 
 // Browse the host's folders (sandboxed to folders.FOLDER_ROOT) so the owner can pick one without typing.
 app.get('/api/folders/browse', (req, res) => {
@@ -780,7 +802,12 @@ app.put('/api/settings', (req, res) => {
     // The either/or switch (HANDOFF §17): 'library' (default) or a saved folder id. Selecting a folder
     // makes it the live source at once; the Library rotation is preserved untouched underneath.
     const src = String(displaySource);
-    if (src !== 'library' && !db.getFolderCollection(Number(src))) {
+    const okLocal = src === 'library' || !!db.getFolderCollection(Number(src));
+    // On the frame the source may be a REMOTE folder ref (remote:<hostId>:<folderId>, §17 Phase B);
+    // accept a well-formed ref (the dropdown only ever offers real ones). Its live reachability is
+    // handled at display time, not here.
+    const okRemote = identity.deviceRole() === 'frame' && !!remoteFolders.parseRef(src);
+    if (!okLocal && !okRemote) {
       return res.status(400).json({ error: 'displaySource must be "library" or a folder id' });
     }
     db.setSetting('display_source', src);
@@ -994,9 +1021,6 @@ app.use((err, _req, res, _next) => {
 // hostName) can re-advertise with the new name without a restart. readvertise() stops any current
 // advertisement and publishes a fresh one from the current identity; best-effort, never throws.
 let advertisement = null;
-// The live LAN browse handle (frame only): the frame browses for the Mac that serves a Folder
-// Collection (§17 Phase B). Null on a standalone Host, which is the server, not the consumer.
-let discoveryBrowser = null;
 function readvertise() {
   try { advertisement && advertisement.stop(); } catch { /* ignore */ }
   const me = identity.identity();
