@@ -505,7 +505,6 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .panel .dropzone { margin-bottom: 18px; } /* upload now lives inside the Library tab */
 
 /* Rotation list — the curated, ordered subset on the panel */
-.rot-hint { color: var(--muted); font-size: 13px; margin: 0 2px 14px; }
 .rot-list { display: flex; flex-direction: column; gap: 8px; }
 /* .rot-list forces display:flex; let it hide (with its pieces) while a Folder Collection is the source. */
 .rot-list[hidden] { display: none; }
@@ -720,9 +719,9 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .folder-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; padding: 14px 16px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; }
 .folder-summary[hidden] { display: none; }
 .fs-head { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; min-width: 0; }
-.fs-name { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 16px; color: var(--text); cursor: pointer; }
+.fs-name { appearance: none; border: 0; background: none; padding: 0; font: inherit; font-size: 14px; color: var(--text); cursor: pointer; } /* matches a rotation piece's name (.rot-title) */
 .fs-name:hover { color: #6fcf97; }
-.fs-sub { font-size: 13px; color: var(--muted); }
+.fs-sub { font-size: 12px; color: var(--muted); } /* matches a rotation piece's artist (.rot-sub) */
 /* A "FOLDER" kind pill, akin to the "CONNECTED" pill (.rot-pill-connected): same shape + accent. */
 .fs-pill { flex: none; align-self: center; padding: 1px 7px; border-radius: 999px; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: #9fe1cb; background: var(--panel-2); border: 1px solid #2f4a44; }
 .fs-facts { flex: none; font-size: 13px; color: var(--muted); white-space: nowrap; }

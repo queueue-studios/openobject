@@ -30,7 +30,6 @@ const panelSettings = document.getElementById('panelSettings');
 const rotList = document.getElementById('rotList');
 const rotCount = document.getElementById('rotCount');
 const rotEmpty = document.getElementById('rotEmpty');
-const rotHint = document.getElementById('rotHint');
 
 const blankBtn = document.getElementById('blankBtn');
 const returnArtBtn = document.getElementById('returnArtBtn'); // shown only while the hidden demo runs
@@ -364,15 +363,6 @@ async function loadRotation() {
   rotList.replaceChildren(...rotationItems.map((it, i) => rotRow(it, i, n)));
   rotCount.textContent = n ? String(n) : '';
   rotEmpty.hidden = n > 0;
-  if (n > 1) {
-    rotHint.hidden = false;
-    rotHint.textContent =
-      mode === 'shuffle'
-        ? 'Shuffle plays these in a random order — the arrangement below sets the Sequence order.'
-        : 'Plays top to bottom. Drag the handle, or use the arrows, to reorder.';
-  } else {
-    rotHint.hidden = true;
-  }
 }
 
 async function toggleRotation(item) {
@@ -1250,7 +1240,7 @@ function renderSource() {
   // flag it without a name rather than silently reverting to Library.
   if (!!foldersData.remote && source !== 'library' && !active) {
     if (sourceHint) sourceHint.hidden = true;
-    orderGroup.hidden = true; rotList.hidden = true; rotHint.hidden = true; rotEmpty.hidden = true;
+    orderGroup.hidden = true; rotList.hidden = true; rotEmpty.hidden = true;
     rotCount.textContent = '';
     folderSummary.hidden = false;
     folderSummary.classList.add('fs-offline');
@@ -1262,7 +1252,6 @@ function renderSource() {
   rotList.hidden = inFolder;
   folderSummary.hidden = !inFolder;
   if (inFolder) {
-    rotHint.hidden = true;
     rotEmpty.hidden = true;
     rotCount.textContent = active.reachable && active.count ? String(active.count) : '';
     renderFolderSummary(active);
