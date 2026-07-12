@@ -72,6 +72,9 @@ sips -s dpiWidth 144 -s dpiHeight 144 "$STAGE/.background/background.png" >/dev/
 
 # --- read-write image with slack so Finder can write the .DS_Store ---
 SIZE_MB=$(( $(du -sm "$STAGE" | cut -f1) + 50 ))
+# Detach any stale volume of the same name first, or the fresh one mounts as "$VOLNAME 1" and the
+# styling below would target the wrong (stale) disk.
+hdiutil detach "/Volumes/$VOLNAME" -force >/dev/null 2>&1 || true
 echo "[dmg] creating ${SIZE_MB}M read-write image ..."
 rm -f "$TMPDMG"
 hdiutil create -volname "$VOLNAME" -srcfolder "$STAGE" -fs HFS+ -format UDRW -size "${SIZE_MB}m" -ov "$TMPDMG" >/dev/null
@@ -84,6 +87,12 @@ echo "[dmg] styling the Finder window ..."
 REPORTED=$(osascript <<APPLESCRIPT
 tell application "Finder"
   activate
+  -- hdiutil attach can return before Finder registers the freshly-mounted volume, so the first
+  -- "tell disk" would fail with -1728 ("can't get disk"). Wait for Finder to see it (up to ~20s).
+  repeat 40 times
+    if exists disk "$VOLNAME" then exit repeat
+    delay 0.5
+  end repeat
   tell disk "$VOLNAME"
     open
     delay 1
