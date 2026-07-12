@@ -365,11 +365,11 @@ const REGISTRY = [
     // hands-free shuffle cycle with imageSmoothingQuality high|medium|low. Quality lets an owner match the
     // canvas cost to their display: High (bicubic, sharpest) suits a Mac or other capable box; Low (bilinear,
     // the artist's own default) suits the frame's weak GPU, where High collapses the shuffle frame rate; Medium
-    // (mipmapped) sits between. Default 'tiled-high' for now; the shipped default is TBD pending the on-frame
-    // Medium test (if Medium is smooth on the frame it becomes the universal default). See HANDOFF §20.
+    // (mipmapped) sits between. Default 'tiled-low': an on-frame test showed Medium still stutters on the frame, so Low (frame-safe, the
+    // artist's own default quality) is the universal default; a capable display can raise it to High. See HANDOFF §20.
     choice: {
       label: 'Display',
-      default: 'tiled-high',
+      default: 'tiled-low',
       options: [
         { value: 'tiled-high', label: 'Tiled (High)' },
         { value: 'tiled-med',  label: 'Tiled (Medium)' },
@@ -784,7 +784,7 @@ const BOUNCE_HOOK = `
 const TILES_HOOK = `
 <script>
 (function(){
-  var mode = new URLSearchParams(location.search).get('oochoice') || 'tiled-high';
+  var mode = new URLSearchParams(location.search).get('oochoice') || 'tiled-low';
   if (mode === 'static') {
     var show = function(){
       var img = document.createElement('img');

@@ -190,9 +190,9 @@ switch its background between **White** (the original) and **Black**; and on its
 And Rich Caldwell's *Tiles* is a sweeping aerial photograph of the planet from above, sliced into a grid
 of squares that shuffle themselves into a new arrangement every few seconds and then settle back into the
 whole picture; a **Display** setting (in Settings) lets you choose **Static**, which simply holds the full high-resolution photograph
-still, or the shuffling **Tiled** version. Tiled comes in **High**, **Medium**, and **Low** quality so you can
-match it to your display: High looks sharpest, and if the shuffle ever looks choppy, choosing Medium or Low
-makes it run smoother.
+still, or the shuffling **Tiled** version. Tiled comes in **Low**, **Medium**, and **High** quality so you can
+match it to your display. It starts on **Low**, which shuffles smoothly on any display; on a powerful display
+(like a Mac) you can raise it to Medium or High for a sharper picture.
 The supported collections live in the **Settings** tab, under
 **Connected Collections**, where you can hide ones you don't own and, for collections that have something to
 adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect, snowfall, or a Tiled/Static display. This is new and **curated**: only collections that have been
