@@ -187,9 +187,13 @@ ribbon-like squiggle of shifting colors on a clean white background. A speed sli
 fast its colors flow, starting at the original's gentle pace, turned up to lively, or held still; you can
 switch its background between **White** (the original) and **Black**; and on its card you can choose
 **Fit** to show the whole squiggle or **Fill** to enlarge it to fill the screen, trimming the edges.
+And Rich Caldwell's *Tiles* is a sweeping aerial photograph of the planet from above, sliced into a grid
+of squares that shuffle themselves into a new arrangement every few seconds and then settle back into the
+whole picture; a **Display** setting (in Settings) lets you choose **Tiled**, the shuffling version, or
+**Static**, which simply holds the full high-resolution photograph still.
 The supported collections live in the **Settings** tab, under
 **Connected Collections**, where you can hide ones you don't own and, for collections that have something to
-adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect or snowfall. This is new and **curated**: only collections that have been
+adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect, snowfall, or a Tiled/Static display. This is new and **curated**: only collections that have been
 specifically added will work, so it won't read just any link yet.
 
 **Folder Collections** *(in the **Settings** tab)*. Have a whole folder of art on your computer, say

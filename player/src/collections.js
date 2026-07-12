@@ -343,6 +343,61 @@ const REGISTRY = [
     },
   },
   {
+    slug: 'tiles',
+    artist: 'Rich Caldwell',
+    name: 'Tiles',
+    chain: 'Ethereum',
+    contract: '0x0a44d8e8386c261caf1738d038994f1c65f58dc7',
+    rpc: 'https://ethereum-rpc.publicnode.com',
+    // A true series on a dedicated Tiles contract (every token is a TILE), so the owner enters their Token ID
+    // (like Chromie Squiggle; the Pendulum lesson: don't fixedToken a real series). Each token's tokenURI
+    // points to its OWN IPFS bundle (its own thumbnail + media HTML + a hardcoded aerial source photo), so
+    // each token mirrors into its own dir (perToken, like Lost in Moffat County / the squiggle).
+    perToken: true,
+    // Each TILE is a p5 sketch that slices one 3628^2 aerial photo into a 6x6 grid; the artist's click
+    // (handleClick) Fisher-Yates shuffles the 36 tiles to new slots with random 90-degree rotations. The
+    // pieces are one family but authored with per-token variation (the inset margin, the background colour,
+    // the presence of a per-tile frame/shadow all differ token to token), so the source transforms below
+    // match TOLERANTLY (regex), never by exact string.
+    // The one control is Display: Tiled (the shuffling sketch) or Static (the 15MB still). It reuses the
+    // choice plumbing (?oochoice) but here the choice picks WHAT renders: the tiles hook shows the still on
+    // 'static' and runs the sketch + hands-free shuffle cycle on 'tiled'. Default Tiled (the piece is the point).
+    choice: {
+      label: 'Display',
+      default: 'tiled',
+      options: [
+        { value: 'tiled',  label: 'Tiled' },
+        { value: 'static', label: 'Static' },
+      ],
+    },
+    choiceHook: 'tiles',
+    animateDefault: false,
+    animatable: false,
+    // p5 is loaded by absolute cdn URL; localize it for offline play (the Golden Lining mechanism). The aerial
+    // source photo (also absolute, inside loadImage()) is handled specially below (saved as oo-static.jpg), so
+    // it is not left to the generic localize.
+    localizeAbsolute: true,
+    // p5 shows its built-in #p5_loading "loading..." text while it preloads the 15MB photo; hide it from the
+    // first paint (the Golden Lining / Lost in Moffat County seam) so the stage stays chrome-free (§6).
+    hideSelectors: ['#p5_loading'],
+    // Source transforms baked into the mirror (tolerant regex; the per-token code varies):
+    //  - margin -> 0 so the tiled art reaches the panel edges (no inset border, §6);
+    //  - the stage background -> pure black so tile gaps (when shuffled) and the letterbox match the stage;
+    //  - drop the unused p5.sound (never used here; the renderer-hang risk from The Bloom) and the unused
+    //    mediabunny importmap (never imported), so the mirror stays lean and localizes no dead weight.
+    htmlReplace: [
+      { find: /let\s+margin\s*=\s*[^;]+;/, replace: 'let margin = 0;' },
+      { find: /background\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)/, replace: 'background(0)' },
+      { find: /\s*<script\b[^>]*\bp5\.sound[^>]*><\/script>/gi, replace: '' },
+      { find: /\s*<script\b[^>]*type=["']importmap["'][^>]*>[\s\S]*?<\/script>/gi, replace: '' },
+    ],
+    // The sketch's aerial source photo is saved once to a fixed oo-static.jpg and loadImage() is pointed at
+    // it, so the SAME local file feeds the tiled sketch AND the Static view (the tiles hook shows it). Done in
+    // the mirror before localizeAbsolute so the absolute source URL is already local, under a name the hook
+    // can rely on.
+    staticFromLoadImage: true,
+  },
+  {
     slug: 'bouncing-openobject-logo',
     artist: 'OpenObject',
     name: 'Bouncing OpenObject Logo',
@@ -703,6 +758,63 @@ const BOUNCE_HOOK = `
 })();
 </script>`;
 
+// Injected into Rich Caldwell's "Tiles": each token is a p5 sketch that slices one 3628^2 aerial photo into
+// a 6x6 grid and, on the artist's click (handleClick), Fisher-Yates shuffles the 36 tiles to new slots with
+// random 90-degree rotations, lerping smoothly. The Display control rides in on ?oochoice:
+//   • 'static'          -> show the 15MB still (the mirrored oo-static.jpg) full-bleed and stop the sketch,
+//                          so a passive frame shows the pristine image;
+//   • 'tiled' (default) -> run the sketch, force high-quality resampling (the p5 canvas defaults to
+//                          imageSmoothingQuality 'low', which visibly softens the downscale of a 3628^2
+//                          source), and drive a hands-free shuffle cycle: hold the assembled image ~7s, then
+//                          4 shuffles ~6s apart, reassemble, and loop (a passive frame has no one to click).
+// `tiles` and `handleClick` are the sketch's own top-level bindings, reachable from a classic script injected
+// into the same document (the Chromie Squiggle pattern). Applied once the canvas exists (after p5 preload).
+const TILES_HOOK = `
+<script>
+(function(){
+  var mode = new URLSearchParams(location.search).get('oochoice') || 'tiled';
+  if (mode === 'static') {
+    var show = function(){
+      var img = document.createElement('img');
+      img.src = 'oo-static.jpg';
+      img.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;z-index:2147483647';
+      (document.body || document.documentElement).appendChild(img);
+    };
+    if (document.body) show(); else window.addEventListener('DOMContentLoaded', show);
+    var sn = 0, siv = setInterval(function(){          // stop the sketch so it isn't rendering behind the still
+      if (++sn > 300) { clearInterval(siv); return; }
+      try { if (typeof noLoop === 'function') noLoop(); } catch (e) {}
+      var c = document.querySelector('canvas'); if (c) { c.style.display = 'none'; clearInterval(siv); }
+    }, 100);
+    return;
+  }
+  var SHUFFLES = 4, SHUFFLE_MS = 6000, ASSEMBLED_MS = 7000;
+  function ready(){
+    try { return !!document.querySelector('canvas') && typeof handleClick === 'function'
+                 && typeof tiles !== 'undefined' && tiles && tiles.length > 0; } catch (e) { return false; }
+  }
+  function applyHQ(){
+    try { var ctx = document.querySelector('canvas').getContext('2d');
+          ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; } catch (e) {}
+  }
+  function reassemble(){ for (var k = 0; k < tiles.length; k++) { tiles[k].tx = tiles[k].sx; tiles[k].ty = tiles[k].sy; tiles[k].targetAngle = 0; } }
+  var n = 0, wait = setInterval(function(){
+    if (++n > 300) { clearInterval(wait); return; }    // ~30s safety
+    if (!ready()) return;
+    clearInterval(wait);
+    applyHQ();
+    window.addEventListener('resize', applyHQ);
+    var done = 0;
+    function step(){
+      applyHQ();
+      if (done < SHUFFLES) { handleClick(); done++; setTimeout(step, SHUFFLE_MS); }
+      else { reassemble(); done = 0; setTimeout(step, ASSEMBLED_MS); }
+    }
+    setTimeout(step, ASSEMBLED_MS);                     // hold the assembled image first, then start shuffling
+  }, 100);
+})();
+</script>`;
+
 async function fetchBuf(url) {
   const r = await ooFetch(toHttp(url));
   if (!r.ok) throw new Error(`fetch ${url} → ${r.status}`);
@@ -774,6 +886,28 @@ async function mirrorInto(c, out, sourceUrl) {
     html = html.replace(new RegExp(`<script\\b[^>]*src=["']${esc}["'][^>]*>\\s*</script>`, 'gi'), '');
   }
 
+  // Small, tolerant source rewrites the fixed dropScripts/hideSelectors seams can't express (e.g. Tiles
+  // varies its inset margin / background colour per token, so they are matched by regex). Each {find, replace}
+  // is applied in order; `find` may be a string (all occurrences, via split/join) or a RegExp. Runs before the
+  // asset scans, so a rewrite that removes a <script> or an absolute URL also removes it from what gets
+  // fetched/localized below.
+  if (c && Array.isArray(c.htmlReplace)) for (const r of c.htmlReplace) {
+    html = (r.find instanceof RegExp) ? html.replace(r.find, r.replace) : html.split(r.find).join(r.replace);
+  }
+
+  // A collection whose sketch loads its image from an absolute URL inside loadImage() (Tiles): save that image
+  // once to a fixed oo-static.jpg and repoint loadImage() at it, so the SAME local file feeds both the sketch
+  // and any static view keyed on it. Done before localizeAbsolute so the absolute source URL is already local
+  // (and under a fixed name), and the generic localize never re-fetches it.
+  if (c && c.staticFromLoadImage) {
+    const m = html.match(/loadImage\(\s*['"]([^'"]+)['"]/);
+    if (m) {
+      fs.mkdirSync(out, { recursive: true });
+      fs.writeFileSync(path.join(out, 'oo-static.jpg'), await fetchBuf(m[1]));
+      html = html.split(m[1]).join('oo-static.jpg');
+    }
+  }
+
   const assets = new Set();
   const re = /(?:src|href)=["']([^"']+)["']/gi;
   let m;
@@ -829,6 +963,7 @@ async function mirrorInto(c, out, sourceUrl) {
   // hook (which drives its loops/speed AND its background from the display params); other Animate-control
   // pieces get the generic fire-once hook. Self-animating / still pieces (Kittoe, send/receive) get none.
   const hook = c && c.controlHook === 'bounce' ? BOUNCE_HOOK
+    : c && c.choiceHook === 'tiles' ? TILES_HOOK
     : c && c.choiceHook === 'snow' ? SNOW_HOOK
     : c && c.animateHook === 'bloom' ? BLOOM_HOOK
     : c && c.animateHook === 'easterEgg' ? EASTER_HOOK
