@@ -763,10 +763,13 @@ const BOUNCE_HOOK = `
 // random 90-degree rotations, lerping smoothly. The Display control rides in on ?oochoice:
 //   • 'static'          -> show the 15MB still (the mirrored oo-static.jpg) full-bleed and stop the sketch,
 //                          so a passive frame shows the pristine image;
-//   • 'tiled' (default) -> run the sketch, force high-quality resampling (the p5 canvas defaults to
-//                          imageSmoothingQuality 'low', which visibly softens the downscale of a 3628^2
-//                          source), and drive a hands-free shuffle cycle: hold the assembled image ~7s, then
-//                          4 shuffles ~6s apart, reassemble, and loop (a passive frame has no one to click).
+//   • 'tiled' (default) -> run the sketch at the browser's default ('low') canvas resampling and drive a
+//                          hands-free shuffle cycle: hold the assembled image ~7s, then 4 shuffles ~6s apart,
+//                          reassemble, and loop (a passive frame has no one to click). We used to force
+//                          imageSmoothingQuality 'high' here for a crisper downscale of the 3628^2 source,
+//                          but on the frame's weak GPU that collapsed the frame rate and (the sketch lerps
+//                          per-frame) stretched each snap into a multi-second crawl; 'low' stays smooth and
+//                          keeps the shuffle quick. Static mode is pristine on its own (native <img>).
 // `tiles` and `handleClick` are the sketch's own top-level bindings, reachable from a classic script injected
 // into the same document (the Chromie Squiggle pattern). Applied once the canvas exists (after p5 preload).
 const TILES_HOOK = `
@@ -793,20 +796,24 @@ const TILES_HOOK = `
     try { return !!document.querySelector('canvas') && typeof handleClick === 'function'
                  && typeof tiles !== 'undefined' && tiles && tiles.length > 0; } catch (e) { return false; }
   }
-  function applyHQ(){
+  // Canvas resampling quality. Forcing 'high' downscaling of the 3628^2 source, x36 tiles, every animation
+  // frame is far too heavy for the frame's GPU: it tanks the frame rate, and since the sketch lerps
+  // per-frame, that turns each ~0.5s shuffle snap into a multi-second stuttering crawl. 'low' is still
+  // smooth (bilinear, not pixelated) and keeps the animation quick; the Static view stays crisp on its own.
+  function applySmoothing(){
     try { var ctx = document.querySelector('canvas').getContext('2d');
-          ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; } catch (e) {}
+          ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'low'; } catch (e) {}
   }
   function reassemble(){ for (var k = 0; k < tiles.length; k++) { tiles[k].tx = tiles[k].sx; tiles[k].ty = tiles[k].sy; tiles[k].targetAngle = 0; } }
   var n = 0, wait = setInterval(function(){
     if (++n > 300) { clearInterval(wait); return; }    // ~30s safety
     if (!ready()) return;
     clearInterval(wait);
-    applyHQ();
-    window.addEventListener('resize', applyHQ);
+    applySmoothing();
+    window.addEventListener('resize', applySmoothing);
     var done = 0;
     function step(){
-      applyHQ();
+      applySmoothing();
       if (done < SHUFFLES) { handleClick(); done++; setTimeout(step, SHUFFLE_MS); }
       else { reassemble(); done = 0; setTimeout(step, ASSEMBLED_MS); }
     }
