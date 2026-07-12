@@ -359,15 +359,22 @@ const REGISTRY = [
     // pieces are one family but authored with per-token variation (the inset margin, the background colour,
     // the presence of a per-tile frame/shadow all differ token to token), so the source transforms below
     // match TOLERANTLY (regex), never by exact string.
-    // The one control is Display: Tiled (the shuffling sketch) or Static (the 15MB still). It reuses the
-    // choice plumbing (?oochoice) but here the choice picks WHAT renders: the tiles hook shows the still on
-    // 'static' and runs the sketch + hands-free shuffle cycle on 'tiled'. Default Tiled (the piece is the point).
+    // The one control is Display: the shuffling sketch at a chosen resampling quality (Tiled High/Medium/Low)
+    // or the 15MB still (Static). It reuses the choice plumbing (?oochoice) but here the choice picks WHAT
+    // renders AND how well: the tiles hook shows the still on 'static', and on any 'tiled-*' runs the sketch +
+    // hands-free shuffle cycle with imageSmoothingQuality high|medium|low. Quality lets an owner match the
+    // canvas cost to their display: High (bicubic, sharpest) suits a Mac or other capable box; Low (bilinear,
+    // the artist's own default) suits the frame's weak GPU, where High collapses the shuffle frame rate; Medium
+    // (mipmapped) sits between. Default 'tiled-high' for now; the shipped default is TBD pending the on-frame
+    // Medium test (if Medium is smooth on the frame it becomes the universal default). See HANDOFF §20.
     choice: {
       label: 'Display',
-      default: 'tiled',
+      default: 'tiled-high',
       options: [
-        { value: 'tiled',  label: 'Tiled' },
-        { value: 'static', label: 'Static' },
+        { value: 'tiled-high', label: 'Tiled (High)' },
+        { value: 'tiled-med',  label: 'Tiled (Medium)' },
+        { value: 'tiled-low',  label: 'Tiled (Low)' },
+        { value: 'static',     label: 'Static' },
       ],
     },
     choiceHook: 'tiles',
@@ -763,19 +770,21 @@ const BOUNCE_HOOK = `
 // random 90-degree rotations, lerping smoothly. The Display control rides in on ?oochoice:
 //   • 'static'          -> show the 15MB still (the mirrored oo-static.jpg) full-bleed and stop the sketch,
 //                          so a passive frame shows the pristine image;
-//   • 'tiled' (default) -> run the sketch at the browser's default ('low') canvas resampling and drive a
-//                          hands-free shuffle cycle: hold the assembled image ~7s, then 4 shuffles ~6s apart,
-//                          reassemble, and loop (a passive frame has no one to click). We used to force
-//                          imageSmoothingQuality 'high' here for a crisper downscale of the 3628^2 source,
-//                          but on the frame's weak GPU that collapsed the frame rate and (the sketch lerps
-//                          per-frame) stretched each snap into a multi-second crawl; 'low' stays smooth and
-//                          keeps the shuffle quick. Static mode is pristine on its own (native <img>).
+//   • 'tiled-high|med|low' -> run the sketch and drive a hands-free shuffle cycle (hold the assembled image
+//                          ~7s, then 4 shuffles ~6s apart, reassemble, and loop; a passive frame has no one
+//                          to click), with the canvas imageSmoothingQuality set to high | medium | low from
+//                          the chosen value. High (bicubic) is the sharpest downscale of the 3628^2 source but
+//                          re-samples every tile every frame, which on the frame's weak GPU collapses the frame
+//                          rate and (the sketch lerps per-frame) stretches each snap into a multi-second crawl;
+//                          Low (bilinear) is the artist's own default and stays quick; Medium (mipmap) is
+//                          between. So an owner matches quality to their display. Static is pristine on its own
+//                          (native <img>).
 // `tiles` and `handleClick` are the sketch's own top-level bindings, reachable from a classic script injected
 // into the same document (the Chromie Squiggle pattern). Applied once the canvas exists (after p5 preload).
 const TILES_HOOK = `
 <script>
 (function(){
-  var mode = new URLSearchParams(location.search).get('oochoice') || 'tiled';
+  var mode = new URLSearchParams(location.search).get('oochoice') || 'tiled-high';
   if (mode === 'static') {
     var show = function(){
       var img = document.createElement('img');
@@ -791,18 +800,21 @@ const TILES_HOOK = `
     }, 100);
     return;
   }
+  // The chosen resampling quality rides in on the same value (tiled-high|tiled-med|tiled-low); anything
+  // unrecognised (e.g. a legacy 'tiled') falls back to 'low', the safe/cheap default.
+  var SMOOTH_Q = mode === 'tiled-high' ? 'high' : mode === 'tiled-med' ? 'medium' : 'low';
   var SHUFFLES = 4, SHUFFLE_MS = 6000, ASSEMBLED_MS = 7000;
   function ready(){
     try { return !!document.querySelector('canvas') && typeof handleClick === 'function'
                  && typeof tiles !== 'undefined' && tiles && tiles.length > 0; } catch (e) { return false; }
   }
-  // Canvas resampling quality. Forcing 'high' downscaling of the 3628^2 source, x36 tiles, every animation
-  // frame is far too heavy for the frame's GPU: it tanks the frame rate, and since the sketch lerps
-  // per-frame, that turns each ~0.5s shuffle snap into a multi-second stuttering crawl. 'low' is still
-  // smooth (bilinear, not pixelated) and keeps the animation quick; the Static view stays crisp on its own.
+  // Canvas resampling quality, from the chosen value (SMOOTH_Q). 'high' (bicubic) is the sharpest downscale of
+  // the 3628^2 source but re-samples x36 tiles every frame, which on the frame's weak GPU tanks the frame rate
+  // and (the sketch lerps per-frame) stretches each ~0.5s snap into a multi-second crawl; 'low' (bilinear, the
+  // artist's own default) stays quick; 'medium' (mipmap) is between. Static stays crisp on its own.
   function applySmoothing(){
     try { var ctx = document.querySelector('canvas').getContext('2d');
-          ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'low'; } catch (e) {}
+          ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = SMOOTH_Q; } catch (e) {}
   }
   function reassemble(){ for (var k = 0; k < tiles.length; k++) { tiles[k].tx = tiles[k].sx; tiles[k].ty = tiles[k].sy; tiles[k].targetAngle = 0; } }
   var n = 0, wait = setInterval(function(){
