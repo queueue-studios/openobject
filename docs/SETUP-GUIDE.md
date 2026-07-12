@@ -194,13 +194,15 @@ specifically added will work, so it won't read just any link yet.
 
 **Folder Collections** *(in the **Settings** tab)*. Have a whole folder of art on your computer, say
 hundreds of clips, that you'd rather not upload one at a time? A **Folder Collection** points OpenObject
-straight at that folder and plays it in place. *(This works when a **computer is running OpenObject as
-the display**. Showing a folder on the XXL frame itself is coming in a later update.)*
+straight at that folder and plays it in place. *(Works whether a **computer** is your display or the **XXL frame** is, with the frame reading the
+folder from your Mac over the network. The frame has a couple of extra needs, noted under "On the
+frame" below.)*
 
 - **Set one up:** Settings, **Folder Collections**, **Add folder**, then pick the folder in the dialog
   that opens. OpenObject counts the compatible files in it (the same image and video types as uploads;
   anything else is ignored). Click the name to give it a **name** and optional **artist**, and choose
-  **Fit or Fill** and **Sequence or Shuffle** for the whole folder. Nothing is copied; the files play
+  **Fit or Fill** for the whole folder. *(Order, **Sequence or Shuffle**, is set on the **Rotation** tab
+  along with the timing, so it applies to whatever is playing.)* Nothing is copied; the files play
   right where they are.
 - **Show it:** on the **Rotation** tab, use the **Source** dropdown to switch from **Library** to your
   folder. Your Library rotation pauses and the folder plays instead; switch back to **Library** any time
@@ -210,6 +212,24 @@ the display**. Showing a folder on the XXL frame itself is coming in a later upd
 
 Folders you save are remembered, so you can switch between them (and back to your Library) from the
 Source dropdown any time.
+
+**On the frame.** Your folders are set up on your Mac, but the frame can play them over your home
+network. Set the folder up on the Mac as above, then on the **frame's** control panel open the
+**Rotation** tab and pick the folder from the **Source** dropdown, exactly as you would on the Mac. The
+frame quietly copies the art across as it plays, so it stays smooth, and clears that copy whenever you
+restart it.
+
+Three things the frame needs from your Mac:
+
+- **Keep OpenObject open on the Mac.** The frame reads the folder from the app, so if the app is closed
+  the folder can't show. If the frame can't find your Mac, it says so and tells you to open the app.
+- **Don't let the Mac fully sleep while it's serving.** The screen going dark is fine, the Mac keeps
+  serving; only a full sleep stops it. To leave a folder playing unattended, turn on **"Prevent
+  automatic sleeping when the display is off"** in your Mac's energy settings. *(Once the frame has the
+  art cached it plays on its own, so a Mac that nods off won't blank the frame; it just can't refresh
+  until the Mac is back.)*
+- **Keep OpenObject updated on the Mac.** If the frame finds a Mac running an older version, it'll tell
+  you a newer one is available, update the app on the Mac.
 
 **Sleep Schedule** *(in the **Settings** tab)*. Optionally have the screen rest on a schedule. Add up
 to **three sleep times**, and for each one tap the **days** it applies to, so a weekday rest, a
