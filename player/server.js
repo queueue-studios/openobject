@@ -1031,6 +1031,7 @@ app.get('/api/system', (_req, res) => {
     supervised: SUPERVISED, // this Host can soft-restart itself (relaunch available) → show Restart
     isDevice: process.platform === 'linux', // this Host can OS-power (the frame) → show Reboot / Shut down
     role: identity.deviceRole(), // 'frame' (the XXL appliance) or 'standalone'; drives the Folder Collections UI fork (§17 Phase B)
+    version: require('./package.json').version, // the running player version, for the always-present About line (no update card needed)
     port: PORT,
     // openobject.local resolves only where mDNS is configured (the installed frame, which is Linux),
     // not on a Mac/standalone, so only advertise it there; the control panel hides the line otherwise.

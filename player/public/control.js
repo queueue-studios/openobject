@@ -53,6 +53,7 @@ const rebootBtn = document.getElementById('rebootBtn');
 const powerStatus = document.getElementById('powerStatus');
 const reachEl = document.getElementById('reach');
 const frameAddr = document.getElementById('frameAddr');
+const aboutVersion = document.getElementById('aboutVersion');
 
 const loginOverlay = document.getElementById('loginOverlay');
 const loginForm = document.getElementById('loginForm');
@@ -1012,6 +1013,19 @@ async function loadSystem() {
   // Only the frame buffers a Mac folder; deviceIsFrame gates the cache-meter refresh (the cache UI
   // now lives inside the Folder Collections card, populated by loadFolders, §17 Phase B).
   deviceIsFrame = s.role === 'frame';
+
+  // Tab title self-identifies by device role, so the frame's panel and this computer's panel are
+  // told apart when both are open (same static page, so only JS can distinguish them). Role-based,
+  // not URL-based, so a tab reads the same however it was reached (localhost / openobject.local / IP).
+  document.title = `OpenObject · Control Panel (${deviceIsFrame ? 'Frame' : 'Local'})`;
+
+  // Always-present version line in About — the one place it shows on a Mac Host, where the Software
+  // Update card is hidden (not a git checkout). Just the number, no jargon; the commit fingerprint
+  // stays in the Software Update card on the frame.
+  if (aboutVersion) {
+    if (s.version) { aboutVersion.textContent = `Version ${s.version}`; aboutVersion.hidden = false; }
+    else aboutVersion.hidden = true;
+  }
 
   // Help card content follows the device: a frame explains pulling a Mac's folder; a Mac explains
   // defining a folder here (and sending one to a frame). Both blocks live in the DOM; show the right one.

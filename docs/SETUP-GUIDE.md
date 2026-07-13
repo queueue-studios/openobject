@@ -268,9 +268,11 @@ It also lets you give this frame a **name**, which is how it shows up on your ne
 OpenObject app. Leave it blank to use the default. Naming is handy if you ever run more than one frame,
 so they do not all look alike.
 
-**About** *(Settings tab, at the bottom)*. A small card with the OpenObject name, a link to the
-project home at openobject.io, a link to the source code on GitHub, and the license. If you ever
-inherit this frame and want to understand or rebuild what it runs, that source link is where to start.
+**About** *(Settings tab, at the bottom)*. A small card with the OpenObject name, the version you're
+running, a link to the project home at openobject.io, a link to the source code on GitHub, and the
+license. The version shows here whether or not the Software Update card is present, so it's always
+easy to find. If you ever inherit this frame and want to understand or rebuild what it runs, that
+source link is where to start.
 
 ---
 
