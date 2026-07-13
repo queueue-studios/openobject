@@ -382,6 +382,17 @@ OpenObject/
 └─ ...
 ```
 
+### Cutting a release (Mac app + engine)
+
+Versions are milestone-based (§20), and a release publishes to two lanes at once: frames self-update by `git pull` of `main`, and the Mac app updates via Sparkle (a signed `.dmg` + an appcast). Matt runs the signed build; the outward publish is Claude-driven from chat so it stays gated.
+
+1. **Matt:** `mac-app/scripts/release.sh <version>` (needs his keychain: the LLC Developer ID, notary profile `openobject-llc`, Sparkle EdDSA key). It prints the **changelog since the last tag** (review it, and write the notes from it), bumps the shared version, builds/signs/notarizes the app + dmg, generates the EdDSA-signed appcast, and syncs `site/appcast.xml`. Safe to re-run.
+2. **Claude (gated):** commit the version bump **including `site/appcast.xml`**, tag `v<version>`, push `main` + the tag.
+3. **Claude (gated):** create the GitHub Release as `queueue-dev` with `OpenObject-<version>.dmg` (asset name must match so the appcast enclosure resolves) + notes.
+4. **Claude (gated):** publish the generated `appcast.xml` to gh-pages via the Contents API (touch only that file so the CNAME and landing page survive). Verify the dmg URL returns 200 and `openobject.io/appcast.xml` serves the new `shortVersionString`.
+
+The build always comes from `HEAD`, so committed code is never missed; the real risks are a stale `site/appcast.xml` and incomplete notes, which step 1 (changelog + site sync) now guards against.
+
 ### In-place updates (self-update from GitHub): Phase 1
 
 The player updates itself from this GitHub repo, **from the control panel**, no
@@ -589,6 +600,10 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-07-13: Release process hardened (changelog + site/appcast auto-sync)
+
+Cutting 1.4.0 surfaced two gaps in the release flow. First, `site/appcast.xml` (the on-`main` copy of the Sparkle feed) had silently drifted to 1.2.0, because syncing it was a manual step the 1.3.0 cut also missed; a stale copy would revert the live feed on any future gh-pages re-publish from `site/`. Second, there was no built-in way to see what a release actually contained (Rich Caldwell's Tiles collection was nearly left out of the notes). `release.sh` now prints the changelog since the last tag at the start (review before continuing, and write the notes from it) and copies the generated appcast to `site/appcast.xml` automatically, so both are part of the pipeline instead of memory. A "Cutting a release" checklist was added to §15. Files: `mac-app/scripts/release.sh`, `docs/HANDOFF.md`. (Matt, 2026-07-13.)
 
 ### 2026-07-12: In-app Help card (device-aware) + Power made collapsible (§17)
 

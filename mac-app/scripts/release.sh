@@ -20,6 +20,16 @@ TAG="v$VERSION"
 GH_REPO="queueue-studios/openobject"
 DL_PREFIX="https://github.com/$GH_REPO/releases/download/$TAG/"
 
+# --- 0. show what is shipping since the last release, so nothing gets missed -------------------------
+# The build always comes from HEAD, so the risk is never "missed code", it is "did we notice everything
+# that changed" (for the notes, and a sanity check). Print the changelog since the previous tag.
+LAST_TAG="$(git -C "$REPO_ROOT" describe --tags --abbrev=0 2>/dev/null || true)"
+if [ -n "$LAST_TAG" ]; then
+  echo "[release] changes since $LAST_TAG (all of this ships in $VERSION; review before continuing):"
+  git -C "$REPO_ROOT" log --oneline "$LAST_TAG"..HEAD | sed 's/^/           /'
+  echo
+fi
+
 # --- 1. bump the shared version (engine + Mac app) --------------------------------------------------
 echo "[release] bumping version to $VERSION"
 ( cd "$REPO_ROOT/player" && npm version "$VERSION" --no-git-tag-version --allow-same-version >/dev/null )
@@ -57,6 +67,11 @@ cp "$DMG" "$UPDATES/"
 APPCAST="$UPDATES/appcast.xml"
 [ -f "$APPCAST" ] || { echo "[release] appcast not generated"; exit 1; }
 
+# Keep the on-main copy in sync so a future gh-pages re-publish (from site/) can't revert the live feed
+# to an older version. It drifted silently before 1.4.0. Commit this together with the version bump.
+cp "$APPCAST" "$REPO_ROOT/site/appcast.xml"
+echo "        synced → site/appcast.xml"
+
 cat <<EOF
 
 ====================================================================
@@ -66,7 +81,7 @@ cat <<EOF
    appcast : $APPCAST
 ====================================================================
  Next (outward, done from chat so it stays gated):
-   1. Commit the version bump + tag $TAG.
+   1. Commit the version bump (INCLUDING the synced site/appcast.xml) + tag $TAG.
    2. Create the GitHub Release and upload the dmg (asset name must stay
       OpenObject-$VERSION.dmg so the appcast URL resolves).
    3. Publish appcast.xml to gh-pages (openobject.io/appcast.xml).
