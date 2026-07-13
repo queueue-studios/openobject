@@ -22,6 +22,8 @@ yarn-error.log*
 /player/data/
 /player/uploads/
 /player/library/
+# Local backups of Connected pieces pulled from the frame (art, never committed)
+/Backup/
 *.sqlite
 *.sqlite3
 *.db
