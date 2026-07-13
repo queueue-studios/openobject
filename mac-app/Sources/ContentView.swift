@@ -86,11 +86,19 @@ struct ContentView: View {
             Label("Viewing", systemImage: "display")
                 .foregroundStyle(.secondary)
             Text(name).font(.callout).multilineTextAlignment(.center)
+            // Be honest when the chosen Host has dropped off the network. Without this the buttons below
+            // stay lit but do nothing, since their action cannot resolve a Host discovery no longer lists.
+            if !isViewerHostReachable {
+                Label("Not reachable right now", systemImage: "wifi.exclamationmark")
+                    .font(.footnote)
+                    .foregroundStyle(.orange)
+            }
         }
         Button { actions.openControlPanel() } label: {
             Text("Open Control Panel").frame(maxWidth: .infinity).padding(.horizontal, 10)
         }
         .buttonStyle(.borderedProminent)
+        .disabled(!isViewerHostReachable)
         displayControls
         // Switching to hosting your own is a rare "change my mind" action once you've chosen to access
         // a Host, so it's a quiet link, not a button competing with Open Display / Open Control Panel.
@@ -122,6 +130,7 @@ struct ContentView: View {
                 Text("Open Display").frame(maxWidth: .infinity).padding(.horizontal, 10)
             }
             .buttonStyle(.bordered)
+            .disabled(!isViewerHostReachable)
             if case .failed(let message) = display.state {
                 Text(message)
                     .font(.footnote)
@@ -132,6 +141,16 @@ struct ContentView: View {
     }
 
     // MARK: - First-run onboarding (only when another Host is found)
+
+    // In Viewer mode, whether the chosen Host is currently on the network (discovery lists it). Drives
+    // the Open Control Panel / Open Display enabled state so they never look active while pointing at a
+    // Host that has dropped off. Clicking one used to silently do nothing. Always true as a Host.
+    private var isViewerHostReachable: Bool {
+        switch roleStore.mode {
+        case .host: return true
+        case .viewer(let id, _): return discovery.hosts.contains(where: { $0.id == id })
+        }
+    }
 
     // Hosts that aren't this Mac's own running Host.
     private var otherHosts: [HostDiscovery.Host] {

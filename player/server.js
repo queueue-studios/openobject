@@ -39,6 +39,7 @@ const folders = require('./src/folders');
 const seed = require('./src/seed');
 const identity = require('./src/identity');
 const discovery = require('./src/discovery');
+const instanceLock = require('./src/instance-lock');
 const remoteFolders = require('./src/remote-folders');
 const folderCacheMod = require('./src/folder-cache');
 const RESTART_CODE = require('./src/restart-code');
@@ -1128,7 +1129,7 @@ function readvertise() {
 
 // Cache the running commit for /healthz (HANDOFF §15) before serving; never block boot on it.
 updater.refreshCommitCache().finally(() => {
-  app.listen(PORT, HOST, () => {
+  const server = app.listen(PORT, HOST, () => {
     console.log(`OpenObject player listening on http://localhost:${PORT}`);
     console.log(`  • control  →  http://localhost:${PORT}/`);
     console.log(`  • display  →  http://localhost:${PORT}/display`);
@@ -1138,6 +1139,18 @@ updater.refreshCommitCache().finally(() => {
     // Best-effort and off the playback path: discovery.advertise never throws, so a failure here
     // leaves the player serving exactly as before, just not auto-discoverable.
     readvertise();
+
+    // Flag a SECOND OpenObject server on this same machine (a stray dev/preview server, a leftover
+    // `npm start`): running more than one contends on mDNS and can break openobject.local resolution
+    // (the 2026-07-12 outage). Best-effort and FAIL-OPEN, so it never blocks startup or advertising,
+    // since the frame is single-instance and must always come up discoverable.
+    try {
+      const other = instanceLock.checkAndClaim({ port: PORT });
+      if (other) {
+        console.warn(`[OpenObject] Heads up: another OpenObject server (PID ${other.pid}${other.port ? `, port ${other.port}` : ''}) already appears to be running on this machine.`);
+        console.warn('[OpenObject] Running more than one on the same computer can interfere with reaching your frame (mDNS / .local). Stop the extra one if you did not mean to run it.');
+      }
+    } catch { /* fail-open: the instance check must never affect startup */ }
 
     // On the frame (OO_ROLE=frame), also BROWSE for other Hosts so a Folder Collection served by a
     // Mac can be discovered and selected (HANDOFF §17 Phase B). Only the frame consumes: a standalone
@@ -1155,8 +1168,20 @@ updater.refreshCommitCache().finally(() => {
       process.once(sig, () => {
         try { advertisement && advertisement.stop(); } catch { /* ignore */ }
         try { discoveryBrowser && discoveryBrowser.stop(); } catch { /* ignore */ }
+        try { instanceLock.release(); } catch { /* ignore */ }
         process.exit(0);
       });
     }
+  });
+
+  // A clear message when the port is already taken (usually another OpenObject already running on this
+  // machine) instead of an uncaught EADDRINUSE stack trace. Other listen errors surface as before.
+  server.on('error', (err) => {
+    if (err && err.code === 'EADDRINUSE') {
+      console.error(`\n[OpenObject] Port ${PORT} is already in use. Another OpenObject server is probably already running on this machine.`);
+      console.error('[OpenObject] Stop the other one (or set a different PORT), then start again.\n');
+      process.exit(1);
+    }
+    throw err;
   });
 });

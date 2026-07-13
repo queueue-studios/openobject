@@ -1195,6 +1195,17 @@ const MAC_SEARCH_GRACE_MS = 12000;
 let macSearchStartedAt = 0;
 let macSearchTimer = null;
 
+// A one-click way back to the Library, shown in every "Mac unreachable" panel so the frame is never
+// stranded on a folder whose Mac has gone away (§17). It matters most in error state 1, where the
+// folder has dropped out of the Source dropdown entirely, leaving no other way to switch off it.
+function switchToLibraryButton() {
+  return '<button type="button" class="update-btn fs-to-library" id="fsToLibrary">Switch to Library</button>';
+}
+function wireSwitchToLibrary() {
+  const btn = document.getElementById('fsToLibrary');
+  if (btn) btn.addEventListener('click', async () => { await saveSettings({ displaySource: 'library' }); await refresh(); });
+}
+
 // Rotation tab: the Source dropdown (Library / each saved folder) + folder-mode visibility. Called at
 // the end of refresh(), after loadRotation, so folder mode overrides the per-piece list (HANDOFF §17).
 function renderSource() {
@@ -1249,8 +1260,9 @@ function renderSource() {
     orderGroup.hidden = true; rotList.hidden = true; rotEmpty.hidden = true;
     rotCount.textContent = '';
     folderSummary.hidden = false;
-    folderSummary.classList.add('fs-offline');
-    folderSummary.innerHTML = '<div class="fs-facts fs-facts-offline">Mac unreachable. Make sure it is awake and the OpenObject app is open.</div>';
+    folderSummary.classList.add('fs-offline', 'fs-unreachable');
+    folderSummary.innerHTML = '<div class="fs-facts fs-facts-offline">Mac unreachable. Make sure it is awake and the OpenObject app is open.</div>' + switchToLibraryButton();
+    wireSwitchToLibrary();
     return;
   }
   const inFolder = !!active;
@@ -1281,10 +1293,12 @@ function renderFolderSummary(f) {
     ? `<span class="fs-name fs-name-static"${f.host ? ` title="Shared by ${escapeHtml(f.host)}"` : ''}>${escapeHtml(f.name)}</span>`
     : `<button type="button" class="fs-name" id="fsName" title="Manage in Settings">${escapeHtml(f.name)}</button>`;
   folderSummary.classList.toggle('fs-offline', offline);
+  folderSummary.classList.toggle('fs-unreachable', offline);
   folderSummary.innerHTML = `
     <div class="fs-head">${nameEl}${sub}<span class="fs-pill">Folder</span>${fillPill}</div>
-    <div class="fs-facts${offline ? ' fs-facts-offline' : f.reachable ? '' : ' fs-facts-warn'}">${facts}</div>`;
+    <div class="fs-facts${offline ? ' fs-facts-offline' : f.reachable ? '' : ' fs-facts-warn'}">${facts}</div>${offline ? switchToLibraryButton() : ''}`;
   if (!remote) document.getElementById('fsName').addEventListener('click', gotoFolderSettings);
+  if (offline) wireSwitchToLibrary();
 }
 
 // The folder name in the Rotation summary jumps to its setup in Settings (expanding the card).

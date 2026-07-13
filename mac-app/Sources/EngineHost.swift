@@ -42,7 +42,34 @@ final class EngineHost: ObservableObject {
     func start() {
         guard process == nil else { return }
         status = .starting
+        Task { await startAfterPreflight() }
+    }
 
+    // Don't stack a second server on top of one already running on this Mac (a stray dev/preview
+    // server, or a leftover from a previous run). Two OpenObject servers on one machine contend on
+    // mDNS and can break openobject.local resolution (the 2026-07-12 outage). Surface it plainly
+    // instead of spawning a duplicate that just fails to bind the port and reports a vaguer error.
+    private func startAfterPreflight() async {
+        let serving = await portAlreadyServing()
+        guard case .starting = status, process == nil else { return } // stop()/a role switch intervened
+        if serving {
+            status = .failed("Another OpenObject server is already running on this Mac (port \(port)). Quit it, then reopen OpenObject.")
+            return
+        }
+        launchEngine()
+    }
+
+    // True if something already answers /healthz on our port, i.e. an OpenObject engine is already up
+    // on this Mac. A refused connection (nothing there) returns false fast.
+    private func portAlreadyServing() async -> Bool {
+        var req = URLRequest(url: baseURL.appendingPathComponent("healthz"))
+        req.timeoutInterval = 1.0
+        guard let (_, resp) = try? await URLSession.shared.data(for: req),
+              let http = resp as? HTTPURLResponse, http.statusCode == 200 else { return false }
+        return true
+    }
+
+    private func launchEngine() {
         guard let nodeURL = Bundle.main.url(forResource: "node", withExtension: nil) else {
             status = .failed("Bundled Node runtime is missing from the app.")
             return
