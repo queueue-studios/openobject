@@ -237,6 +237,9 @@ Three things the frame needs from your Mac:
 - **Keep OpenObject updated on the Mac.** If the frame finds a Mac running an older version, it'll tell
   you a newer one is available, update the app on the Mac.
 
+There's also a **Help** card at the bottom of the **Settings** tab that walks through these folder steps
+in the app, worded for whichever device you're reading it on (a frame or your Mac).
+
 **Sleep Schedule** *(in the **Settings** tab)*. Optionally have the screen rest on a schedule. Add up
 to **three sleep times**, and for each one tap the **days** it applies to, so a weekday rest, a
 weekend lie-in, and an "I'm at the office" block can all live side by side. Set the times on a normal
@@ -248,9 +251,9 @@ back up on its own. **Want it off right now?** Tap **Sleep** at the top of the c
 button reads **Wake** while the screen is off. If you tap **Wake** during a scheduled sleep, the art
 stays on until the next scheduled sleep.
 
-The **Sleep Schedule**, **Connected Collections**, **Folder Collections**, **Password**, and **Network**
-sections **start collapsed** to keep the Settings tab short. Tap a header to open one, and it stays the
-way you leave it.
+The **Sleep Schedule**, **Connected Collections**, **Folder Collections**, **Power**, **Password**,
+**Network**, and **Help** sections **start collapsed** to keep the Settings tab short. Tap a header to
+open one, and it stays the way you leave it.
 
 **Power** *(Settings tab)*. **Restart** restarts the OpenObject software, handy if the app seems
 stuck. **Reboot** restarts the whole frame, and **Shut down** turns it off. If a control ever

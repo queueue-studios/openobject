@@ -197,22 +197,30 @@
         </div>
       </section>
 
-      <!-- Power — Restart (real soft-restart via the supervisor) + Shut down (hardware stub) (HANDOFF §10) -->
-      <section class="device">
-        <div class="section-title">Power</div>
-        <div class="device-row">
-          <button type="button" id="restartBtn" class="update-btn">Restart</button>
-          <span class="device-note">Restarts the control panel.</span>
+      <!-- Power: Restart (soft-restart via the supervisor) + Reboot / Shut down (frame only) (HANDOFF §10).
+           Collapsible, folded by default (wireCollapse); the whole card hides on hosts that can't power/restart. -->
+      <section class="device" id="powerCard">
+        <div class="card-head">
+          <button type="button" class="card-toggle" id="powerToggle" aria-expanded="true" aria-controls="powerBody">
+            <span class="card-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="section-title">Power</span>
+          </button>
         </div>
-        <div class="device-row">
-          <button type="button" id="rebootBtn" class="update-btn">Reboot</button>
-          <span class="device-note">Reboots the frame.</span>
+        <div class="card-body" id="powerBody">
+          <div class="device-row">
+            <button type="button" id="restartBtn" class="update-btn">Restart</button>
+            <span class="device-note">Restarts the control panel.</span>
+          </div>
+          <div class="device-row">
+            <button type="button" id="rebootBtn" class="update-btn">Reboot</button>
+            <span class="device-note">Reboots the frame.</span>
+          </div>
+          <div class="device-row">
+            <button type="button" id="shutdownBtn" class="update-btn danger">Shut down</button>
+            <span class="device-note">Turns off the frame.</span>
+          </div>
+          <div class="device-status" id="powerStatus" hidden></div>
         </div>
-        <div class="device-row">
-          <button type="button" id="shutdownBtn" class="update-btn danger">Shut down</button>
-          <span class="device-note">Turns off the frame.</span>
-        </div>
-        <div class="device-status" id="powerStatus" hidden></div>
       </section>
 
       <!-- Password: optional control-panel lock (HANDOFF §10), off by default; filled by control.js. Sits below Power as an opt-in, uncommon feature. -->
@@ -237,6 +245,40 @@
           <div class="name-field" id="nameField">
             <p class="device-note">This name helps you identify this player in the app and on your network.</p>
             <input id="hostName" class="auth-input" type="text" maxlength="40" autocomplete="off" placeholder="OpenObject" aria-label="Player name">
+          </div>
+        </div>
+      </section>
+
+      <!-- Help: how the frame and Folder Collections fit together. Collapsible, folded by default
+           (wireCollapse), like the other reference cards; device-aware body (frame vs Mac). -->
+      <section class="device" id="helpCard">
+        <div class="card-head">
+          <button type="button" class="card-toggle" id="helpToggle" aria-expanded="true" aria-controls="helpBody">
+            <span class="card-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="section-title">Help</span>
+          </button>
+        </div>
+        <div class="card-body help-body" id="helpBody">
+          <!-- Frame: how to show a folder that lives on a Mac. -->
+          <div id="helpFrame" hidden>
+            <p class="help-title">Display content from a folder on your Mac</p>
+            <p class="device-note">Folder Collections let this frame show images and videos directly from a folder on your Mac, with nothing to upload.</p>
+            <ol class="help-steps">
+              <li>On your Mac, open the OpenObject app and choose <b>Host OpenObject on this Mac</b>. The Mac must be <b>Hosting</b>, not <b>Viewing</b>.</li>
+              <li>Click <b>Open Control Panel</b>, then add the folder under <b>Folder Collections</b>.</li>
+              <li>Back on the frame (Control Panel you are reading now), open the <b>Rotation</b> tab and select the folder from the <b>Source</b> menu.</li>
+            </ol>
+            <p class="device-note">Keep the Mac awake and OpenObject running while a folder is the <b>Source</b>. If the Mac sleeps or the app quits, the frame will show <b>Mac unreachable</b>. You can switch back to your <b>Library</b> at any time.</p>
+          </div>
+          <!-- Standalone Mac (or any non-frame Host): how folders here work, and how to send one to a frame. -->
+          <div id="helpStandalone">
+            <p class="help-title">Display content from a folder</p>
+            <p class="device-note">A Folder Collection shows images and videos directly from a folder on this Mac, in place of your uploaded <b>Library</b>, with nothing to upload.</p>
+            <ol class="help-steps">
+              <li>Under <b>Folder Collections</b>, add a folder from this Mac.</li>
+              <li>Open the <b>Rotation</b> tab and select the folder from the <b>Source</b> menu.</li>
+            </ol>
+            <p class="device-note">To show a folder on a separate OpenObject frame (such as an Infinite Objects XXL) instead, keep this Mac awake with the OpenObject app <b>Hosting</b>, then select the folder from the <b>Source</b> menu on the frame's Control Panel.</p>
           </div>
         </div>
       </section>

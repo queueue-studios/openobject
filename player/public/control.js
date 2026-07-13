@@ -1012,6 +1012,13 @@ async function loadSystem() {
   // Only the frame buffers a Mac folder; deviceIsFrame gates the cache-meter refresh (the cache UI
   // now lives inside the Folder Collections card, populated by loadFolders, §17 Phase B).
   deviceIsFrame = s.role === 'frame';
+
+  // Help card content follows the device: a frame explains pulling a Mac's folder; a Mac explains
+  // defining a folder here (and sending one to a frame). Both blocks live in the DOM; show the right one.
+  const helpFrame = document.getElementById('helpFrame');
+  const helpStandalone = document.getElementById('helpStandalone');
+  if (helpFrame) helpFrame.hidden = !deviceIsFrame;
+  if (helpStandalone) helpStandalone.hidden = deviceIsFrame;
 }
 
 // Poll /healthz until the player is back up and a predicate holds (a new commit after an update,
@@ -1707,6 +1714,8 @@ wireCollapse('sleepCard', 'sleepToggle');
 wireCollapse('connectedCard', 'connectedToggle');
 wireCollapse('foldersCard', 'foldersToggle');
 wireCollapse('wifiCard', 'wifiToggle');
+wireCollapse('powerCard', 'powerToggle');
+wireCollapse('helpCard', 'helpToggle');
 
 // Keep the Sleep Schedule status line and the week strip's "now" marker current as time passes.
 setInterval(() => { if (!panelSettings.hidden) { renderSleepStatus(); renderStrip(); } }, 60000);
