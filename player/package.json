@@ -2,7 +2,7 @@
   "name": "openobject-player",
   "version": "1.4.0",
   "private": true,
-  "description": "OpenObject player — self-hosted local art frame for the Infinite Objects XXL.",
+  "description": "A self-hosted, borderless art display for your Mac. No cloud, account, or subscription. It can also revive a stranded Infinite Objects XXL frame.",
   "license": "SEE LICENSE IN LICENSE",
   "author": "Queueue Studios LLC",
   "type": "commonjs",

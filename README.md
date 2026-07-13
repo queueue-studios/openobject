@@ -4,9 +4,8 @@
 
 # OpenObject
 
-OpenObject is a self-hosted, borderless art display for your Mac. It turns any Mac and an everyday
-monitor into an edge-to-edge digital canvas you control from your phone or any browser on your
-network. No cloud, no account, no subscription.
+A self-hosted, borderless art display for your Mac. No cloud, account, or subscription. It can also
+revive a stranded Infinite Objects XXL frame.
 
 **[Download for Mac](https://github.com/queueue-studios/openobject/releases/latest)** · [openobject.io](https://openobject.io)
 
