@@ -220,25 +220,45 @@ const REGISTRY = [
     // the music file by RELATIVE ref, so the mirror takes the asset base from the directory itself
     // (dirBundle), not the gateway root.
     dirBundle: true,
-    // The bundle also loads p5.sound.min.js, which the sketch never actually uses (its audio is raw Web
-    // Audio), and that unused library hangs the renderer in restricted contexts (it froze p5 before setup()
-    // in a headless browser). We are always muted (§12), so we drop it from the mirror: the visual is
-    // identical and now renders reliably everywhere. (The desktop archival copy keeps it, faithfully.)
+    // The music track (TheBloom.mp3, 2.3 MB of the 2.6 MB artifact) is named in a JS config object
+    // (CONFIG.MUSIC_URL), not in a src/href attribute, so the generic relative-asset scan never saw it and
+    // early mirrors shipped without it. extraAssets names it explicitly so it lands in the bundle and is
+    // served same-origin, which is also what lets the sketch's analyser read it (see the Music control).
+    extraAssets: ['TheBloom.mp3'],
+    // The bundle also loads p5.sound.min.js, which the sketch genuinely never uses (playback is a plain
+    // <audio> element and the analyser is raw Web Audio), and that unused library hangs the renderer in
+    // restricted contexts (it froze p5 before setup() in a headless browser). We drop it from the mirror:
+    // the visual is identical and it renders reliably everywhere. Dropping it stays correct with Music on,
+    // since no audio path here goes through p5.sound. (The desktop archival copy keeps it, faithfully.)
     dropScripts: ['p5.sound.min.js'],
     // A fixed 1920x1080 (16:9) canvas the sketch self-fits to the viewport on black. Declaring the aspect
     // letterboxes it on the bare square stage (Golden Lining-style); on a 16:9 screen it fills edge to edge.
     aspect: '1920 / 1080',
     // The piece opens behind a full-screen "Click to Bloom" overlay (#startOverlay) that also gates the
-    // bloom; a passive frame can't click, so the bloom hook auto-starts it on every display, silently (the
-    // music never plays, §12). The overlay lives in the static HTML, so it would paint (then fade over its
-    // own 0.8s) before the hook can run — a brief "Click to Bloom" flash; hideSelectors rules it out from the
-    // first paint (the hook still reveals the garden). It self-animates after that (flowers sway and spin on
-    // their own, a spaceship drifts), so no Animate toggle. Its hand interactions (click a flower to spin,
-    // the music panel) are not supported on a passive, muted frame.
+    // bloom; a passive frame can't click, so the bloom hook auto-starts it on every display. The overlay
+    // lives in the static HTML, so it would paint (then fade over its own 0.8s) before the hook can run, a
+    // brief "Click to Bloom" flash; hideSelectors rules it out from the first paint (the hook still reveals
+    // the garden). It self-animates after that (flowers sway and spin on their own, a spaceship drifts), so
+    // no Animate toggle. The artist's own music panel is display:none until opened, so it never surfaces on
+    // the zero-chrome stage; clicking a flower to spin it stays unsupported on a passive frame.
     animateDefault: false,
     animatable: false,
     animateHook: 'bloom',
     hideSelectors: ['#startOverlay'],
+    // Music is this piece's one control, and the track is not decoration: startExperience() plays it, and the
+    // sketch runs an FFT over it whose bass/mid/high energy drives the render (the sunset gradient's width,
+    // the flowers' motion), falling back to a canned ambient pulse whenever nothing is playing. So On is the
+    // artist's full piece and Off is the reduced one, which is why it defaults On. Off restores the original
+    // behaviour by no-oping playback in BLOOM_HOOK. (OpenObject muted every piece until 2026-07-20; audio is
+    // supported now that the Mac is the primary display, and the XXL frame simply has no speaker, so it
+    // plays this silently either way.) A two-option select rather than a new toggle type: it matches the
+    // Chromie Squiggle's binary Background dropdown and needs no new control plumbing.
+    controls: [
+      { key: 'music', type: 'select', label: 'Music', default: 'on', options: [
+          { value: 'on',  label: 'On' },
+          { value: 'off', label: 'Off' },
+      ] },
+    ],
   },
   {
     slug: 'code-art',
@@ -654,15 +674,24 @@ const EASTER_HOOK = `
 </script>`;
 
 // Injected into Chaz Wesley's "The Bloom" (Chazstract #28): the piece opens behind a "Click to Bloom"
-// overlay (#startOverlay) whose click runs the sketch's startExperience(), which hides the overlay AND
-// starts the bloom clock (its flowers stay frozen as buds until then). A passive frame has no one to click,
-// so we fire it ourselves once setup() has run (the canvas exists). OpenObject is always muted (HANDOFF §12),
-// so we no-op audio playback first; the garden then blooms and self-animates with no sound. Runs
-// unconditionally: revealing the garden is required to display the art, not an optional Animate.
+// overlay (#startOverlay) whose click runs the sketch's startExperience(), which hides the overlay, starts
+// the bloom clock (its flowers stay frozen as buds until then), AND plays the music. A passive frame has no
+// one to click, so we fire it ourselves once setup() has run (the canvas exists). Runs unconditionally:
+// revealing the garden is required to display the art, not an optional Animate.
+//
+// Music On (?oo_music=on, the default) leaves playback alone: the track plays and the sketch's own FFT
+// analyser drives the visuals from it. The mirror serves the mp3 same-origin (extraAssets), so
+// createMediaElementSource reads it with no CORS taint and the analyser actually connects. Music Off
+// no-ops HTMLMediaElement.play first, so the garden blooms in silence and the sketch falls back to its
+// ambient pulse, which is how every display behaved while OpenObject was muted-always. Where autoplay is
+// refused (a plain browser tab rather than a kiosk, which runs --autoplay-policy=no-user-gesture-required)
+// the artwork catches its own rejected play() and continues on that same silent path, so art never stalls.
 const BLOOM_HOOK = `
 <script>
 (function(){
-  try { HTMLMediaElement.prototype.play = function(){ return Promise.resolve(); }; } catch (e) {}
+  if (new URLSearchParams(location.search).get('oo_music') === 'off') {
+    try { HTMLMediaElement.prototype.play = function(){ return Promise.resolve(); }; } catch (e) {}
+  }
   var n = 0;
   var iv = setInterval(function(){
     if (++n > 300) { clearInterval(iv); return; }   // ~30s safety
@@ -935,6 +964,10 @@ async function mirrorInto(c, out, sourceUrl) {
     if (/^(https?:)?\/\//i.test(ref) || ref.startsWith('data:') || ref.startsWith('#')) continue;
     assets.add(ref.replace(/^\.?\//, ''));
   }
+  // Relative assets a collection references from inside its own JavaScript, which the attribute scan above
+  // cannot see (The Bloom names its music track in a CONFIG object, not a src=). Named explicitly per
+  // collection, then mirrored and served same-origin like any other file in the bundle.
+  if (c && Array.isArray(c.extraAssets)) for (const extra of c.extraAssets) assets.add(extra.replace(/^\.?\//, ''));
   for (const rel of assets) {
     const buf = await fetchBuf(base + rel);
     const dest = path.join(out, rel);

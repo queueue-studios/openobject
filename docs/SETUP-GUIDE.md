@@ -155,7 +155,10 @@ the same for each (no per-piece timing). Videos and animations always **loop** a
 the first frame: a shorter one repeats to fill the time, and a clip longer than the time simply
 moves on when it's up.
 
-**Sound.** Always off. It's silent art on a wall.
+**Sound.** Your own photos and videos always play silently. The one exception is a connected piece
+that came with music of its own: Chaz Wesley's *The Bloom* has a soundtrack, switched **on** to begin
+with, and a **Music** setting to turn it off. You'll hear it when your Mac is the display. A frame has
+no speaker, so it stays silent there whichever way the setting is set.
 
 **Connected Collections**. Some digital art isn't a file you can download, it's a
 generative or web-hosted piece. OpenObject can show a few **specific, supported collections** of this
@@ -179,7 +182,10 @@ generative study of motion: a chain of colored orbs swings like a pendulum, trac
 whole panel. And Jeremy Booth's *Lost in Moffat County* is a series of painterly Western scenes that shift from day to
 night on their own with your local time; switch on Animate for that piece (in Settings) to reveal a hand-drawn animated
 easter egg. And Chaz Wesley's *The Bloom* is a hand-drawn flower garden that blooms at sunset, with a little
-spaceship drifting through the sky above it. And NFTman76's *Binary Mountains* is a glowing wireframe
+spaceship drifting through the sky above it. It's the one piece that comes with its own music, and the
+garden moves to it: the flowers and the sunset shift along with the song. A **Music** setting (in
+Settings) starts **on**; turn it off and the garden keeps drifting on its own, silently. If you added
+this piece before, remove it and add it again to get the music, since that's what downloads the song. And NFTman76's *Binary Mountains* is a glowing wireframe
 mountain range under a starry sky, with snow drifting down as the view slowly circles it; a **Snow**
 setting (in Settings) lets you choose how heavy the snowfall is, from Light Snow to a full Blizzard.
 And Erick Calderon (Snowfro)'s *Chromie Squiggle* is the original Art Blocks artwork: a bright,
