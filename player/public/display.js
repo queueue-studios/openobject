@@ -56,6 +56,7 @@ let front = 0; // which layer is currently visible
 let timer = null;
 let started = false;
 let lastShowAt = 0; // when the last crossfade began — guards the hidden-layer cleanup against a live fade
+let pendingLayer = -1; // layer holding a render that has not revealed yet — never free it (see freeHiddenLayer)
 let shuffleQueue = [];
 let itemsListSig = ''; // ids of the current items in order; the shuffle bag resets only when this changes
 let sleeping = false; // Sleep Hours / manual Blank: showing the dimmed mark (HANDOFF §13)
@@ -159,7 +160,14 @@ function render(layer, item, onReady) {
 // nothing visible changes — only the wasted background rendering stops.
 function freeHiddenLayer() {
   if (Date.now() - lastShowAt < 700) return;     // a crossfade may still be running — leave both layers
-  const hidden = layers[1 - front];
+  const idx = 1 - front;
+  // A render in flight lives in the back layer and has not flipped `front` yet, so it looks exactly like
+  // a stale layer to the two checks below: `front` still points at the OUTGOING piece, and the incoming
+  // layer has no `.show` until its reveal. Freeing it would delete the piece we are waiting on, and its
+  // load event would then never fire, so the reveal backstop would fade in an empty layer (a black stage
+  // until something else re-renders). Only ever free a layer whose piece has actually appeared.
+  if (idx === pendingLayer) return;
+  const hidden = layers[idx];
   if (!hidden.classList.contains('show')) hidden.replaceChildren();
 }
 
@@ -169,7 +177,9 @@ function show(item) {
   currentId = item.id;
   currentSig = sig(item);
   const back = 1 - front;
+  pendingLayer = back;                  // in flight until reveal: off limits to freeHiddenLayer
   const reveal = once(() => {
+    pendingLayer = -1;                  // it is on screen now, so the usual cleanup rules apply again
     layers[back].classList.add('show');
     layers[front].classList.remove('show');
     front = back;
