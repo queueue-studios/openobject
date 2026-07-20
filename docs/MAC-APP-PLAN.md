@@ -295,6 +295,13 @@ browses Bonjour, shows a **list of OpenObject servers found**, the user picks on
 it renders that Host's `/display` and follows the rotation curated there. Selecting the
 frame versus the Mac Host is just picking a different entry in that list.
 
+> **Partly superseded by `TVOS-APP-PLAN.md` (2026-07-20).** tvOS ships no web view, so the
+> Apple TV app **cannot** render `/display`. It is a native reimplementation of the Display
+> role instead, and Connected Collections cannot render there at all. See
+> `TVOS-APP-PLAN.md` §2. The discovery model described above is unaffected and still
+> stands; the rendering half is replaced, and the review note below is revisited there too
+> (bundled sample art is not the mitigation used, because the app owns no art).
+
 ### Note for later: tvOS App Store review without a server
 Parked, but recorded so it is not re-derived: a LAN-client app will **not** be rejected
 merely because reviewers cannot find a server on their test network, but an app that
