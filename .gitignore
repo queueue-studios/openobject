@@ -41,6 +41,9 @@ OpenObject-HANDOFF.pdf
 Device Photos/
 Screenshots/
 
+# Personal working files dropped into the repo root (notes, drafts). Never committed.
+/Git Ignore/
+
 # ── Installer build artifacts (Phase 2) ───────────────────────────
 /installer/build/
 /installer/work/
