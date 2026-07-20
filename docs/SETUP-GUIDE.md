@@ -157,8 +157,10 @@ moves on when it's up.
 
 **Sound.** Your own photos and videos always play silently. The one exception is a connected piece
 that came with music of its own: Chaz Wesley's *The Bloom* has a soundtrack, switched **on** to begin
-with, and a **Music** setting to turn it off. You'll hear it when your Mac is the display. A frame has
-no speaker, so it stays silent there whichever way the setting is set.
+with, and a **Music** setting to turn it off. You'll hear it when your Mac is the display. If you're
+watching in an ordinary browser tab instead, **click the picture once** and the music starts: browsers
+don't let a page play sound until you've interacted with it, so nothing we can do will start it for you.
+A frame has no speaker, so it stays silent there whichever way the setting is set.
 
 **Connected Collections**. Some digital art isn't a file you can download, it's a
 generative or web-hosted piece. OpenObject can show a few **specific, supported collections** of this

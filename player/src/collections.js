@@ -244,14 +244,21 @@ const REGISTRY = [
     animateDefault: false,
     animatable: false,
     animateHook: 'bloom',
-    hideSelectors: ['#startOverlay'],
+    // #startOverlay is the "Click to Bloom" gate (above). #settingsPanel is the artist's own music panel:
+    // it is display:none until opened, but clicking the signature in the corner toggles it open, so on a
+    // Mac it IS reachable on the stage. It offers Play/Pause/Mute and an "Upload MP3 or WAV" file picker,
+    // which is chrome that does not belong on an art display (§6) and invites a viewer to swap the score.
+    // Hidden here; the display's own Music control is the supported way to set playback. (Its Play button
+    // also calls audioEl.play() with no analyser wiring, so it could give sound with no reaction anyway.)
+    hideSelectors: ['#startOverlay', '#settingsPanel'],
     // Music is this piece's one control, and the track is not decoration: startExperience() plays it, and the
     // sketch runs an FFT over it whose bass/mid/high energy drives the render (the sunset gradient's width,
     // the flowers' motion), falling back to a canned ambient pulse whenever nothing is playing. So On is the
     // artist's full piece and Off is the reduced one, which is why it defaults On. Off restores the original
     // behaviour by no-oping playback in BLOOM_HOOK. (OpenObject muted every piece until 2026-07-20; audio is
-    // supported now that the Mac is the primary display, and the XXL frame simply has no speaker, so it
-    // plays this silently either way.) A two-option select rather than a new toggle type: it matches the
+    // supported now that the Mac is the primary display. On the XXL frame the control is inert: Chromium
+    // opens no audio output there at all, so the piece always takes its own silent fallback path, verified
+    // on the real device 2026-07-20. See HANDOFF §12.) A two-option select rather than a new toggle type: it matches the
     // Chromie Squiggle's binary Background dropdown and needs no new control plumbing.
     controls: [
       { key: 'music', type: 'select', label: 'Music', default: 'on', options: [
@@ -689,7 +696,8 @@ const EASTER_HOOK = `
 const BLOOM_HOOK = `
 <script>
 (function(){
-  if (new URLSearchParams(location.search).get('oo_music') === 'off') {
+  var musicOff = new URLSearchParams(location.search).get('oo_music') === 'off';
+  if (musicOff) {
     try { HTMLMediaElement.prototype.play = function(){ return Promise.resolve(); }; } catch (e) {}
   }
   var n = 0;
@@ -699,6 +707,35 @@ const BLOOM_HOOK = `
     clearInterval(iv);
     try { startExperience(); } catch (e) {}
   }, 100);
+
+  // Click to start the music. In a kiosk the track autoplays and none of this runs. In a plain browser
+  // tab autoplay is refused, and since the artist's own player panel is hidden (hideSelectors) there
+  // would otherwise be no way to hear it, so the viewer's first click starts it. We wire the analyser
+  // ourselves because the artwork only builds it inside the play() that was rejected: without this the
+  // click would give sound but leave the garden on its ambient fallback, which is most of the point.
+  // Settings mirror the artwork's own (fftSize 512, smoothing 0.8); it is same-origin, so no CORS taint.
+  if (musicOff) return;
+  var start = function(){
+    try {
+      if (!audioEl || !audioEl.paused) return;
+      audioEl.play().then(function(){
+        document.removeEventListener('pointerdown', start, true);
+        if (audioCtx) return;                        // the artwork already wired it
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 512;
+          analyser.smoothingTimeConstant = 0.8;
+          audioSrc = audioCtx.createMediaElementSource(audioEl);
+          audioSrc.connect(analyser);
+          analyser.connect(audioCtx.destination);
+          freqData = new Uint8Array(analyser.frequencyBinCount);
+          timeData = new Uint8Array(analyser.frequencyBinCount);
+        } catch (e) {}
+      }).catch(function(){});
+    } catch (e) {}                                   // audioEl not defined yet (TDZ): a later click retries
+  };
+  document.addEventListener('pointerdown', start, true);
 })();
 </script>`;
 
