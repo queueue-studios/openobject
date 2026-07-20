@@ -1,6 +1,6 @@
 {
   "name": "openobject-player",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "private": true,
   "description": "A self-hosted, borderless art display for your Mac. No cloud, account, or subscription. It can also revive a stranded Infinite Objects XXL frame.",
   "license": "SEE LICENSE IN LICENSE",
