@@ -59,9 +59,15 @@ builder-only convenience.
 - **Rotation order: Sequence / Shuffle.** Sequence = the set order; Shuffle =
   randomized pass, each clip once before repeating, then reshuffles. (Pure independent
   Random was dropped, odd fit for a frame; Shuffle already covers random order.)
-- **Motion + audio: GIF/WebP/AVIF/SVG and video loop-to-fill; never freeze on frame 1.
-  Muted, always.** **One global equal-time duration** for every piece (no per-clip
-  duration); a clip longer than it is cut at the duration, shorter loops to fill.
+- **Motion: GIF/WebP/AVIF/SVG and video loop-to-fill; never freeze on frame 1.**
+  **One global equal-time duration** for every piece (no per-clip duration); a clip
+  longer than it is cut at the duration, shorter loops to fill.
+- **Audio: uploaded video is muted; Connected pieces are per-collection** (HANDOFF §12,
+  revised 2026-07-20). The old "muted, always" rule dates from when the speakerless XXL
+  was the only display; the Mac is primary now, so a scored piece can be heard. A
+  collection may expose its own audio control (*The Bloom* carries **Music**, default
+  On, because its soundtrack drives what the piece renders). The XXL frame opens no
+  audio output at all, verified on the real device, so audio is inert there.
 - **Storage: full local mirror by default.** Progressive sync: start the rotation on
   the first clip, fold the rest in without restarting/stuttering the loop. A
   buffered/least-recently-shown eviction mode is a documented seam, off by default.

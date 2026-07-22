@@ -295,13 +295,27 @@ with §3.
 
 ## 10. Audio (an amendment to a v1 decision)
 
-The v1 rule is "**muted, always**" (`CLAUDE.md`, HANDOFF §12), chosen when the XXL frame
-was the only target. The frame has no speakers, so the decision cost nothing. Once the Mac
-became the primary surface, and now a TV, suppressing audio is a real loss.
+The original v1 rule was "**muted, always**", chosen when the speakerless XXL frame was
+the only target, so the decision cost nothing. Once the Mac became the primary surface,
+and now a TV, suppressing audio is a real loss.
 
-**New rule: art with audio plays its audio, and every display owns its own mute.** In
+**That rule has already been partly retired, ahead of this plan.** As of 2026-07-20
+(v1.5.0, HANDOFF §12) the shipped position is **uploaded video muted, Connected pieces
+per-collection**: *The Bloom* carries its own **Music** control, default On, because its
+soundtrack drives what the piece renders. Two facts came out of that work and are load
+bearing here:
+
+- **Both Chrome launchers already pass `--autoplay-policy=no-user-gesture-required`**
+  (`mac-app/Sources/DisplayController.swift` since 2026-07-02,
+  `installer/kiosk/chromium-kiosk.sh` since 2026-06-14). **This work is done.** Do not
+  re-add it.
+- **The XXL frame opens no audio output at all**, verified on the real device: an
+  HDA-Intel card is present, but every playback substream stays closed. Audio is inert on
+  the frame regardless of settings, so there is nothing to verify there.
+
+**What remains: art with audio plays its audio, and every display owns its own mute.** In
 practice this matters most for a **pinned video**, which is the case actually expected in
-use.
+use, and which is still muted at the element today.
 
 The abrupt cut when a rotation advances mid-audio is accepted as physics, not a bug: a
 clip cut at the duration cuts its sound the same way it cuts its picture.
@@ -315,6 +329,11 @@ nobody needs and puts the setting in three places once device volume is counted.
 control panel, because a browser page at `/display` has no UI to put it in. The app's
 control lives in the app, because it can have one. No inheritance, no precedence.
 
+Note that a *per-collection* control already exists (The Bloom's Music). A display-level
+mute sits above it and is not a replacement: the collection control says whether a piece
+is scored at all, the display control says whether this screen makes noise. Reconcile the
+two when Phase A runs rather than assuming they collide.
+
 This is also the conventional split for ambient media apps: **device volume controls how
 loud everything is; the app controls whether this content makes sound at all.** Muting art
 in-app so the TV does not have to be re-leveled is the real use case, and it is why an
@@ -322,26 +341,25 @@ app-level mute is not redundant with the hardware volume control.
 
 ### Work outside the app
 
-Removing `muted` from the web display is not sufficient, and getting this wrong would
-mean a video with sound does not play **at all** rather than playing silently. **Chrome
-blocks unmuted autoplay by default**: `video.play()` returns a rejected promise and
-nothing starts. Deleting `el.muted = true` (`player/public/display.js`) and changing
-nothing else produces exactly that failure.
+The browser-launcher half is already done (above). What is left is the page itself, and
+getting it wrong would mean a video with sound does not play **at all** rather than
+playing silently. **Chrome blocks unmuted autoplay by default**: `video.play()` returns a
+rejected promise and nothing starts. Deleting `el.muted = true`
+(`player/public/display.js`) and changing nothing else produces exactly that failure on
+any browser launched without the flag.
 
-Two changes together, not one:
+So the page needs a **fallback for the path we do not launch.** Someone opening
+`http://localhost:3000/display` in their own browser has no flag, and the README tells
+people to do exactly that. The display attempts unmuted playback, catches a rejected
+`play()`, and retries muted. **Art never stops; at worst it is silent on that one path.**
 
-1. **Pass the autoplay flag where we launch the browser.** Chrome accepts
-   `--autoplay-policy=no-user-gesture-required`. The Mac app already launches Chrome
-   itself (`MAC-APP-PLAN.md` §5), so it adds the flag there; the frame's cage/Chromium
-   kiosk launch line gets the same. This covers every supported install.
-2. **Fall back in the page, for the path we do not launch.** Someone opening
-   `http://localhost:3000/display` in their own browser will not have the flag, and the
-   README tells people to do exactly that. So the display attempts unmuted playback,
-   catches a rejected `play()`, and retries muted. **Art never stops; at worst it is
-   silent on that one path.**
+The Bloom hit this same wall and solved it differently, by starting its track on the
+viewer's first click (`player/src/collections.js`). That works for a piece a person is
+sitting in front of; it is not available to a passive rotation, which is why video needs
+the retry instead.
 
-Neither is assumed to work. Both are verified on a real Mac and on the frame before this
-ships.
+Verified on a real Mac before it ships. Nothing to verify on the frame, which has no
+audio output.
 
 Separately and out of scope here: several Connected Collections had audio stripped when
 their bundles were built, which in hindsight was too aggressive. Matt will audit those in a
@@ -453,9 +471,11 @@ Roughly in order. Phase A carries no app risk and benefits the existing surfaces
 can land first and independently.
 
 ### Phase A: Engine seams (shared, benefits the Mac and the frame too)
-- **Audio**, per §10: unmute the web display, solve Chrome's autoplay policy on the Mac
-  app and on the frame kiosk, add the control panel's mute setting for the web display.
-  Ships with HANDOFF and Setup Guide updates, since it changes user-facing behavior.
+- **Audio**, per §10: make uploaded video's `muted` conditional instead of hard-coded, add
+  the page-level catch-and-retry-muted fallback, and add the control panel's mute setting
+  for the web display. **The Chrome autoplay flags are already in both launchers; do not
+  re-add them.** Ships with CLAUDE.md, HANDOFF §12, and Setup Guide updates, since it
+  changes user-facing behavior.
 - **Splash address fix.** The idle screen picks `addresses[0]` from every non-internal
   IPv4 interface (`player/server.js` `lanAddresses()`, consumed at `display.js`), which is
   enumeration order, not reachability. On a multi-homed machine it can display an address
