@@ -19,6 +19,7 @@ const durDown = document.getElementById('durDown');
 const durUp = document.getElementById('durUp');
 const unitSeg = document.getElementById('unitSeg');
 const modeSeg = document.getElementById('modeSeg');
+const soundSeg = document.getElementById('soundSeg');
 const hostNameEl = document.getElementById('hostName');
 
 const tabLibrary = document.getElementById('tabLibrary');
@@ -489,6 +490,7 @@ async function loadSettings() {
   setSeg(unitSeg, 'unit', durationUnit);
   mode = s.mode;
   setSeg(modeSeg, 'mode', mode);
+  setSeg(soundSeg, 'sound', s.muted ? 'off' : 'on'); // web display Sound: Off = muted (§12)
   librarySort = s.librarySort || 'recent';
   sortSelect.value = librarySort;
   libraryFilter = s.libraryFilter || 'all';
@@ -1671,6 +1673,10 @@ unitSeg.querySelectorAll('button').forEach((b) =>
 );
 modeSeg.querySelectorAll('button').forEach((b) =>
   b.addEventListener('click', () => { mode = b.dataset.mode; setSeg(modeSeg, 'mode', mode); saveSettings({ mode }); loadRotation(); })
+);
+// Sound On/Off (HANDOFF §12): the web display's own mute. Off means muted:true, so uploaded video is silent.
+soundSeg.querySelectorAll('button').forEach((b) =>
+  b.addEventListener('click', () => { setSeg(soundSeg, 'sound', b.dataset.sound); saveSettings({ muted: b.dataset.sound === 'off' }); })
 );
 
 // Folder Collections (HANDOFF §17): switch the Display Source, and the folder picker.

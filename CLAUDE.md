@@ -62,12 +62,18 @@ builder-only convenience.
 - **Motion: GIF/WebP/AVIF/SVG and video loop-to-fill; never freeze on frame 1.**
   **One global equal-time duration** for every piece (no per-clip duration); a clip
   longer than it is cut at the duration, shorter loops to fill.
-- **Audio: uploaded video is muted; Connected pieces are per-collection** (HANDOFF §12,
-  revised 2026-07-20). The old "muted, always" rule dates from when the speakerless XXL
-  was the only display; the Mac is primary now, so a scored piece can be heard. A
-  collection may expose its own audio control (*The Bloom* carries **Music**, default
-  On, because its soundtrack drives what the piece renders). The XXL frame opens no
-  audio output at all, verified on the real device, so audio is inert there.
+- **Audio: each display owns its own mute, a master gate** (HANDOFF §12, revised 2026-07-24).
+  The old "muted, always" rule dated from the speakerless XXL being the only display; the Mac
+  (and a coming Apple TV) is primary now, so a scored piece can be heard. The **web display's
+  Sound setting** (control panel, Rotation tab), default **On** (audio plays), decides whether
+  the whole screen makes noise: On lets a video play its sound and a scored connected piece its
+  music; **Off silences everything** (uploaded video muted; a scored connected piece renders its
+  own silent/ambient form, e.g. *The Bloom* with the music off, by forcing the collection's audio
+  control off). A collection's own audio control (*The Bloom*'s **Music**, default On) is the
+  finer choice underneath, applying only when Sound is On. Where a plain browser refuses unmuted
+  autoplay the display retries muted, so art never stops; a live flip reaches even a pinned video.
+  The XXL frame opens no audio output at all, verified on the real device, so its own kiosk stays
+  silent regardless.
 - **Storage: full local mirror by default.** Progressive sync: start the rotation on
   the first clip, fold the rest in without restarting/stuttering the loop. A
   buffered/least-recently-shown eviction mode is a documented seam, off by default.

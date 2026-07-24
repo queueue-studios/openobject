@@ -100,6 +100,15 @@
             <button type="button" data-mode="shuffle">Shuffle</button>
           </div>
         </div>
+        <!-- Sound (HANDOFF §12): whether this display makes noise. On lets a video with a soundtrack
+             play it (your Mac as the display); Off mutes your videos. A frame has no audio output. -->
+        <div class="set-group" id="soundGroup">
+          <span class="set-label">Sound</span>
+          <div class="seg" id="soundSeg" role="group" aria-label="Display sound">
+            <button type="button" data-sound="on">On</button>
+            <button type="button" data-sound="off">Off</button>
+          </div>
+        </div>
         <!-- Display Source (HANDOFF §17): Library (default) or one saved Folder Collection. Selecting a
              folder makes it the live source; folders are set up in Settings → Folder Collections. -->
         <div class="set-group" id="sourceGroup">

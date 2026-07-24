@@ -802,6 +802,7 @@ function currentSettings() {
     hostNameCustom: db.getSetting('host_name', ''), // the raw override ('' = using the default); what the Name field edits
     hostNameDefault: identity.defaultHostName(),     // the per-machine fallback, shown as the field's placeholder
     displaySource: db.getSetting('display_source', 'library'), // 'library' or a folder id (HANDOFF §17)
+    muted: db.getSetting('display_muted', '') === '1', // web display Sound: Off mutes uploaded video; default off = audio plays (§12)
   };
   s.asleep = isAsleep(s); // the live state, so the control panel can label the button Sleep/Wake by what's true now
   return s;
@@ -810,7 +811,7 @@ function currentSettings() {
 app.get('/api/settings', (_req, res) => res.json(currentSettings()));
 
 app.put('/api/settings', (req, res) => {
-  const { durationMs, mode, sleepRanges, manualBlank, librarySort, libraryFilter, hostName, displaySource } = req.body || {};
+  const { durationMs, mode, sleepRanges, manualBlank, librarySort, libraryFilter, hostName, displaySource, muted } = req.body || {};
   if (durationMs !== undefined) {
     const ms = Number(durationMs);
     if (!Number.isFinite(ms) || ms < 1000) return res.status(400).json({ error: 'durationMs must be >= 1000' });
@@ -819,6 +820,12 @@ app.put('/api/settings', (req, res) => {
   if (mode !== undefined) {
     if (!MODES.has(mode)) return res.status(400).json({ error: 'mode must be sequence|shuffle' });
     db.setSetting('rotation_mode', mode);
+  }
+  if (muted !== undefined) {
+    // The web display's own mute (HANDOFF §12): Sound Off mutes uploaded video at the element. Each
+    // display owns its mute (no Host-wide default with per-app overrides); this is the web one.
+    if (typeof muted !== 'boolean') return res.status(400).json({ error: 'muted must be a boolean' });
+    db.setSetting('display_muted', muted ? '1' : '');
   }
   if (sleepRanges !== undefined) {
     const ok =
@@ -955,6 +962,7 @@ app.get('/api/display', ah(async (_req, res) => {
         pinnedId: null,
         asleep: settings.asleep,
         retroArcade: settings.retroArcade,
+        muted: settings.muted, // web display Sound (§12); folder media is video-capable too
         source: 'folder',
       });
     }
@@ -973,6 +981,7 @@ app.get('/api/display', ah(async (_req, res) => {
       pinnedId: null,
       asleep: settings.asleep,
       retroArcade: settings.retroArcade,
+      muted: settings.muted, // web display Sound (§12)
       source: 'folder',
     });
   }
@@ -984,6 +993,7 @@ app.get('/api/display', ah(async (_req, res) => {
     pinnedId: settings.pinnedId,
     asleep: settings.asleep,
     retroArcade: settings.retroArcade, // hidden self-playing demo: the display swaps to the canvas
+    muted: settings.muted, // web display Sound: Off mutes uploaded video (§12)
     source: 'library',
   });
 }));
@@ -1017,13 +1027,32 @@ app.post('/api/update/apply', ah(async (_req, res) => {
 // On macOS (Phase 1) only the app-level Restart can truly act; Shut down and Wi-Fi onboarding
 // are hardware actions and ship as visible-but-inert stubs until the device exists.
 
-// IPv4 LAN addresses, so the panel can show "reach me from your phone at …" (a real help today).
+// IPv4 LAN addresses, best-first, so the panel can show "reach me from your phone at …" and the
+// display's idle splash can trust addresses[0] (display.js). The naive list is raw OS enumeration
+// order, which on a multi-homed machine can put a VPN tunnel, a virtualization bridge, or a
+// link-local (no-DHCP) address first — one the viewer cannot reach (Phase A splash fix). So skip
+// interfaces that are never the LAN route (VPN / virtual / overlay name prefixes) and link-local
+// addresses, then order real private-LAN (RFC1918) addresses ahead of anything else: a
+// dependency-free proxy for the default route, with no platform-specific route lookup. The control
+// panel still shows the whole list; only its quality and ordering improve (no UI change).
+const NON_LAN_IFACE = /^(utun|ipsec|ppp|awdl|llw|bridge|vmnet|vnic|vboxnet|tap|tun|wg|tailscale|docker|veth|virbr|br-|zt)/i;
+const isPrivateV4 = (ip) => {
+  if (ip.startsWith('10.') || ip.startsWith('192.168.')) return true;
+  if (ip.startsWith('172.')) { const b = parseInt(ip.split('.')[1], 10); return b >= 16 && b <= 31; }
+  return false;
+};
 function lanAddresses() {
   const out = [];
-  for (const list of Object.values(os.networkInterfaces())) {
-    for (const ni of list || []) if (ni.family === 'IPv4' && !ni.internal) out.push(ni.address);
+  for (const [name, list] of Object.entries(os.networkInterfaces())) {
+    if (NON_LAN_IFACE.test(name)) continue;             // VPN / virtual / overlay iface: never the LAN route
+    for (const ni of list || []) {
+      if (ni.family !== 'IPv4' || ni.internal) continue;
+      if (ni.address.startsWith('169.254.')) continue;  // link-local (DHCP failed): not reachable as a LAN host
+      out.push(ni.address);
+    }
   }
-  return out;
+  // Private-LAN addresses first (the reachable ones); a stable sort keeps enumeration order within a group.
+  return out.sort((a, b) => (isPrivateV4(b) ? 1 : 0) - (isPrivateV4(a) ? 1 : 0));
 }
 
 app.get('/api/system', (_req, res) => {

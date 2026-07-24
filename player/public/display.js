@@ -7,7 +7,8 @@
 // video/animation loops to fill it (a video longer than the duration is cut off when
 // the timer advances). Order: Sequence / Shuffle (HANDOFF §7). New uploads,
 // deletions, Fit/Fill flips, and duration/order changes fold in live without restarting
-// the loop (polled). Always muted (§12).
+// the loop (polled). Uploaded video honors the display's Sound setting, falling back to
+// muted only where a plain browser refuses unmuted autoplay (§12).
 //
 // DISPLAY-TARGET CONTRACT (the Display role — HANDOFF §20, 2026-07-01; MAC-APP-PLAN §A4).
 // This page renders exactly one Host, and that Host is WHICHEVER ONE SERVED THIS PAGE. Every data
@@ -48,6 +49,7 @@ if (hintHost) {
 let items = [];
 let durationMs = 8000;
 let mode = 'sequence';
+let muted = true; // the web display's Sound setting (§12): true = video muted. Set from /api/display each poll.
 
 let pos = -1; // index in `items` of the piece on screen
 let currentId = null; // its library id — survives reordering as the library changes
@@ -63,8 +65,30 @@ let sleeping = false; // Sleep Hours / manual Blank: showing the dimmed mark (HA
 let shiftTimer = null; // slow pixel-shift while asleep (anti-burn-in)
 let arcadeOn = false; // Retro Arcade demo is taking the stage (easter egg)
 
+// Master gate (Direction D, §12): the display's Sound setting sits ABOVE a connected piece's own
+// audio. While the display is muted, a collection's audio control (today only The Bloom's `music`) is
+// forced to its silent value, so Sound Off silences the whole screen — uploaded video AND connected
+// audio — not just video. It reuses the existing ?oo_<control> plumbing (the bundle already honors
+// oo_music=off, so a piece falls back to its own ambient/silent render), which means no bundle change
+// and it works with pieces mirrored before this shipped. Used by BOTH render() (the iframe src) and
+// sig() (so a live Sound flip re-renders the piece — the same crossfade-reload an Animate/Fit change
+// triggers, since the value lives in the iframe URL). AUDIO_CONTROLS is the seam if audio controls
+// ever grow past one; a piece with none, or already silent, is returned unchanged (no needless reload).
+const AUDIO_CONTROLS = { music: 'off' }; // control key -> the value that means "silent"
+function gatedControls(item) {
+  if (!muted || !item.controls) return item.controls;
+  let out = null;
+  for (const k in AUDIO_CONTROLS) {
+    if (k in item.controls && item.controls[k] !== AUDIO_CONTROLS[k]) {
+      out = out || { ...item.controls };
+      out[k] = AUDIO_CONTROLS[k];
+    }
+  }
+  return out || item.controls;
+}
+
 const sig = (item) => item.kind === 'connected'
-  ? 'c|' + item.collection + '|' + item.source_url + '|' + (item.animate ? 1 : 0) + '|' + (item.speed == null ? '' : item.speed) + '|' + (item.rpcUrl || '') + '|' + item.fit + '|' + (item.controls ? JSON.stringify(item.controls) : '')
+  ? 'c|' + item.collection + '|' + item.source_url + '|' + (item.animate ? 1 : 0) + '|' + (item.speed == null ? '' : item.speed) + '|' + (item.rpcUrl || '') + '|' + item.fit + '|' + (item.controls ? JSON.stringify(gatedControls(item)) : '')
   : item.fit + '|' + item.filename;
 const once = (fn) => {
   let done = false;
@@ -110,7 +134,8 @@ function render(layer, item, onReady) {
     if (item.animate) params.push('ooanim=1');                          // fire the bundle's animate hook
     if (item.speed != null) params.push('oospeed=' + encodeURIComponent(item.speed)); // 0..10 cosine sweep speed
     if (item.choice != null) params.push('oochoice=' + encodeURIComponent(item.choice)); // single-choice control value
-    if (item.controls) for (const k in item.controls) params.push('oo_' + k + '=' + encodeURIComponent(item.controls[k])); // general controls → ?oo_<key>=value
+    const ctl = gatedControls(item); // general controls → ?oo_<key>=value; the display's Sound gate forces audio controls silent when muted (§12)
+    if (ctl) for (const k in ctl) params.push('oo_' + k + '=' + encodeURIComponent(ctl[k]));
     const tokenSeg = item.perToken && item.token_id != null ? '/' + encodeURIComponent(item.token_id) : '';
     el.src = '/collections/' + item.collection + tokenSeg + '/index.html' + (params.length ? '?' + params.join('&') : '');
     // Some collections compose the art in a centered inset with a black margin (e.g. send/receive's
@@ -130,13 +155,17 @@ function render(layer, item, onReady) {
     }
   } else if (item.kind === 'video') {
     el = document.createElement('video');
-    el.muted = true;          // silent art on a wall (§12)
+    el.muted = muted;         // the display's Sound setting (§12); may fall back to muted below
     el.loop = true;           // loop to fill the duration
     el.playsInline = true;
     el.autoplay = true;
     el.addEventListener('loadeddata', onReady, { once: true });
     el.src = item.src || ('/uploads/' + item.filename);
-    el.play().catch(() => {});
+    // Chrome refuses UNMUTED autoplay unless it was launched with --autoplay-policy=no-user-gesture-
+    // required (our kiosk and the Mac app both pass it; a plain browser opened at /display does not).
+    // Without the flag an unmuted play() rejects and nothing plays at all, so catch that and retry
+    // muted: art never stops, and at worst it is silent on that one un-flagged path (§12).
+    el.play().catch(() => { if (!el.muted) { el.muted = true; el.play().catch(() => {}); } });
   } else {
     el = document.createElement('img'); // stills + animated (GIF/WebP/AVIF) + SVG (SMIL) hold/loop
     el.addEventListener('load', onReady, { once: true });
@@ -279,9 +308,19 @@ function exitArcade() {
   arcadeCanvas.hidden = true;    // playback resumes via the rest of apply() (started=false → advance)
 }
 
+// Fold a live Sound On/Off change into the VIDEO already on screen, in place. A video's mute is not
+// part of its sig, so apply() won't re-render it — this is what makes a Sound flip reach a pinned
+// video, which never advances to pick up the new setting on its own. A connected piece takes the other
+// path: its audio gate lives in its sig (gatedControls), so a Sound flip re-renders it instead (§12).
+function syncMute() {
+  const el = layers[front].firstElementChild;
+  if (el && el.tagName === 'VIDEO' && el.muted !== muted) el.muted = muted;
+}
+
 function apply(state) {
   durationMs = state.durationMs;
   mode = state.mode;
+  muted = !!state.muted; // web display Sound: Off mutes uploaded video (§12)
 
   if (state.retroArcade) return enterArcade(); // hidden self-playing demo (easter egg) owns the stage
   if (arcadeOn) exitArcade();                  // just left the demo — fall through and resume the rotation
@@ -299,6 +338,8 @@ function apply(state) {
   if (nextSig !== itemsListSig) { shuffleQueue = []; itemsListSig = nextSig; }
 
   if (items.length === 0) return showIdle();
+
+  syncMute(); // fold a live Sound On/Off change into the piece already on screen (e.g. a pinned video)
 
   if (currentId != null) pos = items.findIndex((i) => i.id === currentId);
   if (!started || pos < 0) return advance();             // (re)start, or skip a deleted current
