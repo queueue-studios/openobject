@@ -1,0 +1,60 @@
+# OpenObject Apple TV app — XcodeGen project spec (TVOS-APP-PLAN §7, §14 Phase C).
+#
+# `xcodegen generate` produces OpenObject.xcodeproj from this YAML; the generated project is ALSO
+# committed, so the app builds with only `xcodebuild` (the same "checked-in Xcode project" decision as
+# mac-app). Regenerate after editing: `cd tv-app && xcodegen generate`.
+#
+# A thin tvOS shell over the shared DisplayCore engine (../display-core). It takes exactly one role,
+# Display (§3): it finds a Host on the LAN, the owner picks one, and it renders that Host's rotation
+# full-screen with zero chrome. It runs no server and owns no art. C1 is the buildable skeleton; the
+# poll/advance driver, art stage, and Host picker arrive in later Phase C checkpoints.
+
+name: OpenObject
+
+options:
+  bundleIdPrefix: io.openobject
+  deploymentTarget:
+    tvOS: "17.0"          # matches DisplayCore's floor (covers every v1 format + modern APIs)
+  createIntermediateGroups: true
+
+# The shared Display-role engine, consumed as a LOCAL Swift package (no server, no bundled engine).
+packages:
+  DisplayCore:
+    path: ../display-core
+
+settings:
+  base:
+    ARCHS: arm64
+    ONLY_ACTIVE_ARCH: "NO"
+    SWIFT_VERSION: "5.0"         # the UI layer; DisplayCore builds in its own Swift 6 mode
+    MARKETING_VERSION: "1.6.0"   # shared version (sourced from player/package.json; release.sh syncs)
+    CURRENT_PROJECT_VERSION: "1"
+    # Local/unsigned for now so it builds without a Developer ID. Phase E sets the real App Store
+    # signing identity (Queueue Studios LLC).
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGNING_REQUIRED: "NO"
+
+targets:
+  OpenObjectTV:
+    type: application
+    platform: tvOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources
+    dependencies:
+      - package: DisplayCore
+        product: DisplayCore
+    info:
+      path: OpenObject-Info.plist
+      properties:
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleDisplayName: OpenObject
+        NSHumanReadableCopyright: "Copyright 2026 Queueue Studios LLC. All rights reserved."
+    settings:
+      base:
+        PRODUCT_NAME: OpenObject
+        # Placeholder bundle id: the final one is a §16 open item, chosen with the iPad listing in mind
+        # (one App Store record spanning tvOS + iPad). Harmless to change now (local, unsigned).
+        PRODUCT_BUNDLE_IDENTIFIER: io.openobject.app
