@@ -24,6 +24,10 @@ let package = Package(
     ],
     targets: [
         .target(name: "DisplayCore"),
-        .testTarget(name: "DisplayCoreTests", dependencies: ["DisplayCore"]),
+        .testTarget(
+            name: "DisplayCoreTests",
+            dependencies: ["DisplayCore"],
+            resources: [.copy("Fixtures")] // real /api/display captures, decoded in tests
+        ),
     ]
 )

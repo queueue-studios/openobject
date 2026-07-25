@@ -1,0 +1,35 @@
+{
+  "items": [
+    {
+      "id": "fc1:clip.mp4",
+      "filename": "clip.mp4",
+      "format": "mp4",
+      "kind": "video",
+      "fit": "fill",
+      "src": "/folder-media/1/clip.mp4"
+    },
+    {
+      "id": "fc1:photo1.png",
+      "filename": "photo1.png",
+      "format": "png",
+      "kind": "still",
+      "fit": "fill",
+      "src": "/folder-media/1/photo1.png"
+    },
+    {
+      "id": "fc1:photo2.jpg",
+      "filename": "photo2.jpg",
+      "format": "jpeg",
+      "kind": "still",
+      "fit": "fill",
+      "src": "/folder-media/1/photo2.jpg"
+    }
+  ],
+  "durationMs": 10000,
+  "mode": "sequence",
+  "pinnedId": null,
+  "asleep": false,
+  "retroArcade": false,
+  "muted": false,
+  "source": "folder"
+}

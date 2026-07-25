@@ -11,10 +11,9 @@
 // Host exactly as a browser display does. The Host (player/server.js) gets no tvOS-specific endpoint
 // and no per-client logic, and the XXL frame is untouched (docs/TVOS-APP-PLAN.md §3, §11, §15).
 
-/// Namespace marker for the DisplayCore module. The real types live in their own files
-/// (Host, CapabilityFilter, the rotation engine, …) as the phase fills in.
-public enum DisplayCore {
-    /// Module identifier. The single source of truth for the *product* version is
-    /// `player/package.json` (MAC-APP-PLAN §3); this is only a package-level marker.
-    public static let moduleName = "DisplayCore"
-}
+// This file is intentionally declaration-free: it documents the module. The real types live in their
+// own files (Host, MediaFormat, CapabilityFilter, DisplayItem, DisplayResponse, DisplayClient, and the
+// rotation engine / discovery / media pipeline as the phase fills in). No namespace type is declared
+// here on purpose — one named `DisplayCore` would shadow the module name (`DisplayCore.Host` would then
+// resolve to the type, not the module). The single source of truth for the *product* version stays
+// `player/package.json` (MAC-APP-PLAN §3).

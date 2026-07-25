@@ -17,8 +17,10 @@ public struct CapabilityFilter: Sendable {
 
     /// Whether this Display can render a piece with the given kind and format. A Connected piece is
     /// never renderable (it is a web program with no native engine, §2); otherwise it comes down to
-    /// whether the format decodes here. An absent/unknown format is treated as not renderable (safe).
-    public func canRender(kind: MediaKind, format: MediaFormat?) -> Bool {
+    /// whether the format decodes here. An absent/unknown format — or an unrecognized kind from a newer
+    /// Host — is treated conservatively: unknown formats are not renderable, and a nil kind decides by
+    /// format alone (so a future non-connected kind still plays if we can decode it, §11).
+    public func canRender(kind: MediaKind?, format: MediaFormat?) -> Bool {
         if kind == .connected { return false }
         guard let format else { return false }
         return Self.renderableFormats.contains(format)
