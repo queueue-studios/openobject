@@ -601,6 +601,18 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-07-25: Apple TV app underway: engine (`display-core/`) complete, app (`tv-app/`) started
+
+Executing `docs/TVOS-APP-PLAN.md`. The Apple TV is the fourth surface and the first that cannot be a web page (tvOS has no web view, plan §2), so the Display role is being reimplemented natively in Swift. The server (`player/`) is unchanged: the app talks to `/api/display` exactly as a browser display does, and the XXL frame never runs Swift. Everything here is additive and isolated (a new `display-core/` package and a `tv-app/` target); nothing regresses the live system, which is why each checkpoint could land on `main` independently.
+
+**Phase A (engine seams), shipped in v1.6.0.** The per-display audio Sound master gate plus the idle-splash address fix (the two 2026-07-24 entries below), the only user-facing part, already documented in §6/§12 and the Setup Guide.
+
+**Phase B (`display-core/`), complete.** A UI-free SwiftPM library (Swift 6, Swift Testing; platforms tvOS 17 / iOS 17 plus macOS for headless `swift test`) that both the tvOS and future iPad apps consume, so they stay identical: the Host model and manual-entry parsing, Bonjour discovery via NWBrowser, the `/api/display` client and Codable models (verified against captured fixtures and a live Host), the capability filter (skips connected / SVG / WebM natively, §6), a faithful port of `player/public/display.js`'s rotation engine (pure, synchronous, deterministically tested), and a memory-safe media pipeline (bounded ImageIO decode, on-demand animated frames, a bounded LRU disk cache in Caches). Commits aa56e88, 9b2abc6, b19ca22, 45353b9, 8d762f4.
+
+**Phase C (`tv-app/`), started** (`display-core` now at 60 tests). C1 (6f76066): a buildable tvOS app target mirroring `mac-app`'s xcodegen setup (a committed `.xcodeproj`), consuming `display-core`, verified compiling and running on the tvOS simulator. C2 (f721eae): `RotationPlayer`, the `@Observable @MainActor` driver (poll, apply, advance, publishing a `screen` the UI observes), placed in `display-core` so both apps share it. Next: C3 the art stage (the first real tvOS UI), then C4 the Host picker, C5 states / settings / audio, D branding, E the App Store submission, F the full docs treatment (this log gains the structured engineering record and the Setup Guide gains an Apple TV section), G iPad.
+
+The full user-facing documentation lands in Phase F when the app ships; this entry is the running record until then. (Matt, 2026-07-25.)
+
 ### 2026-07-24: Uploaded-video audio via a per-display Sound setting (§12; tvOS plan Phase A)
 
 First slice of the Apple TV plan's **Phase A** (engine seams shared by every display; `docs/TVOS-APP-PLAN.md` §14). The last of the "muted, always" rule is retired for uploaded video, so a Mac (and a coming Apple TV) rendering a scored clip can be heard.
