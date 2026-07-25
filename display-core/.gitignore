@@ -1,0 +1,6 @@
+# SwiftPM build output and workspace state — never committed (build junk, machine-specific).
+.build/
+.swiftpm/
+DerivedData/
+*.xcodeproj
+Package.resolved
