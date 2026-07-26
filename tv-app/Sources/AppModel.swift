@@ -93,7 +93,7 @@ final class AppModel {
             _ = try await DisplayClient().fetchDisplay(from: host)
             select(host)
         } catch {
-            manualError = "No OpenObject answered at that address."
+            manualError = "No Host answered at that address."
         }
     }
 }

@@ -8,32 +8,32 @@ struct HostPickerView: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            VStack(spacing: 56) {
-                Image("OpenObjectLogo")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 420, height: 420)
-                    .foregroundStyle(.white)
-                    .accessibilityLabel("OpenObject")
+        VStack(spacing: 56) {
+            Image("OpenObjectLogo")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 420, height: 420)
+                .foregroundStyle(.white)
+                .accessibilityLabel("OpenObject")
 
-                discoveredHosts
+            discoveredHosts
 
-                manualEntry
-            }
-            .padding(.horizontal, 80)
-            .padding(.top, 64)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-
-            // Pinned to the screen's bottom-right corner (§10), inside the tvOS title-safe margin.
+            manualEntry
+        }
+        .padding(.horizontal, 80)
+        .padding(.top, 64)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color.black)
+        // The Sound icon rides on its own full-screen layer so it can sit in the physical bottom-right
+        // corner without pulling the content (the text field especially) out of the safe area.
+        .overlay {
             SoundToggleButton(model: model)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                 .padding(.trailing, 90)
                 .padding(.bottom, 60)
+                .ignoresSafeArea()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black)
-        .ignoresSafeArea()
         .onAppear { model.startDiscoveryIfPicking() }
     }
 
@@ -42,38 +42,44 @@ struct HostPickerView: View {
             VStack(spacing: 20) {
                 if model.scanning {
                     ProgressView().scaleEffect(1.6).tint(.white)
-                    Text("Looking for OpenObject on your network…")
+                    Text("Looking for Hosts on your network…")
                         .font(.title3).foregroundStyle(.secondary)
                 } else {
-                    Text("No OpenObject found on your network yet.")
+                    Text("No Hosts found on your network.")
                         .font(.title3).foregroundStyle(.secondary)
-                    Text("Make sure it's on and on the same Wi-Fi.")
+                    Text("Your Apple TV is ready to connect. Once an OpenObject Host is running on your network, it will appear here automatically.")
                         .font(.callout).foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 1100)
                 }
             }
-            .frame(height: 200)
+            .frame(minHeight: 200)
         } else {
-            VStack(spacing: 16) {
-                ForEach(model.hosts) { host in
-                    Button { model.select(host) } label: {
-                        HStack(spacing: 20) {
-                            Image(systemName: "play.tv")
-                            Text(host.name).font(.title2).lineLimit(1)
-                            Spacer(minLength: 0)
+            VStack(spacing: 24) {
+                Text("Choose a Host")
+                    .font(.headline).foregroundStyle(.secondary)
+                VStack(spacing: 16) {
+                    ForEach(model.hosts) { host in
+                        Button { model.select(host) } label: {
+                            HStack(spacing: 20) {
+                                Image(systemName: "play.tv")
+                                Text(host.name).font(.title2).lineLimit(1)
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .padding(.vertical, 8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
+                .frame(width: 1500)
             }
-            .frame(width: 1500)
             .frame(minHeight: 200)
         }
     }
 
     @ViewBuilder private var manualEntry: some View {
         VStack(spacing: 20) {
-            Text("Or enter its address")
+            Text(model.hosts.isEmpty ? "Know a Host's address?" : "Or enter its address")
                 .font(.headline).foregroundStyle(.secondary)
             HStack(spacing: 20) {
                 TextField("192.168.1.10 or openobject.local", text: $model.manualAddress)
@@ -102,7 +108,7 @@ private struct SoundToggleButton: View {
             model.soundOn.toggle()
         } label: {
             Image(systemName: model.soundOn ? "speaker.wave.2.fill" : "speaker.slash.fill")
-                .font(.system(size: 52, weight: .medium))
+                .font(.system(size: 38, weight: .medium))
                 .foregroundStyle(focused ? AnyShapeStyle(.white) : AnyShapeStyle(.secondary))
                 .scaleEffect(focused ? 1.2 : 1)
                 .animation(.easeOut(duration: 0.15), value: focused)

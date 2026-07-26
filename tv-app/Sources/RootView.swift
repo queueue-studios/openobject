@@ -17,7 +17,6 @@ struct RootView: View {
                     .onExitCommand { model.showPicker() }   // Menu/Back returns to the picker (§14)
             }
         }
-        // ArtStageView and HostPickerView each own their safe-area handling (the art bleeds to the edges;
-        // the picker keeps its Sound toggle pinned to the screen corner), so no blanket ignore here.
+        .ignoresSafeArea()
     }
 }
