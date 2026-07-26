@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import DisplayCore
 
 // The zero-chrome art stage (§6): it observes the RotationPlayer's screen and renders it. A `.playing`
@@ -27,18 +28,30 @@ struct ArtStageView: View {
             }
 
             switch player.screen {
-            case .idle:      IdleSplashView()
+            case .idle:      IdleSplashView(address: controlPanelAddress)
             case .sleeping:  SleepView()
             case .playing:   EmptyView()
             }
         }
         .ignoresSafeArea()
         .task(id: currentItemID) { await syncStage() }
+        // Keep the tvOS screensaver from interrupting the art while the stage is up (§14: idle timer). A
+        // playing video defeats it on its own, but stills and animations do not, so hold it off here.
+        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
+        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
     }
 
     private var currentItemID: String? {
         if case let .playing(item) = player.screen { return item.id }
         return nil
+    }
+
+    // The Host's address, shown on the idle screen so the owner knows where to add art (§13).
+    private var controlPanelAddress: String {
+        let comps = URLComponents(url: host.baseURL, resolvingAgainstBaseURL: false)
+        guard let name = comps?.host else { return host.baseURL.absoluteString }
+        if let port = comps?.port, port != 80 { return "\(name):\(port)" }
+        return name
     }
 
     // Load the current piece's media and crossfade it in; clear the stage when idle/asleep.
@@ -56,14 +69,21 @@ struct ArtStageView: View {
     }
 }
 
-// Idle / empty state: the branded mark comes in Phase D; for now a plain mark + the web display's hint.
+// Idle / empty state (§13): the branded wordmark plus where to add art, phrased as what will appear
+// rather than what is missing. Shown when connected to a Host whose rotation has nothing renderable.
 struct IdleSplashView: View {
+    let address: String
+
     var body: some View {
-        VStack(spacing: 24) {
-            Text("OpenObject")
-                .font(.system(size: 80, weight: .semibold))
+        VStack(spacing: 32) {
+            Image("OpenObjectLogo")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 360, height: 360)
                 .foregroundStyle(.white)
-            Text("Add art from the control panel")
+                .accessibilityLabel("OpenObject")
+            Text("Add art at \(address)")
                 .font(.title3)
                 .foregroundStyle(.secondary)
         }
