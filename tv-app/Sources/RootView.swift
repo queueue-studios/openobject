@@ -13,8 +13,8 @@ struct RootView: View {
             case .picker:
                 HostPickerView(model: model)
             case .display(let host):
-                ArtStageView(player: model.player, host: host, pipeline: model.pipeline, muted: !model.soundOn)
-                    .onExitCommand { model.showPicker() }   // Menu/Back returns to the picker (§14)
+                ArtStageView(player: model.player, host: host, pipeline: model.pipeline,
+                             muted: !model.soundOn, onExit: { model.showPicker() })
             }
         }
         .ignoresSafeArea()

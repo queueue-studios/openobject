@@ -11,7 +11,9 @@ struct ArtStageView: View {
     let host: Host
     let pipeline: MediaPipeline
     let muted: Bool
+    let onExit: () -> Void
 
+    @FocusState private var stageFocused: Bool
     @State private var shownID: String?
     @State private var shownMedia: RenderableMedia?
     @State private var shownFit: Fit = .fit
@@ -35,10 +37,20 @@ struct ArtStageView: View {
             }
         }
         .ignoresSafeArea()
+        // Capture the Menu/Back button so it returns to the picker instead of quitting the app. The stage
+        // has no other focusable content, so it must be focusable itself to receive the command; the focus
+        // effect is disabled so the art stays zero-chrome (§14, §15).
+        .focusable()
+        .focusEffectDisabled()
+        .focused($stageFocused)
+        .onExitCommand { onExit() }
         .task(id: currentItemID) { await syncStage() }
         // Keep the tvOS screensaver from interrupting the art while the stage is up (§14: idle timer). A
         // playing video defeats it on its own, but stills and animations do not, so hold it off here.
-        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
+        .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = true
+            stageFocused = true
+        }
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
     }
 

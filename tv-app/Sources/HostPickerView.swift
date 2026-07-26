@@ -7,6 +7,12 @@ import DisplayCore
 struct HostPickerView: View {
     @Bindable var model: AppModel
 
+    // Which host row holds focus. We steer initial focus onto the first row (people read top-down) so the
+    // remote's primary action is right there on arrival, instead of tvOS's default of the bottom control.
+    @FocusState private var focusedHost: String?
+    // Flips true once the owner moves focus themselves; after that we stop steering.
+    @State private var ownerTookFocus = false
+
     var body: some View {
         VStack(spacing: 56) {
             Image("OpenObjectLogo")
@@ -34,7 +40,26 @@ struct HostPickerView: View {
                 .padding(.bottom, 60)
                 .ignoresSafeArea()
         }
-        .onAppear { model.startDiscoveryIfPicking() }
+        .onAppear {
+            model.startDiscoveryIfPicking()
+            pinFocusToFirstHost()
+        }
+        // Hosts arrive (and re-sort) asynchronously over Bonjour, so keep focus on whichever row is
+        // currently first until the owner moves it themselves - otherwise a late host that sorts ahead
+        // leaves focus stranded on the wrong row (as it did on the second row before this).
+        .onChange(of: model.hosts) { _, _ in pinFocusToFirstHost() }
+        .onChange(of: focusedHost) { _, newValue in
+            // Any focus resting somewhere other than the current first row is the owner navigating (a
+            // lower row, or the address field, which clears focusedHost). Once that happens, stop steering.
+            if newValue != model.hosts.first?.id { ownerTookFocus = true }
+        }
+    }
+
+    // Keep initial focus on the first host row while the list is still settling, and only until the owner
+    // has taken focus somewhere themselves (so a late-arriving host never yanks the cursor from under them).
+    private func pinFocusToFirstHost() {
+        guard !ownerTookFocus, let first = model.hosts.first else { return }
+        focusedHost = first.id
     }
 
     @ViewBuilder private var discoveredHosts: some View {
@@ -69,6 +94,7 @@ struct HostPickerView: View {
                             .padding(.vertical, 8)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .focused($focusedHost, equals: host.id)
                     }
                 }
                 .frame(width: 1500)

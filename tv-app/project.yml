@@ -53,6 +53,11 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         CFBundleDisplayName: OpenObject
         NSHumanReadableCopyright: "Copyright 2026 Queueue Studios LLC. All rights reserved."
+        # Required for Bonjour discovery on device (iOS/tvOS 14+ gate _tcp browsing behind Local Network
+        # access + a declared service list); without these a real Apple TV finds no Hosts (§5).
+        NSLocalNetworkUsageDescription: "OpenObject finds Hosts on your local network to show their art."
+        NSBonjourServices:
+          - _openobject._tcp
     settings:
       base:
         PRODUCT_NAME: OpenObject

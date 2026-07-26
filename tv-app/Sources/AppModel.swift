@@ -68,7 +68,15 @@ final class AppModel {
     /// the background; the picker restarts discovery when it appears.
     func showPicker() {
         player.stop()
+        clearManualEntry()
         route = .picker
+    }
+
+    /// Drop any half-typed address + its error. Called when a connection happens, when returning to the
+    /// picker, and when the address field is abandoned, so a stale draft never lingers.
+    func clearManualEntry() {
+        manualAddress = ""
+        manualError = nil
     }
 
     /// Choose a Host: remember it, stop browsing, and switch to its art.
@@ -76,6 +84,7 @@ final class AppModel {
         store.saveDefaultHost(host)
         discovery.stop()
         scanFloor?.cancel()
+        clearManualEntry()
         player.start(host: host)
         route = .display(host)
     }
