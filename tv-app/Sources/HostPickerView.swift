@@ -8,23 +8,32 @@ struct HostPickerView: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        VStack(spacing: 56) {
-            Image("OpenObjectLogo")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 420, height: 420)
-                .foregroundStyle(.white)
-                .accessibilityLabel("OpenObject")
+        ZStack(alignment: .bottomTrailing) {
+            VStack(spacing: 56) {
+                Image("OpenObjectLogo")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 420, height: 420)
+                    .foregroundStyle(.white)
+                    .accessibilityLabel("OpenObject")
 
-            discoveredHosts
+                discoveredHosts
 
-            manualEntry
+                manualEntry
+            }
+            .padding(.horizontal, 80)
+            .padding(.top, 64)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+            // Pinned to the screen's bottom-right corner (§10), inside the tvOS title-safe margin.
+            SoundToggleButton(model: model)
+                .padding(.trailing, 90)
+                .padding(.bottom, 60)
         }
-        .padding(.horizontal, 80)
-        .padding(.top, 64)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
+        .ignoresSafeArea()
         .onAppear { model.startDiscoveryIfPicking() }
     }
 
@@ -76,5 +85,30 @@ struct HostPickerView: View {
                 Text(error).font(.callout).foregroundStyle(.red)
             }
         }
+    }
+}
+
+// The app-owned Sound toggle (§10): a bare speaker icon (waves when on, a slash when muted), no button
+// chrome. Sticky and default On. A set-once control, so it rests in the secondary gray (matching the
+// picker's supporting text) and only comes forward — white and scaled up — when focused with the remote.
+// The symbols are the platform-standard audio glyphs; speaker.slash.fill is what the Siri Remote's mute
+// button and the system volume HUD use.
+private struct SoundToggleButton: View {
+    let model: AppModel
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        Button {
+            model.soundOn.toggle()
+        } label: {
+            Image(systemName: model.soundOn ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                .font(.system(size: 52, weight: .medium))
+                .foregroundStyle(focused ? AnyShapeStyle(.white) : AnyShapeStyle(.secondary))
+                .scaleEffect(focused ? 1.2 : 1)
+                .animation(.easeOut(duration: 0.15), value: focused)
+        }
+        .buttonStyle(.plain)
+        .focused($focused)
+        .accessibilityLabel(model.soundOn ? "Sound on" : "Sound off")
     }
 }

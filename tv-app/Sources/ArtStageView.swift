@@ -10,6 +10,7 @@ struct ArtStageView: View {
     let player: RotationPlayer
     let host: Host
     let pipeline: MediaPipeline
+    let muted: Bool
 
     @State private var shownID: String?
     @State private var shownMedia: RenderableMedia?
@@ -22,7 +23,7 @@ struct ArtStageView: View {
             // The current art (persisted across the async load of the next piece, so the crossfade has
             // something to fade FROM). Keyed by id so a new piece opacity-crossfades in.
             if let media = shownMedia, let id = shownID {
-                MediaView(media: media, fit: shownFit)
+                MediaView(media: media, fit: shownFit, muted: muted)
                     .id(id)
                     .transition(.opacity)
             }

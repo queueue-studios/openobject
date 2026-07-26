@@ -7,6 +7,7 @@ import DisplayCore
 struct MediaView: View {
     let media: RenderableMedia
     let fit: Fit
+    let muted: Bool
 
     var body: some View {
         switch media {
@@ -15,7 +16,7 @@ struct MediaView: View {
         case .animated(let animated):
             AnimatedImageView(animated: animated, fit: fit)
         case .video(let url):
-            VideoLayerView(url: url, fit: fit)
+            VideoLayerView(url: url, fit: fit, muted: muted)
         }
     }
 

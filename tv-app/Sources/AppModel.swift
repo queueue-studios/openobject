@@ -24,11 +24,20 @@ final class AppModel {
     var manualError: String?
     private(set) var scanning = false
 
+    // The app-owned Sound setting (§10): whether this Apple TV plays a scored video's audio. Sticky and
+    // default On; the TV's own volume/mute is the loudness control above it. Only uploaded videos can
+    // carry audio on tvOS (Connected scored pieces are skipped there), so this gates exactly that.
+    var soundOn: Bool {
+        didSet { UserDefaults.standard.set(soundOn, forKey: Self.soundKey) }
+    }
+    private static let soundKey = "openobject.soundOn"
+
     @ObservationIgnored private let store: HostStore
     @ObservationIgnored private var scanFloor: Task<Void, Never>?
 
     init(store: HostStore = UserDefaultsHostStore()) {
         self.store = store
+        soundOn = (UserDefaults.standard.object(forKey: Self.soundKey) as? Bool) ?? true
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         pipeline = MediaPipeline(cache: MediaCache(directory: caches.appendingPathComponent("OOMedia")),
                                  maxPixel: 3840)
@@ -53,6 +62,13 @@ final class AppModel {
             try? await Task.sleep(for: .seconds(4))
             self?.scanning = false
         }
+    }
+
+    /// Leave the art stage for the picker (the Menu/Back action, §14). Stops playback so nothing polls in
+    /// the background; the picker restarts discovery when it appears.
+    func showPicker() {
+        player.stop()
+        route = .picker
     }
 
     /// Choose a Host: remember it, stop browsing, and switch to its art.
