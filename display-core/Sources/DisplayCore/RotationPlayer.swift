@@ -17,6 +17,10 @@ import Observation
 public final class RotationPlayer {
     /// What the UI should present right now. A SwiftUI view observes this.
     public private(set) var screen: RotationEngine.Screen = .idle
+    /// False until the first poll of the current Host succeeds; the UI shows a "Connecting…" state until
+    /// then (§13). Stays true afterward even if later polls fail, so a Host that drops mid-playback holds
+    /// its last frame rather than falling back to "Connecting" (§16: hold the last frame).
+    public private(set) var hasConnected = false
 
     private let fetch: @Sendable (Host) async throws -> DisplayResponse
     private let engine: RotationEngine
@@ -47,11 +51,13 @@ public final class RotationPlayer {
     /// Replaces any current session.
     public func start(host: Host) {
         stop()
+        hasConnected = false
         pollTask = Task { [weak self] in
             while !Task.isCancelled {
                 guard let self else { return }
                 // A failed poll keeps the current screen (playback is local), like display.js's catch.
                 if let response = try? await self.fetch(host) {
+                    self.hasConnected = true
                     self.engine.apply(response)
                     self.reconcile()
                 }

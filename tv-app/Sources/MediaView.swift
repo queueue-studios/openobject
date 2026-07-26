@@ -8,6 +8,7 @@ struct MediaView: View {
     let media: RenderableMedia
     let fit: Fit
     let muted: Bool
+    let audioBus: AudioBus
 
     var body: some View {
         switch media {
@@ -16,7 +17,7 @@ struct MediaView: View {
         case .animated(let animated):
             AnimatedImageView(animated: animated, fit: fit)
         case .video(let url):
-            VideoLayerView(url: url, fit: fit, muted: muted)
+            VideoLayerView(url: url, fit: fit, muted: muted, bus: audioBus)
         }
     }
 

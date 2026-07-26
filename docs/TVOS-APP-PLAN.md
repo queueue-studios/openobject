@@ -549,7 +549,9 @@ A second thin target on the same core. Explicitly not a web view (§2).
   at Phase C.
 - The bundle identifier, chosen with the iPad listing in mind (§12).
 - Cache size ceiling and eviction policy (§9).
-- Behavior when a Host disappears mid-playback: hold the last frame, splash, or return to
-  the picker (§13).
+- Behavior when a Host disappears mid-playback: RESOLVED (Phase C5.3). Hold the last frame and
+  keep silently retrying, since playback is local so art never stops; the poll loop already does
+  this, and `hasConnected` stays true so the stage never drops back to "Connecting". Not a splash,
+  not a bounce to the picker.
 - How the temporary review Host is stood up and reached (§12), settled at Phase E.
 - Content and wording of the privacy and support pages (§14, Phase E).
