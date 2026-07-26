@@ -7,7 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0F330A0AE4E1FF0E56C4BC82 /* UserDefaultsHostStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E70C92B387C5850E35FBA0A /* UserDefaultsHostStore.swift */; };
+		1BB527B8B7A6B32C16AA75F5 /* HostPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965CA6A5C9E0069F762371BE /* HostPickerView.swift */; };
+		5C61A5B9D560127AF913A85E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9F495F9E260E654A7FF423B1 /* Assets.xcassets */; };
 		6777C5D0170FC6FACDFEC0AC /* MediaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC4CA6744F8BE1C2B522FB7C /* MediaView.swift */; };
+		68A9C983076D5DB2384C9D68 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A844CD351E9A95F19B6E3888 /* AppModel.swift */; };
 		8C056E9F9A79407FC0CC50F3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED4ED6C991174D53E98ADCB /* RootView.swift */; };
 		8C0D4A429C13FA0A38EDAD5B /* OpenObjectTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FEFC2F065B88CE379F032E3 /* OpenObjectTVApp.swift */; };
 		AF983191DF9D02478396CCA0 /* ArtStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */; };
@@ -20,6 +24,10 @@
 		5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtStageView.swift; sourceTree = "<group>"; };
 		5ED4ED6C991174D53E98ADCB /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		5FEFC2F065B88CE379F032E3 /* OpenObjectTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenObjectTVApp.swift; sourceTree = "<group>"; };
+		965CA6A5C9E0069F762371BE /* HostPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostPickerView.swift; sourceTree = "<group>"; };
+		9E70C92B387C5850E35FBA0A /* UserDefaultsHostStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsHostStore.swift; sourceTree = "<group>"; };
+		9F495F9E260E654A7FF423B1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A844CD351E9A95F19B6E3888 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		C9BEA43C301A266597B50BEC /* display-core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "display-core"; path = "../display-core"; sourceTree = SOURCE_ROOT; };
 		DA28F2304D58551C6975D317 /* OpenObjectTV.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OpenObjectTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC4CA6744F8BE1C2B522FB7C /* MediaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaView.swift; sourceTree = "<group>"; };
@@ -40,6 +48,7 @@
 		45FB89F809E72C32975B65D4 = {
 			isa = PBXGroup;
 			children = (
+				9F495F9E260E654A7FF423B1 /* Assets.xcassets */,
 				BFC0C1525F0CC41315C18F25 /* Packages */,
 				4B9965AD3BE888154B253124 /* Sources */,
 				91A625EA3E8B3B284AA7FC97 /* Products */,
@@ -49,10 +58,13 @@
 		4B9965AD3BE888154B253124 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				A844CD351E9A95F19B6E3888 /* AppModel.swift */,
 				5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */,
+				965CA6A5C9E0069F762371BE /* HostPickerView.swift */,
 				FC4CA6744F8BE1C2B522FB7C /* MediaView.swift */,
 				5FEFC2F065B88CE379F032E3 /* OpenObjectTVApp.swift */,
 				5ED4ED6C991174D53E98ADCB /* RootView.swift */,
+				9E70C92B387C5850E35FBA0A /* UserDefaultsHostStore.swift */,
 				4EB8A78C5BDAA4C7CB44CCB8 /* VideoLayerView.swift */,
 			);
 			path = Sources;
@@ -82,6 +94,7 @@
 			buildConfigurationList = 3B8388B7199F5F97A23CF6E0 /* Build configuration list for PBXNativeTarget "OpenObjectTV" */;
 			buildPhases = (
 				96FF27970F695E9271566EF5 /* Sources */,
+				A475F05C27B5FE30AA30B4A0 /* Resources */,
 				DEA02266B94E0443C9104B28 /* Frameworks */,
 			);
 			buildRules = (
@@ -132,15 +145,29 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		A475F05C27B5FE30AA30B4A0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C61A5B9D560127AF913A85E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		96FF27970F695E9271566EF5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				68A9C983076D5DB2384C9D68 /* AppModel.swift in Sources */,
 				AF983191DF9D02478396CCA0 /* ArtStageView.swift in Sources */,
+				1BB527B8B7A6B32C16AA75F5 /* HostPickerView.swift in Sources */,
 				6777C5D0170FC6FACDFEC0AC /* MediaView.swift in Sources */,
 				8C0D4A429C13FA0A38EDAD5B /* OpenObjectTVApp.swift in Sources */,
 				8C056E9F9A79407FC0CC50F3 /* RootView.swift in Sources */,
+				0F330A0AE4E1FF0E56C4BC82 /* UserDefaultsHostStore.swift in Sources */,
 				EDB77F24F0B85223CC172A67 /* VideoLayerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

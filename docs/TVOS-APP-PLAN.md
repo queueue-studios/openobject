@@ -1,10 +1,13 @@
 # OpenObject Apple TV App: Plan and Architecture Direction
 
 > **Document type:** Execution plan, now in execution.
-> **Status (2026-07-25):** Phase A shipped (in v1.6.0). Phase B (`display-core/`, the shared
-> headless engine) complete. Phase C (`tv-app/`) underway: C1 (a buildable tvOS target) and C2
-> (the `RotationPlayer` driver) done; C3 (the art stage) next. Executed phase-by-phase, each
-> checkpoint committed on `main`; the running record is in HANDOFF §20.
+> **Status (2026-07-26):** Phase A shipped (in v1.6.0). Phase B (`display-core/`, the shared
+> headless engine) complete. Phase C (`tv-app/`) underway: C1 (a buildable tvOS target), C2
+> (the `RotationPlayer` driver), C3 (the art stage), and C4 (the Host picker: Bonjour discovery,
+> manual address entry, a remembered default Host, and the official OPEN/OBJECT wordmark) done;
+> C5 (states, settings, audio session, screensaver defeat) next. Executed phase-by-phase, each
+> checkpoint committed on `main`; the running record is in HANDOFF §20. UI/UX copy and state
+> polish is the C5 pass.
 >
 > **Relationship to the spec:** `HANDOFF.md` stays the authoritative engineering spec
 > for shipped behavior. This file is the plan; as pieces ship, the relevant HANDOFF

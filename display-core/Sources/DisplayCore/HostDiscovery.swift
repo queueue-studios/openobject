@@ -1,5 +1,6 @@
 import Foundation
 import Network
+import Observation
 
 // Bonjour discovery of OpenObject Hosts on the LAN (TVOS-APP-PLAN §5), the native counterpart to
 // player/src/discovery.js's browse side. It finds `_openobject._tcp` services, reads each Host's
@@ -14,15 +15,16 @@ import Network
 // the NWBrowser/NWConnection plumbing is integration-tested against a running Host.
 
 @MainActor
+@Observable
 public final class HostDiscovery {
     /// The Hosts currently visible on the network, deduplicated by id and sorted by name. A driver /
     /// SwiftUI picker observes this.
     public private(set) var hosts: [Host] = []
 
-    private let serviceType: String
-    private var browser: NWBrowser?
-    private var resolved: [NWEndpoint: Host] = [:]   // endpoint -> its resolved Host
-    private var pending: Set<NWEndpoint> = []         // endpoints currently being resolved
+    @ObservationIgnored private let serviceType: String
+    @ObservationIgnored private var browser: NWBrowser?
+    @ObservationIgnored private var resolved: [NWEndpoint: Host] = [:]   // endpoint -> its resolved Host
+    @ObservationIgnored private var pending: Set<NWEndpoint> = []        // endpoints currently being resolved
 
     /// - Parameter serviceType: the Bonjour service, `_openobject._tcp` by default (matches
     ///   player/src/discovery.js).

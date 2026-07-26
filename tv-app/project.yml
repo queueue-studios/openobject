@@ -42,6 +42,7 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: Sources
+      - path: Assets.xcassets
     dependencies:
       - package: DisplayCore
         product: DisplayCore
