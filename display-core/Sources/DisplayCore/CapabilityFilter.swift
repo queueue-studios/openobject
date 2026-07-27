@@ -9,8 +9,9 @@
 public struct CapabilityFilter: Sendable {
     /// Formats this Display can decode natively. Everything except SVG (would be static-only on tvOS,
     /// breaking the project's "never freeze on frame one" rule, §6) and WebM (its decoders are LGPL, a
-    /// legal question inside a proprietary App Store binary, §6). Animated AVIF stays in pending a
-    /// Phase C check that ImageIO decodes AVIS sequences (§6, §16); still AVIF is fine since tvOS 16.
+    /// legal question inside a proprietary App Store binary, §6). Animated AVIF (AVIS) is confirmed
+    /// (Phase C, §6/§16): ImageIO reports the frame sequence and per-frame delays, so it animates like
+    /// GIF/WebP; on an OS whose ImageIO lacks AVIS decode it simply shows the first frame, never errors.
     public static let renderableFormats: Set<MediaFormat> = [.jpeg, .png, .gif, .avif, .webp, .mp4, .mov]
 
     public init() {}

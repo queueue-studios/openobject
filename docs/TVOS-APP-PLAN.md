@@ -186,7 +186,7 @@ chrome-legal territory; the art stage never is.
 | GIF, animated | **Yes, v1** | ImageIO decodes frames and per-frame delays; a `CADisplayLink` drives them. Well-trodden, on the order of a few hundred lines. |
 | WebP, static and animated | **Yes, v1** | ImageIO has decoded WebP since tvOS 14. Same frame path as GIF. No third-party dependency, no licensing question. |
 | AVIF, still | Yes | Decode supported since tvOS 16. |
-| AVIF, animated | **Verify** | AVIS sequence support in ImageIO is less certain than still AVIF. The rarest of the three animated formats by a wide margin. Confirm during Phase C. |
+| AVIF, animated | **Yes** | Confirmed in Phase C: ImageIO reports the AVIS frame sequence and per-frame delays (read from the `{AVIS}` dictionary, same `DelayTime` keys as GIF), so it animates on the same path as GIF/WebP. On an OS whose ImageIO lacks AVIS decode it shows the first frame, never an error. |
 | MP4, MOV | Yes | AVPlayer, H.264/HEVC. |
 | SVG | **Declined** | See below. |
 | WebM | **Declined** | See below. |
@@ -544,9 +544,13 @@ A second thin target on the same core. Explicitly not a web view (§2).
 
 ## 16. Open items to settle during execution (not blocking the plan)
 
-- Animated AVIF support in ImageIO (§6), settled at Phase C.
-- Whether Folder Collections need any handling at all (§5), expected to be none, confirmed
-  at Phase C.
+- Animated AVIF support in ImageIO (§6): RESOLVED (Phase C5.4). ImageIO decodes the AVIS
+  sequence and per-frame delays, so it animates like GIF/WebP; `AnimatedImage.frameDelay`
+  now also reads the `{AVIS}` dictionary. Verified rendering + animating on the simulator.
+- Whether Folder Collections need any handling at all (§5): RESOLVED (Phase C5.4), none
+  needed. A folder item's host-relative `src` resolves through `MediaPipeline.mediaURL`
+  exactly as a Library upload's `/uploads/<file>` does; verified a `source: "folder"`
+  rotation renders on the simulator.
 - The bundle identifier, chosen with the iPad listing in mind (§12).
 - Cache size ceiling and eviction policy (§9).
 - Behavior when a Host disappears mid-playback: RESOLVED (Phase C5.3). Hold the last frame and

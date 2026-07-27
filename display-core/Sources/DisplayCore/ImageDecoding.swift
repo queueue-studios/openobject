@@ -85,13 +85,15 @@ public final class AnimatedImage: @unchecked Sendable {
         return buffer.count
     }
 
-    // Per-frame delay from the format's metadata (GIF or WebP), preferring the unclamped value; a sane
-    // default when a format omits it.
+    // Per-frame delay from the format's metadata (GIF, WebP, or animated AVIF), preferring the unclamped
+    // value; a sane default when a format omits it. The AVIS (animated AVIF) dictionary carries its delay
+    // under the same "DelayTime"/"UnclampedDelayTime" keys as GIF (confirmed on-device, Phase C, §6), so
+    // the same key constants read it; without this an animated AVIF would play at the 0.1s fallback.
     private static func frameDelay(_ source: CGImageSource, _ index: Int) -> Double {
         guard let props = CGImageSourceCopyPropertiesAtIndex(source, index, nil) as? [CFString: Any] else {
             return 0.1
         }
-        for dictKey in [kCGImagePropertyGIFDictionary, kCGImagePropertyWebPDictionary] {
+        for dictKey in [kCGImagePropertyGIFDictionary, kCGImagePropertyWebPDictionary, kCGImagePropertyAVISDictionary] {
             guard let dict = props[dictKey] as? [CFString: Any] else { continue }
             let unclamped = (dict[kCGImagePropertyGIFUnclampedDelayTime] as? Double)
                 ?? (dict[kCGImagePropertyWebPUnclampedDelayTime] as? Double)
