@@ -6,27 +6,18 @@
 
 OpenObject is a self-hosted platform for displaying digital art on your own screens. One lightweight
 local core, multiple ways to display: your Mac, Apple TV, iPad, or a revived Infinite Objects XXL
-frame. No cloud. No account. No subscription.
+frame ("Frame"). No cloud. No account. No subscription.
 
 **[Download for Mac](https://github.com/queueue-studios/openobject/releases/latest)** · [openobject.io](https://openobject.io)
 
 ## The platform
 
-```mermaid
-%%{init: {"flowchart": {"rankSpacing": 34, "nodeSpacing": 28}}}%%
-graph BT
-    subgraph Displays["Displays (play from a Host)"]
-        ATV["Apple TV"]
-        IPAD["iPad"]
-    end
-    subgraph Hosts["Hosts (manage artwork)"]
-        MAC["Mac"]
-        FRAME["Infinite Objects XXL Frame"]
-    end
-    Hosts --- Displays
-```
+| | Apple TV | iPad | Mac | Frame |
+|---|:---:|:---:|:---:|:---:|
+| **Displays your art** | ✓ | ✓ | ✓ | ✓ |
+| **Hosts your art** | | | ✓ | ✓ |
 
-*A Host can also function as its own display.*
+*A Host can also function as a display.*
 
 OpenObject is a lightweight local server that runs entirely on your own network. It has three jobs,
 and different devices take on different tasks:
