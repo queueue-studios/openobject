@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenObject Support</title>
+  <meta name="description" content="Help with OpenObject on Apple TV, iPad, Mac, and the Infinite Objects XXL frame. Get a display and a Host talking, and reach us at support@openobject.io.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="OpenObject Support">
+  <meta property="og:description" content="Help with OpenObject on Apple TV, iPad, Mac, and the Infinite Objects XXL frame.">
+  <meta property="og:url" content="https://openobject.io/support/">
+  <meta property="og:image" content="https://raw.githubusercontent.com/queueue-studios/openobject/main/assets/branding/openobject-logo-512.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="OpenObject Support">
+  <meta name="twitter:description" content="Help with OpenObject on Apple TV, iPad, Mac, and the Infinite Objects XXL frame.">
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/queueue-studios/openobject/main/assets/branding/openobject-logo-512.png">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <div class="topnav">
+    <a class="home" href="/"><span class="wordmark" role="img" aria-label="OpenObject"></span></a>
+    <nav>
+      <a href="/apple-tv/">Apple TV</a>
+      <a href="/support/" aria-current="page">Support</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="https://github.com/queueue-studios/openobject">GitHub</a>
+    </nav>
+  </div>
+
+  <main class="wrap">
+
+    <header class="pagehead">
+      <p class="eyebrow">Support</p>
+      <h1>Help with OpenObject</h1>
+      <p class="lede">OpenObject runs entirely on your own network, so most questions come down to getting a display and a Host talking to each other. Here is the quick help, by device.</p>
+    </header>
+
+    <div class="callout" style="margin-top:8px">
+      <p style="margin:0"><strong>Apple TV or iPad showing "Looking for Hosts on your network…" or "Your Apple TV is ready to connect"? The app is working!</strong> That is its normal waiting state. The Apple TV and iPad apps are displays: they show art from an OpenObject Host on the same network, so they wait until one is available. Start OpenObject on a Mac or an Infinite Objects XXL frame (or type the Host's address in the app), and your art appears within moments.</p>
+    </div>
+
+    <section>
+      <h2>Apple TV &amp; iPad</h2>
+      <p>The Apple TV and iPad apps are <strong>displays</strong>. They show art from a <strong>Host</strong>, a Mac or an Infinite Objects XXL frame running OpenObject on the same network. To use one: keep a Host running, open the app, let it find your Host (or type the Host's address), and pick it. See the <a href="/apple-tv/">Apple TV overview</a> for the full picture.</p>
+
+      <div class="qa">
+        <p class="q">The app is looking but doesn't find my Host.</p>
+        <p class="a">Make sure a Host (your Mac or frame) is actually running OpenObject, and that it and the Apple TV are on the same Wi-Fi or network. If your network is slow to announce devices, use the app's <strong>manual entry</strong> and type the Host's address. Both are normal ways in.</p>
+      </div>
+      <div class="qa">
+        <p class="q">Some of my art isn't showing on the TV.</p>
+        <p class="a">Connected Collections don't appear on Apple TV or iPad (they're small programs that need a browser engine to run), and the SVG and WebM formats aren't shown there either. All of them will display perfectly on your Mac and frame. Everything else in your rotation plays as usual. <a href="/apple-tv/">More on this</a>.</p>
+      </div>
+      <div class="qa">
+        <p class="q">There's no sound, or too much sound.</p>
+        <p class="a">For the Apple TV display, your television's volume controls how loud it is; the <strong>Sound</strong> setting decides whether art makes noise at all.</p>
+      </div>
+      <div class="qa">
+        <p class="q">How do I change what's playing?</p>
+        <p class="a">Curate in the web control panel, on your phone or computer, pointed at your Host. The Apple TV is a display, not a remote, so it follows whatever the Host is playing, within a few seconds and without a restart.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Mac</h2>
+      <p>The Mac app is a full Host: it holds your art, displays it, and serves the control panel. The <a href="https://github.com/queueue-studios/openobject/blob/main/docs/MAC-DISPLAY-SETUP.md">Mac guide</a> walks setup and first run.</p>
+      <div class="qa">
+        <p class="q">Open Display does nothing, or asks for Chrome.</p>
+        <p class="a">OpenObject renders the art with Google Chrome in the background. Install it from google.com/chrome and try again.</p>
+      </div>
+      <div class="qa">
+        <p class="q">The screen only shows the OpenObject logo.</p>
+        <p class="a">That's the idle screen when nothing is in the rotation yet, or the first piece is still loading. Add art in the control panel, or give it a moment.</p>
+      </div>
+      <div class="qa">
+        <p class="q">I can't find the app's window.</p>
+        <p class="a">Click the OpenObject icon in the menu bar (top-right, a small bold square frame) and choose <strong>Show OpenObject</strong>.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Infinite Objects XXL frame</h2>
+      <p>Reviving a frame is the advanced, hands-on path. The <a href="https://github.com/queueue-studios/openobject/blob/main/docs/SETUP-GUIDE.md">XXL Frame Guide</a> covers the whole thing in plain language, and the <a href="https://github.com/queueue-studios/openobject/blob/main/docs/SETUP-GUIDE.md#if-something-seems-stuck">troubleshooting section</a> covers the common snags. Once installed, you reach its control panel at <code>openobject.local</code> from any browser on your network.</p>
+    </section>
+
+    <section>
+      <h2>Still stuck?</h2>
+      <p>Email <a href="mailto:support@openobject.io">support@openobject.io</a> and tell us what you're seeing and on which device. If you're comfortable on GitHub, you can also <a href="https://github.com/queueue-studios/openobject/issues">open an issue</a>.</p>
+    </section>
+
+    <footer>
+      <nav class="footlinks">
+        <a href="/">Home</a>
+        <a href="/apple-tv/">Apple TV</a>
+        <a href="/support/">Support</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="https://github.com/queueue-studios/openobject">GitHub</a>
+      </nav>
+      <p class="copyright">&copy; 2026 Queueue Studios LLC. All rights reserved. &middot; openobject.io</p>
+    </footer>
+
+  </main>
+</body>
+</html>
