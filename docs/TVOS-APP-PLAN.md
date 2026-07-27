@@ -173,7 +173,9 @@ chrome-legal territory; the art stage never is.
   arguably the most portable file in the repo. There is also a nice fit in the input: the
   trigger is a game-controller code, and entering it on a Siri Remote D-pad is more
   authentic than on a keyboard. Kept out of v1 only because it would compete for attention
-  with the rendering path.
+  with the rendering path. **Tracked as a planned enhancement for both the tvOS and iPad
+  apps** (post-v1): port `arcade.js` natively (SpriteKit or SwiftUI Canvas) once the core
+  surfaces ship.
 - Any Host-side power, update, or network function.
 
 ---
@@ -498,6 +500,14 @@ any UI.
 The tvOS target: Host picker, manual Host entry, art stage, settings, idle timer, audio
 session, splash and sleep states, and the full set of waiting and setup states from §13.
 Confirms Folder Collections (§5) and settles animated AVIF (§6).
+
+### Phase C6: On-device testing (before branding)
+Deploy to a real Apple TV to exercise what the simulator cannot: Bonjour on the actual LAN,
+the Siri Remote's focus and Menu behavior, real audio output, and the panel itself. Route A
+is a direct Xcode install (development signing with the Queueue Studios LLC team, automatic
+provisioning to a paired Apple TV), which needs no App Store Connect. TestFlight (an
+internal-tester build, no beta review) is the durable alternative and folds into Phase E.
+Fix on-device issues here, before investing in branding assets.
 
 ### Phase D: Branding and assets
 Its own phase, run when the app is functional. tvOS needs a layered parallax app icon

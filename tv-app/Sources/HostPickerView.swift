@@ -14,32 +14,38 @@ struct HostPickerView: View {
     @State private var ownerTookFocus = false
 
     var body: some View {
-        VStack(spacing: 56) {
-            Image("OpenObjectLogo")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 420, height: 420)
-                .foregroundStyle(.white)
-                .accessibilityLabel("OpenObject")
+        VStack(spacing: 0) {
+            VStack(spacing: 56) {
+                Image("OpenObjectLogo")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 420, height: 420)
+                    .foregroundStyle(.white)
+                    .accessibilityLabel("OpenObject")
 
-            discoveredHosts
+                discoveredHosts
 
-            manualEntry
+                manualEntry
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .focusSection()   // the hosts + address field are one focus section
+
+            // The Sound control lives in a full-width bottom row that is its OWN focus section and a real
+            // sibling of the content (not an overlay), so a press down from the hosts or the address field
+            // lands on it. tvOS focus moves only up/down/left/right, and the earlier corner overlay sat
+            // diagonally from every control on a separate layer, so no direction ever reached it.
+            HStack(spacing: 0) {
+                Spacer(minLength: 0)
+                SoundToggleButton(model: model)
+            }
+            .focusSection()
         }
         .padding(.horizontal, 80)
         .padding(.top, 64)
+        .padding(.bottom, 60)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.black)
-        // The Sound icon rides on its own full-screen layer so it can sit in the physical bottom-right
-        // corner without pulling the content (the text field especially) out of the safe area.
-        .overlay {
-            SoundToggleButton(model: model)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .padding(.trailing, 90)
-                .padding(.bottom, 60)
-                .ignoresSafeArea()
-        }
         .onAppear {
             model.startDiscoveryIfPicking()
             pinFocusToFirstHost()

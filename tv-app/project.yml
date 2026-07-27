@@ -29,11 +29,11 @@ settings:
     SWIFT_VERSION: "5.0"         # the UI layer; DisplayCore builds in its own Swift 6 mode
     MARKETING_VERSION: "1.6.0"   # shared version (sourced from player/package.json; release.sh syncs)
     CURRENT_PROJECT_VERSION: "1"
-    # Local/unsigned for now so it builds without a Developer ID. Phase E sets the real App Store
-    # signing identity (Queueue Studios LLC).
-    CODE_SIGN_STYLE: Manual
-    CODE_SIGN_IDENTITY: "-"
-    CODE_SIGNING_REQUIRED: "NO"
+    # Signed for on-device testing (Phase C6) with the Queueue Studios LLC team (J87JRCN9RM). Automatic
+    # signing lets Xcode provision a development profile for a paired Apple TV on the first device build;
+    # the simulator still builds ad-hoc ("Sign to Run Locally"). Phase E adds App Store distribution.
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: J87JRCN9RM
 
 targets:
   OpenObjectTV:
@@ -61,6 +61,12 @@ targets:
     settings:
       base:
         PRODUCT_NAME: OpenObject
+        # tvOS Brand Assets (layered app icon + Top Shelf) in Assets.xcassets/AppIcon.brandassets. A
+        # placeholder that matches the Mac app icon (black OPEN/OBJECT wordmark on white, wordmark ~58.6%
+        # of the icon height). ALWAYS regenerate from the canonical ../assets/branding/openobject-logo.svg
+        # (render it at high resolution, then downscale to each size) - never enlarge a raster PNG, which
+        # fuzzes the edges. Phase D authors the polished parallax layers and Top Shelf art.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # Placeholder bundle id: the final one is a §16 open item, chosen with the iPad listing in mind
         # (one App Store record spanning tvOS + iPad). Harmless to change now (local, unsigned).
         PRODUCT_BUNDLE_IDENTIFIER: io.openobject.app

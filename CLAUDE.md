@@ -96,7 +96,10 @@ The **OPEN / OBJECT** wordmark lives in `assets/branding/`: **`openobject-logo.s
 exports (`openobject-logo-256/512.png`, favicons, apple-touch-icon). Large source masters
 stay in `Logo/` (gitignored). CSS recolors the SVG white-on-dark (idle/boot screen) or
 black-on-light; it is wired into the player's display and control pages. A plain raster
-color-inverse is *not* the plan (Matt handles that in Photoshop if ever needed). **SVG
+color-inverse is *not* the plan (Matt handles that in Photoshop if ever needed). **App
+icons (Mac, tvOS, iPad) regenerate from this canonical SVG, never from an enlarged raster
+PNG** (enlarging fuzzes the edges): render `openobject-logo.svg` at high resolution and
+downscale to each size. **SVG
 here is a UI/brand asset**; displayed user *art* in SVG is supported too, rendered as a
 safe image (see Formats / §6). Aesthetic: understated, functional, no clutter.
 
