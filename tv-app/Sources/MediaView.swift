@@ -13,20 +13,32 @@ struct MediaView: View {
     var body: some View {
         switch media {
         case .still(let image):
-            frame(image.cgImage)
+            StageImage(cgImage: image.cgImage, fit: fit)
         case .animated(let animated):
             AnimatedImageView(animated: animated, fit: fit)
         case .video(let url):
             VideoLayerView(url: url, fit: fit, muted: muted, bus: audioBus)
         }
     }
+}
 
-    @ViewBuilder private func frame(_ cgImage: CGImage) -> some View {
-        Image(decorative: cgImage, scale: 1, orientation: .up)
-            .resizable()
-            .aspectRatio(contentMode: fit == .fill ? .fill : .fit)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .clipped()
+// One image sized to the full stage: Fit letterboxes (contain), Fill covers and center-crops (cover).
+// The crop MUST be symmetric so a centered subject stays centered. Sizing the image with an explicit
+// stage-sized frame (from GeometryReader) does that; the earlier `.aspectRatio(.fill)` over a flexible
+// `.frame(maxWidth/maxHeight: .infinity)` shifted the image off-center on tvOS (a centered subject drifted
+// right), because the flexible frame did not center the overflow symmetrically (§6).
+private struct StageImage: View {
+    let cgImage: CGImage
+    let fit: Fit
+
+    var body: some View {
+        GeometryReader { geo in
+            Image(decorative: cgImage, scale: 1, orientation: .up)
+                .resizable()
+                .aspectRatio(contentMode: fit == .fill ? .fill : .fit)
+                .frame(width: geo.size.width, height: geo.size.height)
+                .clipped()
+        }
     }
 }
 
@@ -42,11 +54,7 @@ private struct AnimatedImageView: View {
         TimelineView(.animation) { context in
             let index = frameIndex(elapsed: context.date.timeIntervalSince(start))
             if let cgImage = animated.frame(at: index) {
-                Image(decorative: cgImage, scale: 1, orientation: .up)
-                    .resizable()
-                    .aspectRatio(contentMode: fit == .fill ? .fill : .fit)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipped()
+                StageImage(cgImage: cgImage, fit: fit)
             } else {
                 Color.black
             }
