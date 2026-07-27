@@ -4,271 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>OpenObject</title>
-  <meta name="description" content="A simple, elegant way to display digital art on your Mac. OpenObject turns any Mac and an everyday monitor into an edge-to-edge art display you control from any browser. No cloud, no account, no subscription.">
+  <meta name="description" content="A self-hosted platform for displaying digital art on your own screens: your Mac, Apple TV, iPad, or a revived Infinite Objects XXL frame, all controlled from any browser. No cloud, no account, no subscription.">
 
   <!-- Social sharing -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="OpenObject">
-  <meta property="og:description" content="A simple, elegant way to display digital art on your Mac. Turn any Mac and an everyday monitor into an edge-to-edge art display you control from any browser.">
+  <meta property="og:description" content="One art platform, many screens. Show digital art borderless and full screen on your Mac, Apple TV, iPad, or a revived Infinite Objects frame. No cloud, no account, no subscription.">
   <meta property="og:url" content="https://openobject.io">
   <meta property="og:image" content="https://raw.githubusercontent.com/queueue-studios/openobject/main/assets/branding/openobject-logo-512.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@OpenObject_io">
   <meta name="twitter:title" content="OpenObject">
-  <meta name="twitter:description" content="A simple, elegant way to display digital art on your Mac. Your art, edge to edge, controlled from any browser.">
+  <meta name="twitter:description" content="One art platform, many screens. Your art, edge to edge, on every screen you own.">
   <meta name="twitter:image" content="https://raw.githubusercontent.com/queueue-studios/openobject/main/assets/branding/openobject-logo-512.png">
 
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-
-  <style>
-    :root{
-      --bg:#0a0b0d;
-      --bg-soft:#101216;
-      --panel:rgba(255,255,255,.025);
-      --border:rgba(255,255,255,.09);
-      --border-soft:rgba(255,255,255,.06);
-      --text:#e8eaed;
-      --muted:#9aa1ab;
-      --faint:#6b7079;
-      --logo:#f4f5f7;
-      --accent:#8ec7e6;
-      --accent-dim:#5e93b0;
-      --maxw:760px;
-    }
-
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font:400 17px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-      -webkit-font-smoothing:antialiased;
-      text-rendering:optimizeLegibility;
-      /* a dark gallery wall: faint light pooling near the top */
-      background-image:
-        radial-gradient(900px 520px at 50% -8%, rgba(142,199,230,.10), transparent 70%),
-        radial-gradient(700px 500px at 50% 0%, rgba(255,255,255,.05), transparent 65%);
-      background-repeat:no-repeat;
-    }
-    ::selection{background:rgba(142,199,230,.28);color:#fff}
-
-    a{color:var(--accent);text-decoration:none}
-    a:hover{color:#b6dcef;text-decoration:underline;text-underline-offset:3px}
-
-    .wrap{
-      max-width:var(--maxw);
-      margin:0 auto;
-      padding:clamp(28px,6vw,72px) 24px 80px;
-    }
-
-    /* ---------- hero ---------- */
-    .hero{text-align:center;padding:clamp(12px,5vw,40px) 0 8px}
-    .logo-stage{
-      position:relative;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      margin:0 auto 30px;
-    }
-    .glow{
-      position:absolute;
-      inset:-60% -40%;
-      background:radial-gradient(closest-side, rgba(142,199,230,.30), rgba(142,199,230,.06) 55%, transparent 72%);
-      filter:blur(6px);
-      z-index:0;
-      animation:breathe 7s ease-in-out infinite;
-    }
-    @keyframes breathe{
-      0%,100%{opacity:.75;transform:scale(1)}
-      50%{opacity:1;transform:scale(1.05)}
-    }
-    .logo{position:relative;z-index:1}
-    .logo svg{
-      width:clamp(190px,46vw,232px);
-      height:auto;
-      color:var(--logo);
-      display:block;
-      filter:drop-shadow(0 2px 30px rgba(142,199,230,.18));
-    }
-
-    .tagline{
-      font-size:clamp(20px,3.4vw,26px);
-      line-height:1.3;
-      font-weight:600;
-      letter-spacing:-.01em;
-      margin:0 auto 14px;
-      max-width:20ch;
-      color:#f3f5f7;
-    }
-    .lede{
-      color:var(--muted);
-      font-size:clamp(15px,2vw,17px);
-      margin:0 auto 28px;
-      max-width:54ch;
-    }
-
-    .cta{
-      display:flex;
-      gap:12px;
-      justify-content:center;
-      flex-wrap:wrap;
-      margin-bottom:18px;
-    }
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:11px 20px;
-      border-radius:10px;
-      font-size:15px;
-      font-weight:600;
-      border:1px solid var(--border);
-      color:var(--text);
-      background:var(--panel);
-      transition:border-color .15s ease,background .15s ease,transform .15s ease,color .15s ease;
-    }
-    .btn:hover{
-      text-decoration:none;
-      border-color:rgba(255,255,255,.22);
-      background:rgba(255,255,255,.05);
-      transform:translateY(-1px);
-      color:#fff;
-    }
-    .btn-primary{
-      background:var(--logo);
-      color:#0a0b0d;
-      border-color:var(--logo);
-    }
-    .btn-primary:hover{
-      background:#fff;
-      color:#0a0b0d;
-      border-color:#fff;
-    }
-    .btn svg{width:17px;height:17px;flex:none}
-
-    .status{
-      color:var(--faint);
-      font-size:13.5px;
-      margin:18px 0 0;
-    }
-
-    /* ---------- divider ---------- */
-    .rule{
-      border:0;
-      height:1px;
-      background:linear-gradient(90deg,transparent,var(--border),transparent);
-      margin:46px 0 6px;
-    }
-
-    /* ---------- sections ---------- */
-    section{margin-top:42px}
-    h2{
-      font-size:clamp(20px,2.6vw,23px);
-      font-weight:650;
-      letter-spacing:-.01em;
-      margin:0 0 14px;
-      color:#f3f5f7;
-      display:flex;
-      align-items:center;
-      gap:11px;
-    }
-    h2::before{
-      content:"";
-      width:11px;height:11px;
-      border-radius:2px;
-      background:var(--accent);
-      box-shadow:0 0 14px rgba(142,199,230,.55);
-      flex:none;
-    }
-    section p{margin:0 0 14px;color:#d4d8dd}
-    section p.sub{color:var(--muted)}
-    .credit{
-      color:var(--muted);
-      border-left:2px solid var(--border);
-      padding-left:16px;
-      font-size:15.5px;
-    }
-
-    /* ---------- features ---------- */
-    .features{
-      list-style:none;
-      margin:6px 0 0;
-      padding:0;
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:14px;
-    }
-    .features li{
-      background:var(--panel);
-      border:1px solid var(--border-soft);
-      border-radius:12px;
-      padding:16px 16px 15px;
-    }
-    .features b{display:block;color:#f0f2f4;font-weight:600;margin-bottom:3px;font-size:15.5px}
-    .features span{color:var(--muted);font-size:14.5px;line-height:1.55}
-
-    /* ---------- callout ---------- */
-    .callout{
-      background:var(--panel);
-      border:1px solid var(--border-soft);
-      border-radius:12px;
-      padding:20px 22px;
-      margin-top:6px;
-    }
-    .callout p:last-child{margin-bottom:0}
-
-    /* ---------- footer ---------- */
-    footer{
-      margin-top:64px;
-      padding-top:26px;
-      border-top:1px solid var(--border-soft);
-      text-align:center;
-    }
-    .independence{
-      color:var(--faint);
-      font-size:13px;
-      line-height:1.6;
-      max-width:56ch;
-      margin:0 auto 22px;
-    }
-    .footlinks{
-      display:flex;
-      gap:10px 22px;
-      justify-content:center;
-      align-items:center;
-      flex-wrap:wrap;
-      margin-bottom:20px;
-      font-size:14.5px;
-    }
-    .footlinks a{color:var(--muted);font-weight:500}
-    .footlinks a:hover{color:#fff}
-    .x-link{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 16px;
-      border:1px solid var(--border);
-      border-radius:999px;
-      color:var(--text)!important;
-    }
-    .x-link:hover{border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.04);text-decoration:none}
-    .x-link svg{width:15px;height:15px}
-    .fineprint{color:var(--faint);font-size:12.5px;margin:0}
-    .fineprint a{color:var(--faint)}
-
-    @media (max-width:560px){
-      body{font-size:16px}
-      .features{grid-template-columns:1fr}
-    }
-    @media (prefers-reduced-motion:reduce){
-      .glow{animation:none}
-      html{scroll-behavior:auto}
-    }
-  </style>
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <main class="wrap">
@@ -294,8 +48,8 @@
         </div>
       </div>
 
-      <p class="tagline">A simple, elegant way to display digital art on your Mac.</p>
-      <p class="lede">OpenObject turns any Mac and an everyday monitor into an edge-to-edge digital canvas you control from your phone or any browser on your network. No cloud, no account, no subscription.</p>
+      <p class="tagline">One art platform, many screens.</p>
+      <p class="lede">OpenObject is a self-hosted platform for displaying digital art on your own screens. One lightweight local core, multiple ways to display: your Mac, Apple TV, iPad, or a revived Infinite Objects XXL frame, all controlled from any browser on your network. No cloud. No account. No subscription.</p>
 
       <div class="cta">
         <a class="btn btn-primary" href="https://github.com/queueue-studios/openobject/releases/latest">Download for Mac</a>
@@ -305,36 +59,86 @@
         </a>
       </div>
 
-      <p class="status">macOS 15+ &middot; Google Chrome required</p>
+      <p class="status">macOS 15+ &middot; Google Chrome required &middot; Apple TV &amp; iPad coming to the App Store</p>
     </header>
 
     <hr class="rule">
 
     <section>
-      <h2>What is OpenObject?</h2>
-      <p>OpenObject is a small, self-hosted art player for your Mac. It turns your everyday monitor into a full-screen digital art canvas, looping through your images and videos, controlled from any browser on your local network. It runs entirely on your Mac, online or off. Nothing phones home, and nothing expires. It even sidesteps the blockchain: instead of wallet connections and on-chain lookups, you keep a local copy of your art and upload it directly.</p>
-      <p>It started as a rescue for one specific piece of hardware: the Infinite Objects XXL, a lovely 26-inch square digital art frame that is really just a little PC behind the panel. A lot of those frames went unused. OpenObject brings the hardware back under your control, and it runs just as happily on a Mac with an everyday monitor.</p>
-      <p class="credit">Full credit to the White Walls app that originally drove these frames. It was the real heart of the whole setup. The backend services it relied on wound down, which left the hardware no longer able to function as originally intended. That is where OpenObject comes in.</p>
+      <h2>How it works</h2>
+      <p>OpenObject runs entirely on your own network. There are only two kinds of device:</p>
+      <div class="split">
+        <div class="cell">
+          <b>Host: holds your library and serves it to every display</b>
+          <p>Your Mac (or, less commonly, a revived Infinite Objects XXL frame) acts as the Host. It keeps your artwork, plays it full screen, and is managed from the web control panel in any browser on your network. It needs nothing else.</p>
+        </div>
+        <div class="cell">
+          <b>Display: shows art on the screen</b>
+          <p>The Apple TV and iPad apps automatically discover Hosts (such as your Mac) on your network. Choose one, and your art appears. Nothing to upload, nothing to configure.</p>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:14px">One library. One control panel. All shared with every screen. You manage everything in one place, the web control panel, from your phone or any computer on your network.</p>
     </section>
 
     <section>
-      <h2>Who it's for</h2>
-      <p>If you want your own images and video playing full screen on a screen of your own, this is for you. The everyday setup is a Mac and an everyday monitor; the same core can also revive an Infinite Objects XXL gathering dust. It is built so the next person can follow along and do it themselves.</p>
-      <p class="sub">Running it on a Mac takes a few minutes: download the app and open it. Reviving a frame is more involved. Each path has its own step-by-step guide in plain language.</p>
+      <h2>Every screen you own</h2>
+      <p class="sub" style="margin-top:-4px">OpenObject runs on four devices. Two can host your art (and display it). Two simply display it. Start with a Mac. Add displays as desired.</p>
+      <ul class="devices">
+        <li class="device primary">
+          <p class="name">Mac</p>
+          <p class="role">The easiest way to get started. Your Mac stores your library, displays your art full screen, and is controlled from any browser on your network.</p>
+          <div class="device-foot">
+            <span class="chip chip-ok">Available</span>
+            <a class="more" href="https://github.com/queueue-studios/openobject/releases/latest">Download &rsaquo;</a>
+          </div>
+        </li>
+        <li class="device">
+          <p class="name">Infinite Objects XXL</p>
+          <p class="role">Bring an XXL frame back to life. OpenObject turns it into a self-contained digital art display again. Advanced installation required.</p>
+          <div class="device-foot">
+            <span class="chip chip-ok">Available</span>
+            <a class="more" href="https://github.com/queueue-studios/openobject/blob/main/docs/SETUP-GUIDE.md">XXL guide &rsaquo;</a>
+          </div>
+        </li>
+        <li class="device">
+          <p class="name">Apple TV</p>
+          <p class="role">Turn any TV into an OpenObject display. Connect to a Host on your network and your art appears instantly.</p>
+          <div class="device-foot">
+            <span class="chip chip-soon">Coming soon</span>
+            <a class="more" href="/apple-tv/">Learn more &rsaquo;</a>
+          </div>
+        </li>
+        <li class="device">
+          <p class="name">iPad</p>
+          <p class="role">Use an iPad as another display option. It connects to a Host and stays in sync with your library.</p>
+          <div class="device-foot">
+            <span class="chip chip-soon">Coming soon</span>
+            <a class="more" href="/apple-tv/">Learn more &rsaquo;</a>
+          </div>
+        </li>
+      </ul>
     </section>
 
     <section>
       <h2>What it does</h2>
       <ul class="features">
-        <li><b>Your own images and video</b><span>JPEG, PNG, GIF, WebP, AVIF, SVG, and MP4, MOV, WebM, shown edge to edge with no border.</span></li>
-        <li><b>Library, Rotation, Pin</b><span>Everything you upload is kept. You choose what plays and in what order, and you can pin one piece to hold it on screen.</span></li>
-        <li><b>Fit or Fill</b><span>Show the whole image, or crop it to fill the screen. One simple hold time for the whole rotation.</span></li>
-        <li><b>Always in motion</b><span>Animated art and video loop to fill their time and never freeze on the first frame. Silent by design.</span></li>
+        <li><b>Your own images and video</b><span>JPEG, PNG, GIF, WebP, AVIF, SVG, and MP4, MOV, WebM, shown edge to edge with no borders or interface.</span></li>
+        <li><b>Library, Rotation, Pin</b><span>Everything you upload is kept. You choose what plays, in what order, and for what duration. Alternatively, pin one piece to hold it on screen.</span></li>
+        <li><b>Fit or Fill</b><span>Show the whole image, or crop it to fill the screen.</span></li>
+        <li><b>Always in motion</b><span>Animated art and video loop to fill their time.</span></li>
+        <li><b>Audio</b><span>Enable or disable audio so a scored piece can optionally play sound on a supported device.</span></li>
         <li><b>Sleep Schedule</b><span>Blank the screen on a schedule you set per day, overnight or while you're out.</span></li>
         <li><b>Drag and drop</b><span>Add art straight from your phone or laptop. No accounts, no cloud, no subscription.</span></li>
-        <li><b>Built-in updates</b><span>Check for Updates installs the latest version.</span></li>
-        <li><b>Works offline</b><span>It all runs on your Mac. If the internet goes out, your art keeps playing.</span></li>
+        <li><b>Folder Collections</b><span>Point OpenObject at a folder on your computer and it shows everything inside, no uploading required.</span></li>
+        <li><b>Connected Collections</b><span>Certain curated generative and on-chain artworks, such as live p5.js pieces, mirrored locally so they render offline. (Not supported on the Apple TV and iPad displays.)</span></li>
+        <li><b>Works offline</b><span>It all runs on your own network. If the internet goes out, your art keeps playing.</span></li>
       </ul>
+    </section>
+
+    <section>
+      <h2>What is OpenObject?</h2>
+      <p>It started as a rescue for one specific piece of hardware: the Infinite Objects XXL, a lovely 26-inch square digital art frame that is really just a little PC behind the panel. A lot of those frames went unused. OpenObject brings the hardware back under your control, and along the way it turned out the same small core runs just as happily on a Mac, an Apple TV, or an iPad. It deliberately avoids wallet connections, blockchain APIs, and cloud services: instead, you keep local copies of the artwork you own and upload them directly. Nothing phones home, and nothing expires.</p>
+      <p class="credit">Full credit to the White Walls app that originally drove these frames. It was the real heart of the whole setup. The backend services it relied on wound down, which left the hardware no longer able to function as originally intended. That is where OpenObject comes in.</p>
     </section>
 
     <section>
@@ -344,16 +148,12 @@
 
     <section>
       <h2>Getting started</h2>
-      <p>Download OpenObject, open the <code>.dmg</code>, and drag it to your Applications folder. Open it, and your Mac starts serving the display and the control panel. The <a href="https://github.com/queueue-studios/openobject/blob/main/docs/MAC-DISPLAY-SETUP.md">Mac guide</a> walks the first run.</p>
+      <p>Download OpenObject for Mac, open the <code>.dmg</code>, and drag it to your Applications folder. Open it, and your Mac starts serving the display and the control panel. The <a href="https://github.com/queueue-studios/openobject/blob/main/docs/MAC-DISPLAY-SETUP.md">Mac guide</a> walks the first run.</p>
       <div class="cta" style="justify-content:flex-start;margin-top:4px">
         <a class="btn btn-primary" href="https://github.com/queueue-studios/openobject/releases/latest">Download for Mac</a>
       </div>
-      <p class="sub" style="margin-top:18px">Have a stranded Infinite Objects XXL? OpenObject can revive one too. It's an advanced, hands-on path, separate from the Mac app. The <a href="https://github.com/queueue-studios/openobject/blob/main/docs/SETUP-GUIDE.md">XXL Frame Guide</a> walks the whole revival in plain English, from wiping the original software to booting straight into your art.</p>
-    </section>
-
-    <section>
-      <h2>One core, many ways to run it</h2>
-      <p>The Mac app today, an Infinite Objects XXL frame, and, ahead, Apple TV and iPad. Because the core is just a small local art player, it isn't locked to any one device.</p>
+      <p class="sub" style="margin-top:18px">Planning to use an Apple TV or iPad? Those apps are displays: you'll run a Host (your Mac or a frame) on your network, and the app plays its art. <a href="/apple-tv/">More about the Apple TV app &rsaquo;</a></p>
+      <p class="sub">Have a stranded Infinite Objects XXL? OpenObject can revive one too. It's an advanced, hands-on path, separate from the Mac app. The <a href="https://github.com/queueue-studios/openobject/blob/main/docs/SETUP-GUIDE.md">XXL Frame Guide</a> walks the whole revival in plain English, from wiping the original software to booting straight into your art.</p>
     </section>
 
     <section>
@@ -366,6 +166,9 @@
       <p class="independence">OpenObject is an independent project, written from scratch. It is not affiliated with, authorized by, or endorsed by Infinite Objects or any original software provider. Product names are used only to identify the hardware and the original software OpenObject replaces.</p>
 
       <nav class="footlinks">
+        <a href="/apple-tv/">Apple TV</a>
+        <a href="/support/">Support</a>
+        <a href="/privacy/">Privacy</a>
         <a href="https://github.com/queueue-studios/openobject">GitHub</a>
         <a href="https://github.com/queueue-studios/openobject/blob/main/docs/MAC-DISPLAY-SETUP.md">Mac Guide</a>
         <a class="x-link" href="https://x.com/OpenObject_io">
@@ -374,7 +177,8 @@
         </a>
       </nav>
 
-      <p class="fineprint">openobject.io &middot; built with <a href="https://claude.com/claude-code">Claude Code</a></p>
+      <p class="copyright">&copy; 2026 Queueue Studios LLC. All rights reserved.</p>
+      <p class="fineprint" style="margin-top:6px">openobject.io &middot; built with <a href="https://claude.com/claude-code">Claude Code</a></p>
     </footer>
 
   </main>

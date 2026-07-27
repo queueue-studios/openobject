@@ -4,44 +4,92 @@
 
 # OpenObject
 
-A self-hosted, borderless art display for your Mac. No cloud, account, or subscription. It can also
-revive a stranded Infinite Objects XXL frame.
+OpenObject is a self-hosted platform for displaying digital art on your own screens. One lightweight
+local core, multiple ways to display: your Mac, Apple TV, iPad, or a revived Infinite Objects XXL
+frame. No cloud. No account. No subscription.
 
 **[Download for Mac](https://github.com/queueue-studios/openobject/releases/latest)** · [openobject.io](https://openobject.io)
 
+## The platform
+
+```mermaid
+%%{init: {"flowchart": {"rankSpacing": 34, "nodeSpacing": 28}}}%%
+graph BT
+    subgraph Displays["Displays (play from a Host)"]
+        ATV["Apple TV"]
+        IPAD["iPad"]
+    end
+    subgraph Hosts["Hosts (manage artwork)"]
+        MAC["Mac"]
+        FRAME["Infinite Objects XXL Frame"]
+    end
+    Hosts --- Displays
+```
+
+*A Host can also function as its own display.*
+
+OpenObject is a lightweight local server that runs entirely on your own network. It has three jobs,
+and different devices take on different tasks:
+
+- **Host** holds your library and serves artwork to OpenObject displays on your network.
+- **Control** is the web control panel you open in any browser to curate what plays.
+- **Display** renders the art full screen, edge to edge, with no border and no chrome.
+
+Some devices do all three on their own. Others are just a **Display** that connects to a Host on your
+network.
+
+| Device | Host | Control | Display | Status |
+|---|:---:|:---:|:---:|---|
+| **Mac** | ✓ | ✓ | ✓ | Available |
+| **Infinite Objects XXL** frame | ✓ | ✓ | ✓ | Available (advanced) |
+| **Apple TV** | - | - | ✓ | Coming soon |
+| **iPad** | - | - | ✓ | Coming soon |
+
+Your **Mac** and the **frame** are self-contained: each holds your art, is controlled from a browser,
+and shows the art on its own. The **Apple TV** and **iPad** apps are displays that play from a Host
+already running on your network.
+
 ## How it works
 
-You upload your art, and OpenObject shows it edge to edge on a monitor. Your everyday screen becomes
-the art. You manage everything (what is in the rotation, timing, sleep schedule) from any browser on
-your network, through the control panel.
+You upload your art, and OpenObject shows it edge to edge on a screen. Your everyday monitor, TV, or
+frame becomes the art. Through the control panel, you manage your library, rotation, playback timing,
+sleep schedule, and more from any browser on your network.
 
-Under the hood it runs as a small local art player (technically a lightweight server) on your Mac,
-and presents the art in a Chromium kiosk: no window, no menus, no toolbars, just art filling the
-screen. Everything stays on your network.
+Under the hood it runs as a small local art player on a Host (your Mac or the frame), and presents the
+art with no window, no menus, no toolbars, just art filling the screen. On a Mac it drives a Chromium
+kiosk; the frame runs the same page as its own kiosk; the Apple TV and iPad apps render it natively.
+Everything stays on your network.
 
-We built OpenObject to deliberately avoid the APIs, infrastructure, and wallet connections needed to
-read art directly from the blockchain. Instead, you keep a local copy of your art and upload it.
-Everything is local. Simple, safe, and secure.
+OpenObject was designed to deliberately avoid wallet connections, blockchain APIs, and cloud services.
+Instead, you keep local copies of the artwork you own and upload them directly. Everything stays on
+your network. Simple, private, and resilient.
 
 ## What it does
 
-- Displays **JPEG, PNG, GIF, AVIF, WebP, SVG, MP4, MOV, WebM**, edge to edge, no border.
+- Add art by **dragging files onto the control panel** from any device.
+- Displays **JPEG, PNG, GIF, AVIF, WebP, SVG, MP4, MOV, and WebM** artwork edge-to-edge with no
+  borders or interface.
 - **Library, Rotation, and Pin.** Everything you upload is kept. You choose what plays and in what
   order (Sequence or Shuffle), and can pin one piece to hold it permanently.
 - **Fit or Fill.** One global hold duration, plus Fit (the whole image, the default) or Fill (crop
   to fill the screen).
-- **Animated art and video always loop** and never freeze on the first frame. Silent by design.
+- **Animated art and video always loop** and never freeze on the first frame.
+- **Audio.** Enable or disable audio so a scored piece can optionally play sound on a supported device.
 - **Sleep Schedule** to rest the screen by time of day and day of week.
-- Add art by **dragging files onto the control panel** from any device.
-- **Connected Collections.** A curated handful of generative and on-chain artworks (like a p5.js
-  sketch that renders live), mirrored locally so they play offline. Curated, not a general NFT reader.
-- **Built-in updates.** Check for Updates installs the latest version, no reinstall.
+- **Folder Collections.** Instead of uploading, point OpenObject at a folder on your computer and it
+  shows everything inside. An easy way to display a large collection you already have on disk.
+- **Connected Collections.** Certain curated generative and on-chain artworks (such as live p5.js
+  pieces) are mirrored locally so they continue to render even without an internet connection. This is
+  a curated feature, not a general-purpose NFT browser. Note: Connected Collections cannot be displayed
+  with the Apple TV and iPad apps.
+- **Built-in updates.** Install the latest release directly from within OpenObject.
 
 ## Requirements
 
-- A **Mac** (macOS 15 or later) and a monitor to display on (the Mac's own screen or an external one).
-- **Google Chrome** installed. OpenObject drives it in kiosk mode to render the art; you never see or
-  use it as a browser.
+- **Mac (Host):** a Mac (macOS 15 or later), a monitor to display on, and **Google Chrome** installed.
+  OpenObject drives it in kiosk mode to render the art; you never see or use it as a browser.
+- **Apple TV / iPad (Display):** the app, plus a Host (a Mac or a frame) running OpenObject on the same
+  network. These apps show art from a Host; they do not host or curate on their own.
 
 ## Get started
 
@@ -65,11 +113,11 @@ for home use. If you display art in public, please make sure you have a license 
 deliberately avoided wallet connections and their complexity: the process is simply to save a local
 copy of your art and upload it to OpenObject to display it.
 
-## One core, many ways to run it
+## One core, many surfaces
 
-The Mac app today, an Infinite Objects XXL frame, and, ahead, Apple TV and iPad. Because the core is
-just a small local art player, it is not locked to any one device (technically minded owners can even
-run it on their own hardware).
+The Mac app and an Infinite Objects XXL frame today, with Apple TV and iPad apps coming to the App
+Store. Because the core is just a small local art player, it is not locked to any one device
+(technically minded owners can even run it on their own hardware).
 
 ## Documentation
 
@@ -87,8 +135,9 @@ run it on their own hardware).
 
 ## License
 
-**Proprietary. All rights reserved.** The source is public, but OpenObject is not open source, and
-publishing it grants no license to reuse it. See the full [License](LICENSE).
+**Proprietary. All rights reserved.** The source is publicly available, but OpenObject is not open
+source. Viewing the source does not grant permission to reuse, redistribute, or incorporate it into
+another project. See the full [License](LICENSE).
 
 In plain terms: you may download, install, run, and update OpenObject to power **your own** display
 or frame, for personal noncommercial use. Without a separate written license from Queueue Studios
@@ -119,6 +168,5 @@ incorporates none of it. Installing OpenObject on a frame erases the frame's sto
 original software and data before OpenObject is installed.
 
 OpenObject is not affiliated with, authorized by, or endorsed by the device's original
-manufacturer or any original software provider. Product and company names that appear elsewhere
-in this project are the property of their respective owners and are used only to identify the
-hardware and the original software OpenObject replaces.
+manufacturer or any original software provider. All trademarks and product names belong to their
+respective owners and are used solely to identify compatible hardware or software.
