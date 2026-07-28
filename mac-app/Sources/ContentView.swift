@@ -11,6 +11,14 @@ struct ContentView: View {
     @EnvironmentObject private var display: DisplayController
     @EnvironmentObject private var actions: DisplayActions
 
+    // Wordmark box, fixed to an explicit width + aspect-derived height (the SVG viewBox is 1824×1384),
+    // NOT a maxWidth. With only a max width and no height bound, scaledToFit let the VStack's leftover
+    // vertical space set the image's height: the wordmark rendered well below 220, visibly shrank as
+    // the window settled on launch, and even differed between Macs (a longer host name / more hosts
+    // left less room). A fixed size renders identically on every Mac and can't shrink.
+    private let wordmarkWidth: CGFloat = 200
+    private var wordmarkHeight: CGFloat { wordmarkWidth * 1384.0 / 1824.0 }
+
     var body: some View {
         VStack(spacing: 16) {
             // The OPEN/OBJECT wordmark. A template image so it tints to the label color:
@@ -18,7 +26,7 @@ struct ContentView: View {
             Image("Wordmark")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: 220)
+                .frame(width: wordmarkWidth, height: wordmarkHeight)
                 .foregroundStyle(.primary)
                 .accessibilityLabel("OpenObject")
                 .padding(.bottom, 4)
