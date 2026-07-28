@@ -77,7 +77,11 @@ The OS image should boot directly into the OpenObject display with no desktop, l
   **NetworkManager** is installed for the future §11 setup-AP but does not manage Wi-Fi yet.
   Because the ifupdown bring-up runs once at boot and never retries, a small
   **`openobject-netcheck`** systemd timer re-ups Wi-Fi if a cold boot ever leaves the frame with
-  no network (the rejoin race; see §20). Intel iGPU + VA-API drivers and `libavcodec-extra` are
+  no network (the rejoin race; see §20). The frame also keeps **Wi-Fi power-save off** (`iwlwifi`
+  defaults it on, which silently dropped the frame off mDNS discovery and, occasionally, off Wi-Fi
+  entirely; §20 2026-07-28) via an `/etc/modprobe.d` drop, and the netcheck watchdog now **escalates
+  to a Wi-Fi driver reload** when a plain `ifup` can't revive a wedged radio. Intel iGPU + VA-API
+  drivers and `libavcodec-extra` are
   installed for hardware decode (WebM is always safe; the codec package widens MP4/H.264 support).
 - The build tooling lives in `installer/` (`install.sh`, `systemd/`, `kiosk/`, `README.md`).
 
@@ -600,6 +604,18 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-07-28: Wi-Fi power-save disabled (frame dropping off mDNS, then off Wi-Fi); netcheck given teeth
+
+Investigation of the "frame drops off the network" item. Two symptoms turned out to be one root cause. The mild one (logged 2026-07-26 during Apple TV discovery testing): the frame vanished from `_openobject._tcp` mDNS discovery mid-session while still displaying art, so its server was up, only the advertisement went quiet. The severe one (seen live this session): the frame dropped off Wi-Fi **entirely** (gone from the router's client list, `openobject.local` unreachable) and stayed down until a manual power-cycle, even though the `openobject-netcheck` watchdog was enabled and firing every ~30s.
+
+Root cause: **`iwlwifi` Wi-Fi power-save was ON** (`iw dev wlp0s20f3 get power_save` → `Power save: on`), and nothing in the install disabled it. An idle Intel radio in power-save misses multicast (the mDNS drop, the discovery half of the problem) and can drop its association outright (the full disconnect). This, not the `bonjour-service` advertise path first suspected, is the primary cause; the advertise side is secondary (the SRV TTL is 120s and the announce loop backs off to silence after ~2 min, so past that it leans on query-response, which the napping radio breaks). Also confirmed en route: the frame's Wi-Fi is `unmanaged` by NetworkManager (the §8 handoff no-ops), so it runs on ifupdown + wpa_supplicant, and a plain `ifdown`/`ifup` (the old watchdog's only move) does not always revive a wedged `iwlwifi`, which is why the severe drop needed the wall.
+
+Fix (Tier-2, all low-risk / reversible):
+- **Disable Wi-Fi power-save** at the driver level: a `/etc/modprobe.d/iwlwifi-openobject.conf` drop (`options iwlwifi power_save=0` + `options iwlmvm power_scheme=1`) makes "off" the default from every boot, independent of whether ifupdown or NetworkManager owns the link. `install.sh` writes it, also applies it at runtime (`iw ... set power_save off`) so a re-run needs no reboot, and now installs the `iw` package.
+- **Give the netcheck watchdog teeth** (`installer/net/oo-netcheck.sh`): when the link is still down after `ifdown`/`ifup`, it now forces power-save off and **reloads the Wi-Fi driver** (resets the radio the way a reboot would, without rebooting), so a wedged-radio drop self-heals instead of needing a power-cycle. It still acts only when already offline, so it never disturbs a working link or an SSH session.
+
+An existing frame gets the updated watchdog by ordinary self-update (it runs from the checkout at `/opt/openobject`); the `iw` package and the `/etc/modprobe.d` drop need an `install.sh` re-run, or the two manual commands. The kiosk is unaffected (no power-cycle needed). Matt's frame has `iw`, the runtime `iw ... set power_save off`, and the modprobe drop applied by hand already; a reboot will confirm the persistent version holds. If a frame still drops off Wi-Fi after this, escalate to signal / access-point / driver. (Matt, 2026-07-28.)
 
 ### 2026-07-25: Apple TV app underway: engine (`display-core/`) complete, app (`tv-app/`) started
 

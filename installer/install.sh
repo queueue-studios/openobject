@@ -8,7 +8,7 @@
 #   sudo bash /opt/openobject/installer/install.sh
 #
 # What it does, in order (network-dependent work first, the Wi-Fi handoff last):
-#   1. Install OS packages: Chromium + cage (kiosk), Avahi (openobject.local), NetworkManager,
+#   1. Install OS packages: Chromium + cage (kiosk), Avahi (openobject.local), NetworkManager + iw,
 #      Intel iGPU drivers, polkit (for the Reboot / Shut down power controls), fonts.
 #   2. Install Node 22 from NodeSource (Debian's Node is too old for node:sqlite).
 #   3. Create the `openobject` service user + runtime dirs, and grant it reboot/poweroff (polkit).
@@ -16,7 +16,8 @@
 #   5. Install + enable the two systemd units (player + kiosk) that replace supervisor.js.
 #   6. Set the hostname to `openobject` and start Avahi → reachable at openobject.local.
 #   7. Quiet the boot (no console spew / blanking / cursor on the panel).
-#   8. Hand Wi-Fi to NetworkManager (non-fatal: leaves the working Wi-Fi alone if it can't).
+#   8. Disable Wi-Fi power-save (keeps the frame discoverable and connected; HANDOFF §3).
+#   9. Hand Wi-Fi to NetworkManager (non-fatal: leaves the working Wi-Fi alone if it can't).
 set -euo pipefail
 
 # ── Config (override via env if needed) ─────────────────────────────────────────────
@@ -55,7 +56,7 @@ apt-get install -y \
   chromium cage \
   libgl1-mesa-dri mesa-va-drivers intel-media-va-driver libavcodec-extra \
   avahi-daemon libnss-mdns \
-  network-manager \
+  network-manager iw \
   openssh-server \
   fonts-dejavu-core fonts-liberation \
   || die "apt-get install failed — is the network up?"
@@ -205,7 +206,29 @@ else
   warn "no $GRUB_DEFAULT_FILE — skipping boot-quieting (non-fatal)"
 fi
 
-# ── 8. Hand Wi-Fi to NetworkManager (non-fatal) ─────────────────────────────────────
+# ── 8. Wi-Fi radio: disable power-save (keeps the frame discoverable + connected) ────
+# The XXL's Intel iwlwifi radio defaults to power-save ON, which lets it doze when idle. On the
+# frame that shows up two ways: it silently drops off mDNS discovery (goes invisible to the Mac /
+# Apple TV apps while still displaying art), and, worse, it occasionally drops its Wi-Fi association
+# entirely until a power-cycle. Turning power-save off fixes both. The modprobe drop makes "off" the
+# driver default from every boot (independent of whether ifupdown or NetworkManager ends up owning
+# the link, since it is set at the driver level); the runtime `iw` call applies it now, so a re-run
+# on a live frame needs no reboot. Both best-effort.
+log "Disabling Wi-Fi power-save"
+cat > /etc/modprobe.d/iwlwifi-openobject.conf <<'MODPROBE'
+# OpenObject: keep the Wi-Fi radio awake so the frame stays discoverable and connected (HANDOFF §3).
+options iwlwifi power_save=0
+options iwlmvm power_scheme=1
+MODPROBE
+chmod 0644 /etc/modprobe.d/iwlwifi-openobject.conf
+wifi_now=""
+for d in /sys/class/net/*; do
+  [ -e "$d/phy80211" ] && { wifi_now="$(basename "$d")"; break; }
+done
+[ -n "$wifi_now" ] && iw dev "$wifi_now" set power_save off >/dev/null 2>&1 || true
+ok "Wi-Fi power-save disabled (now + persistent)"
+
+# ── 9. Hand Wi-Fi to NetworkManager (non-fatal) ─────────────────────────────────────
 # Do this LAST: every step above needed the network that the Debian installer set up. We try to
 # move Wi-Fi onto NetworkManager (the foundation for the future no-keyboard setup AP, §11) and
 # PROVE it works before disabling the old config. If anything fails we leave the working Wi-Fi

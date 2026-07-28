@@ -6,6 +6,11 @@
 # timer runs this every ~30s; it acts ONLY when there is already no connectivity, so it can never
 # disturb a working connection (or an SSH session): there is nothing to disturb when it fires.
 #
+# When it does fire it escalates: ifdown/ifup first, and if that does not revive the link (a wedged
+# radio does not always reset that way), it forces Wi-Fi power-save off and reloads the Wi-Fi driver,
+# which resets the radio the way a reboot would, without rebooting the frame. (Power-save left on is
+# the usual root cause of the drop in the first place; the installer disables it, this is the belt.)
+#
 # Device-agnostic on purpose: it finds the wireless interface itself, so it also serves the next
 # owner's hardware, not just this frame's wlp0s20f3.
 set -u
@@ -37,3 +42,24 @@ online && exit 0
 log "no LAN connectivity via $wifi_dev, re-upping Wi-Fi"
 ifdown --force "$wifi_dev" >/dev/null 2>&1
 ifup "$wifi_dev" >/dev/null 2>&1 || log "ifup $wifi_dev failed"
+# Keep the radio awake after the bring-up. An idle Wi-Fi power-save (iwlwifi on the XXL) is the usual
+# cause of these drops, of both the silent mDNS-discovery drop and a full disconnect. Best-effort.
+iw dev "$wifi_dev" set power_save off >/dev/null 2>&1 || true
+
+# A plain ifdown/ifup does not always revive a wedged Wi-Fi driver (bench-seen on the XXL's iwlwifi:
+# the radio stayed dark until a reboot). If we are still offline a few seconds later, reload the
+# driver, which resets the radio the way a reboot would, then bring the link back up. This is what
+# turns a stuck frame back on without someone walking to the wall.
+sleep 8
+online && exit 0
+drv=$(basename "$(readlink -f "/sys/class/net/$wifi_dev/device/driver" 2>/dev/null)" 2>/dev/null || echo '')
+if [ -n "$drv" ]; then
+  log "still offline after ifup; reloading Wi-Fi driver ($drv)"
+  for up in iwlmvm iwldvm; do modprobe -r "$up" >/dev/null 2>&1 || true; done  # Intel opmode above iwlwifi
+  modprobe -r "$drv" >/dev/null 2>&1 || true
+  sleep 2
+  modprobe "$drv"  >/dev/null 2>&1 || true
+  sleep 3
+  ifup "$wifi_dev" >/dev/null 2>&1 || true
+  iw dev "$wifi_dev" set power_save off >/dev/null 2>&1 || true
+fi
