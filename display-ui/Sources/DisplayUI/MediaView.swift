@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import DisplayCore
 
 // Renders one piece of ready media on the zero-chrome stage (§6): a still, an animated image (its

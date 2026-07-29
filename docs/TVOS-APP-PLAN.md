@@ -298,6 +298,21 @@ a new concept: `player/src/folder-cache.js` already implements a bounded ephemer
 cache with `usage()` and `clear()`. A cache is not ownership, so this does not conflict
 with §3.
 
+### Note for later: offline / portable playback
+
+Recorded as a possible future enhancement (raised 2026-07-28), not v1. Today the app is a
+live viewer that plays cache-first, so a *running* session keeps cycling already-seen pieces
+even if the Host drops off Wi-Fi. That is a side effect of the media cache, not a feature,
+and three things keep it from being a real "load it at home, then take it off the network"
+mode: the cache is bounded (512 MB LRU), so a larger rotation evicts its earlier pieces; it
+lives in `Caches`, which the OS may purge at any time; and the rotation list is held only in
+memory from the last poll, so a relaunch while offline has nothing to play and shows
+Connecting. A genuine portable mode would need the rotation manifest persisted, a real
+non-purgeable offline store kept separate from the cache, an explicit "Download for offline"
+choice (the app stays a viewer and does not own art, §3), and an offline launch path that
+plays the saved set instead of waiting to connect. Wanted on the list; the need may or may
+not arise.
+
 ---
 
 ## 10. Audio (an amendment to a v1 decision)

@@ -28,7 +28,7 @@ final class AudioBus {
 // A zero-chrome looping video layer. It uses AVPlayerLayer directly (not SwiftUI's VideoPlayer, which
 // shows transport controls) so the art reaches the panel edges with no UI (§6). Seamless loop via
 // AVPlayerLooper; Fit/Fill maps to the layer's videoGravity. `muted` follows the app's Sound setting
-// (§10); the app's audio session (OpenObjectTVApp) lets a scored video be heard when unmuted.
+// (§10); the app's audio session lets a scored video be heard when unmuted.
 struct VideoLayerView: UIViewRepresentable {
     let url: URL
     let fit: Fit

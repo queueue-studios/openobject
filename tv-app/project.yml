@@ -4,10 +4,12 @@
 # committed, so the app builds with only `xcodebuild` (the same "checked-in Xcode project" decision as
 # mac-app). Regenerate after editing: `cd tv-app && xcodegen generate`.
 #
-# A thin tvOS shell over the shared DisplayCore engine (../display-core). It takes exactly one role,
-# Display (§3): it finds a Host on the LAN, the owner picks one, and it renders that Host's rotation
-# full-screen with zero chrome. It runs no server and owns no art. C1 is the buildable skeleton; the
-# poll/advance driver, art stage, and Host picker arrive in later Phase C checkpoints.
+# A thin tvOS shell over two shared local packages: DisplayCore (../display-core, the headless engine)
+# and DisplayUI (../display-ui, the SwiftUI/UIKit art stage). It takes exactly one role, Display (§3):
+# it finds a Host on the LAN, the owner picks one, and it renders that Host's rotation full-screen with
+# zero chrome. It runs no server and owns no art. The rendering (crossfade, audio, idle/sleep marks)
+# lives in DisplayUI's ArtStageCore, shared with the iPad app; tv-app adds only the Siri Remote input
+# (the Host picker and the Menu-button exit).
 
 name: OpenObject
 
@@ -17,10 +19,14 @@ options:
     tvOS: "17.0"          # matches DisplayCore's floor (covers every v1 format + modern APIs)
   createIntermediateGroups: true
 
-# The shared Display-role engine, consumed as a LOCAL Swift package (no server, no bundled engine).
+# The shared Display-role packages, consumed as LOCAL Swift packages (no server, no bundled engine):
+# DisplayCore is the headless engine (discovery, rotation, media pipeline, host store); DisplayUI is the
+# shared SwiftUI/UIKit art stage. Both are shared with the iPad app.
 packages:
   DisplayCore:
     path: ../display-core
+  DisplayUI:
+    path: ../display-ui
 
 settings:
   base:
@@ -46,6 +52,8 @@ targets:
     dependencies:
       - package: DisplayCore
         product: DisplayCore
+      - package: DisplayUI
+        product: DisplayUI
     info:
       path: OpenObject-Info.plist
       properties:

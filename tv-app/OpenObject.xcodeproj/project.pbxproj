@@ -7,30 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0F330A0AE4E1FF0E56C4BC82 /* UserDefaultsHostStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E70C92B387C5850E35FBA0A /* UserDefaultsHostStore.swift */; };
 		1BB527B8B7A6B32C16AA75F5 /* HostPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965CA6A5C9E0069F762371BE /* HostPickerView.swift */; };
+		4A209808B99F4B04FAEFB520 /* DisplayUI in Frameworks */ = {isa = PBXBuildFile; productRef = 41405613C079784B07CEF684 /* DisplayUI */; };
 		5C61A5B9D560127AF913A85E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9F495F9E260E654A7FF423B1 /* Assets.xcassets */; };
-		6777C5D0170FC6FACDFEC0AC /* MediaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC4CA6744F8BE1C2B522FB7C /* MediaView.swift */; };
 		68A9C983076D5DB2384C9D68 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A844CD351E9A95F19B6E3888 /* AppModel.swift */; };
 		8C056E9F9A79407FC0CC50F3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED4ED6C991174D53E98ADCB /* RootView.swift */; };
 		8C0D4A429C13FA0A38EDAD5B /* OpenObjectTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FEFC2F065B88CE379F032E3 /* OpenObjectTVApp.swift */; };
 		AF983191DF9D02478396CCA0 /* ArtStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */; };
 		EB113A78BA588E4CBF278F98 /* DisplayCore in Frameworks */ = {isa = PBXBuildFile; productRef = DD3C4AC8A4B75CA2E48D9B92 /* DisplayCore */; };
-		EDB77F24F0B85223CC172A67 /* VideoLayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB8A78C5BDAA4C7CB44CCB8 /* VideoLayerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		4EB8A78C5BDAA4C7CB44CCB8 /* VideoLayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoLayerView.swift; sourceTree = "<group>"; };
+		3EE44B2E5E10D7A31DF31DE1 /* display-ui */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "display-ui"; path = "../display-ui"; sourceTree = SOURCE_ROOT; };
 		5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtStageView.swift; sourceTree = "<group>"; };
 		5ED4ED6C991174D53E98ADCB /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		5FEFC2F065B88CE379F032E3 /* OpenObjectTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenObjectTVApp.swift; sourceTree = "<group>"; };
 		965CA6A5C9E0069F762371BE /* HostPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostPickerView.swift; sourceTree = "<group>"; };
-		9E70C92B387C5850E35FBA0A /* UserDefaultsHostStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsHostStore.swift; sourceTree = "<group>"; };
 		9F495F9E260E654A7FF423B1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A844CD351E9A95F19B6E3888 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		C9BEA43C301A266597B50BEC /* display-core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "display-core"; path = "../display-core"; sourceTree = SOURCE_ROOT; };
 		DA28F2304D58551C6975D317 /* OpenObjectTV.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OpenObjectTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FC4CA6744F8BE1C2B522FB7C /* MediaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,6 +35,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EB113A78BA588E4CBF278F98 /* DisplayCore in Frameworks */,
+				4A209808B99F4B04FAEFB520 /* DisplayUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -61,11 +58,8 @@
 				A844CD351E9A95F19B6E3888 /* AppModel.swift */,
 				5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */,
 				965CA6A5C9E0069F762371BE /* HostPickerView.swift */,
-				FC4CA6744F8BE1C2B522FB7C /* MediaView.swift */,
 				5FEFC2F065B88CE379F032E3 /* OpenObjectTVApp.swift */,
 				5ED4ED6C991174D53E98ADCB /* RootView.swift */,
-				9E70C92B387C5850E35FBA0A /* UserDefaultsHostStore.swift */,
-				4EB8A78C5BDAA4C7CB44CCB8 /* VideoLayerView.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -82,6 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				C9BEA43C301A266597B50BEC /* display-core */,
+				3EE44B2E5E10D7A31DF31DE1 /* display-ui */,
 			);
 			name = Packages;
 			sourceTree = "<group>";
@@ -104,6 +99,7 @@
 			name = OpenObjectTV;
 			packageProductDependencies = (
 				DD3C4AC8A4B75CA2E48D9B92 /* DisplayCore */,
+				41405613C079784B07CEF684 /* DisplayUI */,
 			);
 			productName = OpenObjectTV;
 			productReference = DA28F2304D58551C6975D317 /* OpenObjectTV.app */;
@@ -135,6 +131,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				95ABF94020E715BF6A4468D5 /* XCLocalSwiftPackageReference "../display-core" */,
+				3643F3ADC5020CDC7C131BCE /* XCLocalSwiftPackageReference "../display-ui" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 91A625EA3E8B3B284AA7FC97 /* Products */;
@@ -165,11 +162,8 @@
 				68A9C983076D5DB2384C9D68 /* AppModel.swift in Sources */,
 				AF983191DF9D02478396CCA0 /* ArtStageView.swift in Sources */,
 				1BB527B8B7A6B32C16AA75F5 /* HostPickerView.swift in Sources */,
-				6777C5D0170FC6FACDFEC0AC /* MediaView.swift in Sources */,
 				8C0D4A429C13FA0A38EDAD5B /* OpenObjectTVApp.swift in Sources */,
 				8C056E9F9A79407FC0CC50F3 /* RootView.swift in Sources */,
-				0F330A0AE4E1FF0E56C4BC82 /* UserDefaultsHostStore.swift in Sources */,
-				EDB77F24F0B85223CC172A67 /* VideoLayerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -366,6 +360,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		3643F3ADC5020CDC7C131BCE /* XCLocalSwiftPackageReference "../display-ui" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../display-ui";
+		};
 		95ABF94020E715BF6A4468D5 /* XCLocalSwiftPackageReference "../display-core" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../display-core";
@@ -373,6 +371,10 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		41405613C079784B07CEF684 /* DisplayUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DisplayUI;
+		};
 		DD3C4AC8A4B75CA2E48D9B92 /* DisplayCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DisplayCore;
