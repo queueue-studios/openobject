@@ -14,6 +14,7 @@
 		975256C9B88CC5551DFDE9D3 /* OpenObjectApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E5EAFDEBAABEBDFDC5CCFA /* OpenObjectApp.swift */; };
 		C0CC78C31BF06ED8D3BE499E /* ArtStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */; };
 		D33D8F7F46D1077C0A358A08 /* DisplayUI in Frameworks */ = {isa = PBXBuildFile; productRef = FB83F50A36A75B3A154319B6 /* DisplayUI */; };
+		D8A06044E1A19EDC97777A1B /* HostPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965CA6A5C9E0069F762371BE /* HostPickerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +23,7 @@
 		58E5EAFDEBAABEBDFDC5CCFA /* OpenObjectApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenObjectApp.swift; sourceTree = "<group>"; };
 		5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtStageView.swift; sourceTree = "<group>"; };
 		5ED4ED6C991174D53E98ADCB /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		965CA6A5C9E0069F762371BE /* HostPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostPickerView.swift; sourceTree = "<group>"; };
 		9F495F9E260E654A7FF423B1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A844CD351E9A95F19B6E3888 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		C9BEA43C301A266597B50BEC /* display-core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "display-core"; path = "../display-core"; sourceTree = SOURCE_ROOT; };
@@ -55,6 +57,7 @@
 			children = (
 				A844CD351E9A95F19B6E3888 /* AppModel.swift */,
 				5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */,
+				965CA6A5C9E0069F762371BE /* HostPickerView.swift */,
 				58E5EAFDEBAABEBDFDC5CCFA /* OpenObjectApp.swift */,
 				5ED4ED6C991174D53E98ADCB /* RootView.swift */,
 			);
@@ -158,6 +161,7 @@
 			files = (
 				2B30729B2BCF7A85E1483196 /* AppModel.swift in Sources */,
 				C0CC78C31BF06ED8D3BE499E /* ArtStageView.swift in Sources */,
+				D8A06044E1A19EDC97777A1B /* HostPickerView.swift in Sources */,
 				975256C9B88CC5551DFDE9D3 /* OpenObjectApp.swift in Sources */,
 				62BBB65E0C954985340A7241 /* RootView.swift in Sources */,
 			);
