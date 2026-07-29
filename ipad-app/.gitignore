@@ -1,0 +1,9 @@
+# Xcode / build products for the iOS app shell. The generated OpenObject.xcodeproj IS committed (so
+# the app builds with only xcodebuild); only build output and per-user state are ignored.
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+.swiftpm/
