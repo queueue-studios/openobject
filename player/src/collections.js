@@ -473,8 +473,9 @@ const REGISTRY = [
     framePixelDensity: 1,
     // The bundle ships an "artist" mode (a full in-page editor) and a "collector" mode (clean, cursor
     // hidden, auto-play, loop pinned on); collector only auto-engages on the fxhash platform, so force it.
-    // That one flip yields the clean display AND the loop. Then the INKFIELD_HOOK (black stage + HUD off)
-    // and the <style> below finish the §6 cleanup (drop the dotted page pattern and the 10px canvas border).
+    // That one flip yields the clean display AND the loop. Then the INKFIELD_HOOK (black stage) and the
+    // <style> below finish the §6 stage (drop the dotted page pattern and the 10px canvas border). The
+    // artist's own grid / brush-parameter overlay is left intact (part of the intended render, not chrome).
     stageHook: 'inkfield',
     htmlReplace: [
       { find: /window\.APP_MODE = 'artist'/g, replace: "window.APP_MODE = 'collector'" },
@@ -952,19 +953,17 @@ const TILES_HOOK = `
 
 // Injected into Aluan Wang's "inkField" (stageHook: 'inkfield'). The piece is a p5 replay of a recorded
 // ink painting, shown in the artist's own "collector" mode, which the mirror forces on (htmlReplace):
-// collector auto-plays the recording and keeps its loop on (loopToggle pinned to 1), so this is not an
-// Animate control, it is stage cleanup for the bare OpenObject panel (HANDOFF §6). Two jobs:
-//  (a) Black stage. The artist paints the PAGE background with the piece's own paper colour (a --canvas-bg
-//      the recording sets), so a non-square token (e.g. #31 Portrait) would show that colour in its
-//      letterbox. A head <style> (htmlReplace) already drops the dotted page pattern and the canvas border;
-//      here we force the page background to pure black with an inline !important, which outranks the paper
-//      colour the sketch applies at runtime (a plain stylesheet rule could not), re-asserted on load.
-//  (b) Zero chrome. The sketch draws an authoring HUD (a debug grid plus stroke readouts) whenever
-//      showGridOverlay / showFuturePathPreview / screenText are true, and a token's recording bakes the grid
-//      ON at playback start (and again on each loop). These are plain window globals; the artist's own URL
-//      flags (?_grid:0 ...) turn them off, but rather than depend on a display param surviving the recording's
-//      state-apply we hold the three globals false here. Assignment works (they are non-configurable vars, so
-//      Object.defineProperty does not), re-asserted on a light interval so it also covers each loop.
+// collector auto-plays the recording and keeps its loop on (loopToggle pinned to 1). The hook's one job is
+// the bare-stage background (HANDOFF §6): the artist paints the PAGE background with the piece's own paper
+// colour (a --canvas-bg the recording sets), so a non-square token (e.g. #31 Portrait) would show that
+// colour in its letterbox. A head <style> (htmlReplace) drops the dotted page pattern and the canvas border;
+// here we force the page background to pure black with an inline !important, which outranks the paper colour
+// the sketch applies at runtime (a plain stylesheet rule could not), re-asserted on load.
+//
+// NOTE: the sketch's grid + brush-parameter overlay (showGridOverlay, baked ON in each token's recording,
+// with a tracking box and live Max/Count/Dir + C/B/S/P readouts) is LEFT ALONE on purpose. It is part of
+// the artist's intended render (it shows on OpenSea and fxhash), not OpenObject chrome, so we do not
+// suppress it (owner's call, 2026-07-29). Do not re-hide it.
 const INKFIELD_HOOK = `
 <script>
 (function(){
@@ -980,12 +979,6 @@ const INKFIELD_HOOK = `
   black();
   document.addEventListener('DOMContentLoaded', black);
   window.addEventListener('load', black);
-  function hudOff(){
-    try { showGridOverlay = false; showFuturePathPreview = false; screenText = false; } catch(e){}
-    try { window.showGridOverlay = false; window.showFuturePathPreview = false; window.screenText = false; } catch(e){}
-  }
-  hudOff();
-  setInterval(hudOff, 1000);
 })();
 </script>`;
 
