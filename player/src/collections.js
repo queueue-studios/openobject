@@ -432,6 +432,48 @@ const REGISTRY = [
     staticFromLoadImage: true,
   },
   {
+    slug: 'inkfield',
+    artist: 'Aluan Wang',
+    name: 'inkField',
+    chain: 'Ethereum',
+    contract: '0x05fbbeccecb61f710e5b3907a68b28df21965a82',
+    rpc: 'https://ethereum-rpc.publicnode.com',
+    // A true generative series on a dedicated contract, so the owner enters their Token ID (like Chromie
+    // Squiggle / Tiles; the Pendulum lesson: never fixedToken a real series). Standard ERC-721 tokenURI
+    // gives a per-token metadata JSON with a clean IPFS `image` (the thumbnail) and an `animation_url`.
+    //
+    // SHARED BUNDLE, seeded by the URL HASH. Every token's animation_url points to the SAME IPFS folder
+    // (index.html); the piece rides in the fragment (index.html#38), not the path or a query. The sketch
+    // reads location.hash to pick the token, so unlike a perToken (Art Blocks) collection the whole series
+    // shares one mirrored bundle and the display forwards the #<token> fragment (display.js). This is the
+    // first collection whose seed is the hash rather than a ?query, which is why display.js grew fragment
+    // forwarding and why extraAssets below carries a {token} placeholder.
+    //
+    // Each token's animation is a RECORDING the sketch fetch()es by hash: lib/<token>.json (~0.6 MB, a
+    // stroke-by-stroke replay of the drawing). That fetch is dynamic, so the attribute scan never sees it;
+    // extraAssets names it with {token} (resolved from the hash at mirror time). The font lib/inconsolata.otf
+    // is likewise pulled in p5's preload() (not via src/href), and a failed loadFont() stalls preload so
+    // setup() never runs, so it must be mirrored too. (The piece also preloads shaders/*.frag, but those
+    // 404 on IPFS by design and fall back to the inlined shader.js, so they are left alone. No
+    // localizeAbsolute: the only absolute refs are a hidden logo/link, not render assets.)
+    extraAssets: ['lib/{token}.json', 'lib/inconsolata.otf'],
+    // Self-animating: collector mode auto-plays the recording and loops it on its own, so no Animate control.
+    // Per-token FORMAT varies (e.g. #31 Portrait, #38 Square) and the sketch sizes its own canvas to the
+    // recording and scales-to-fit on black, so there is no collection-level aspect (one value would be wrong
+    // for a mixed-format series); a non-square token letterboxes on the bare stage natively (§6).
+    animateDefault: false,
+    animatable: false,
+    // The bundle ships an "artist" mode (a full in-page editor) and a "collector" mode (clean, cursor
+    // hidden, auto-play, loop pinned on); collector only auto-engages on the fxhash platform, so force it.
+    // That one flip yields the clean display AND the loop. Then the INKFIELD_HOOK (black stage + HUD off)
+    // and the <style> below finish the §6 cleanup (drop the dotted page pattern and the 10px canvas border).
+    stageHook: 'inkfield',
+    htmlReplace: [
+      { find: /window\.APP_MODE = 'artist'/g, replace: "window.APP_MODE = 'collector'" },
+      { find: '</head>', replace: '<style id="oo-stage">html,body{background-image:none!important}canvas{border:none!important;outline:none!important}</style>\n</head>' },
+    ],
+  },
+  {
     slug: 'bouncing-openobject-logo',
     artist: 'OpenObject',
     name: 'Bouncing OpenObject Logo',
@@ -900,6 +942,45 @@ const TILES_HOOK = `
 })();
 </script>`;
 
+// Injected into Aluan Wang's "inkField" (stageHook: 'inkfield'). The piece is a p5 replay of a recorded
+// ink painting, shown in the artist's own "collector" mode, which the mirror forces on (htmlReplace):
+// collector auto-plays the recording and keeps its loop on (loopToggle pinned to 1), so this is not an
+// Animate control, it is stage cleanup for the bare OpenObject panel (HANDOFF §6). Two jobs:
+//  (a) Black stage. The artist paints the PAGE background with the piece's own paper colour (a --canvas-bg
+//      the recording sets), so a non-square token (e.g. #31 Portrait) would show that colour in its
+//      letterbox. A head <style> (htmlReplace) already drops the dotted page pattern and the canvas border;
+//      here we force the page background to pure black with an inline !important, which outranks the paper
+//      colour the sketch applies at runtime (a plain stylesheet rule could not), re-asserted on load.
+//  (b) Zero chrome. The sketch draws an authoring HUD (a debug grid plus stroke readouts) whenever
+//      showGridOverlay / showFuturePathPreview / screenText are true, and a token's recording bakes the grid
+//      ON at playback start (and again on each loop). These are plain window globals; the artist's own URL
+//      flags (?_grid:0 ...) turn them off, but rather than depend on a display param surviving the recording's
+//      state-apply we hold the three globals false here. Assignment works (they are non-configurable vars, so
+//      Object.defineProperty does not), re-asserted on a light interval so it also covers each loop.
+const INKFIELD_HOOK = `
+<script>
+(function(){
+  function black(){
+    try {
+      document.documentElement.style.setProperty('background-color','#000','important');
+      if (document.body){
+        document.body.style.setProperty('background-color','#000','important');
+        document.body.style.setProperty('background-image','none','important');
+      }
+    } catch(e){}
+  }
+  black();
+  document.addEventListener('DOMContentLoaded', black);
+  window.addEventListener('load', black);
+  function hudOff(){
+    try { showGridOverlay = false; showFuturePathPreview = false; screenText = false; } catch(e){}
+    try { window.showGridOverlay = false; window.showFuturePathPreview = false; window.screenText = false; } catch(e){}
+  }
+  hudOff();
+  setInterval(hudOff, 1000);
+})();
+</script>`;
+
 async function fetchBuf(url) {
   const r = await ooFetch(toHttp(url));
   if (!r.ok) throw new Error(`fetch ${url} → ${r.status}`);
@@ -1003,8 +1084,11 @@ async function mirrorInto(c, out, sourceUrl) {
   }
   // Relative assets a collection references from inside its own JavaScript, which the attribute scan above
   // cannot see (The Bloom names its music track in a CONFIG object, not a src=). Named explicitly per
-  // collection, then mirrored and served same-origin like any other file in the bundle.
-  if (c && Array.isArray(c.extraAssets)) for (const extra of c.extraAssets) assets.add(extra.replace(/^\.?\//, ''));
+  // collection, then mirrored and served same-origin like any other file in the bundle. A {token}
+  // placeholder resolves to this piece's hash seed (inkField fetch()es its per-token recording
+  // lib/<token>.json by location.hash, so the scan never sees it); a static name (a font) is used as-is.
+  const hashSeed = (u.hash || '').replace(/^#/, '');
+  if (c && Array.isArray(c.extraAssets)) for (const extra of c.extraAssets) assets.add(extra.replace(/\{token\}/g, hashSeed).replace(/^\.?\//, ''));
   for (const rel of assets) {
     const buf = await fetchBuf(base + rel);
     const dest = path.join(out, rel);
@@ -1050,8 +1134,10 @@ async function mirrorInto(c, out, sourceUrl) {
   // collection fires the artist's own handler once (start the bloom / toggle the easter egg); a
   // speedControl collection gets a cosine sweep (Golden Lining) or, for the squiggle, the combined squiggle
   // hook (which drives its loops/speed AND its background from the display params); other Animate-control
-  // pieces get the generic fire-once hook. Self-animating / still pieces (Kittoe, send/receive) get none.
-  const hook = c && c.controlHook === 'bounce' ? BOUNCE_HOOK
+  // pieces get the generic fire-once hook. inkField's stageHook is unconditional stage cleanup (black
+  // background + HUD off), not a control. Self-animating / still pieces (Kittoe, send/receive) get none.
+  const hook = c && c.stageHook === 'inkfield' ? INKFIELD_HOOK
+    : c && c.controlHook === 'bounce' ? BOUNCE_HOOK
     : c && c.choiceHook === 'tiles' ? TILES_HOOK
     : c && c.choiceHook === 'snow' ? SNOW_HOOK
     : c && c.animateHook === 'bloom' ? BLOOM_HOOK

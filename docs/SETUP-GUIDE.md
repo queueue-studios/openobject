@@ -206,6 +206,10 @@ whole picture; a **Display** setting (in Settings) lets you choose **Static**, w
 still, or the shuffling **Tiled** version. Tiled comes in **Low**, **Medium**, and **High** quality so you can
 match it to your display. It starts on **Low**, which shuffles smoothly on any display; on a powerful display
 (like a Mac) you can raise it to Medium or High for a sharper picture.
+And Aluan Wang's *inkField* is a generative ink painting that draws itself onto paper, stroke by stroke, over a
+minute or two, then starts a fresh one and keeps going. Each piece composes differently, some tall, some square,
+and a tall one sits centered with black to either side. There's nothing to adjust, it just plays; because it paints
+slowly, you may want to **Pin** it (or give the Rotation a longer time per piece) so you can watch a whole painting form.
 The supported collections live in the **Settings** tab, under
 **Connected Collections**, where you can hide ones you don't own and, for collections that have something to
 adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect, snowfall, or a Tiled/Static display. This is new and **curated**: only collections that have been

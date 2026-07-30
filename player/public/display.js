@@ -128,8 +128,15 @@ function render(layer, item, onReady) {
     el.setAttribute('sandbox', 'allow-scripts allow-same-origin'); // runs scripts; can't navigate/popup
     el.addEventListener('load', onReady, { once: true });
     const params = [];
-    const qIdx = item.source_url ? item.source_url.indexOf('?') : -1;
-    if (qIdx >= 0) params.push(item.source_url.slice(qIdx + 1));         // per-piece seed (shared bundles)
+    // A shared-bundle collection carries its per-piece seed in the official URL: usually a ?query (folded
+    // into params below), but for some (inkField) a #fragment the sketch reads from location.hash. Split the
+    // two so the query seed never swallows the fragment, and re-append the fragment to the local iframe URL.
+    const srcUrl = item.source_url || '';
+    const srcHashIdx = srcUrl.indexOf('#');
+    const srcFrag = srcHashIdx >= 0 ? srcUrl.slice(srcHashIdx) : '';     // '#38' (hash-seeded shared bundle)
+    const srcNoFrag = srcHashIdx >= 0 ? srcUrl.slice(0, srcHashIdx) : srcUrl;
+    const qIdx = srcNoFrag.indexOf('?');
+    if (qIdx >= 0) params.push(srcNoFrag.slice(qIdx + 1));               // per-piece seed (shared bundles)
     if (item.rpcUrl) params.push('rpc_url=' + encodeURIComponent(item.rpcUrl)); // live RPC override
     if (item.animate) params.push('ooanim=1');                          // fire the bundle's animate hook
     if (item.speed != null) params.push('oospeed=' + encodeURIComponent(item.speed)); // 0..10 cosine sweep speed
@@ -137,7 +144,7 @@ function render(layer, item, onReady) {
     const ctl = gatedControls(item); // general controls → ?oo_<key>=value; the display's Sound gate forces audio controls silent when muted (§12)
     if (ctl) for (const k in ctl) params.push('oo_' + k + '=' + encodeURIComponent(ctl[k]));
     const tokenSeg = item.perToken && item.token_id != null ? '/' + encodeURIComponent(item.token_id) : '';
-    el.src = '/collections/' + item.collection + tokenSeg + '/index.html' + (params.length ? '?' + params.join('&') : '');
+    el.src = '/collections/' + item.collection + tokenSeg + '/index.html' + (params.length ? '?' + params.join('&') : '') + srcFrag;
     // Some collections compose the art in a centered inset with a black margin (e.g. send/receive's
     // sprite card fills the middle 60%). `crop` zooms the iframe so the art reaches the panel edges
     // (HANDOFF §6). Oversizing the iframe (not CSS-scaling) keeps the generator rendering at full
