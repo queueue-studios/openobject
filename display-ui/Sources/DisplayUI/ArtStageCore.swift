@@ -33,21 +33,28 @@ public struct ArtStageCore: View {
     @State private var audioBus = AudioBus()
 
     public var body: some View {
-        ZStack {
-            Color.black
+        GeometryReader { geo in
+            // The wordmark on the text states is 46% of the smaller stage dimension (vmin), matching the
+            // web display's 46vmin and the frame; sized to the actual stage so it reads right from an
+            // iPhone up to the TV, instead of a fixed point size that overflows a phone.
+            let markSize = 0.46 * min(geo.size.width, geo.size.height)
+            ZStack {
+                Color.black
 
-            // Connecting / idle / sleep marks sit BEHIND the art so a piece crossfades in over them and
-            // fades out to reveal them, never flashing bare black (display.js hides the idle mark as the
-            // piece fades in, not before).
-            stateMark
+                // Connecting / idle / sleep marks sit BEHIND the art so a piece crossfades in over them and
+                // fades out to reveal them, never flashing bare black (display.js hides the idle mark as the
+                // piece fades in, not before).
+                stateMark(markSize: markSize)
 
-            // The current art (persisted across the async load of the next piece, so the crossfade has
-            // something to fade FROM). Keyed by id so a new piece opacity-crossfades in.
-            if let media = shownMedia, let id = shownID {
-                MediaView(media: media, fit: shownFit, muted: muted, audioBus: audioBus)
-                    .id(id)
-                    .transition(.opacity)
+                // The current art (persisted across the async load of the next piece, so the crossfade has
+                // something to fade FROM). Keyed by id so a new piece opacity-crossfades in.
+                if let media = shownMedia, let id = shownID {
+                    MediaView(media: media, fit: shownFit, muted: muted, audioBus: audioBus)
+                        .id(id)
+                        .transition(.opacity)
+                }
             }
+            .frame(width: geo.size.width, height: geo.size.height)
         }
         .ignoresSafeArea()
         .task(id: currentItemID) { await syncStage() }
@@ -60,13 +67,13 @@ public struct ArtStageCore: View {
     // The non-art background for right now (§13): the Connecting mark until the Host first answers, then
     // the branded splash when the rotation has nothing renderable, or the dimmed sleep mark. While a piece
     // is playing this is empty, since the art covers the stage.
-    @ViewBuilder private var stateMark: some View {
+    @ViewBuilder private func stateMark(markSize: CGFloat) -> some View {
         if !player.hasConnected {
-            ConnectingView(name: host.name)
+            ConnectingView(name: host.name, markSize: markSize)
         } else {
             switch player.screen {
-            case .idle:      IdleSplashView(address: controlPanelAddress)
-            case .sleeping:  SleepView()
+            case .idle:      IdleSplashView(address: controlPanelAddress, markSize: markSize)
+            case .sleeping:  SleepView(markSize: markSize)
             case .playing:   EmptyView()
             }
         }
@@ -103,17 +110,18 @@ public struct ArtStageCore: View {
     }
 }
 
-// The branded wordmark, sized and placed the same across the stage's text states so they don't jump.
-// The 500pt box is 46% of the 1080pt stage height, matching the web display's 46vmin idle/sleep mark so
-// the wordmark reads at the same vertical proportion on the frame and on the app (§13, Branding). The
-// image asset "OpenObjectLogo" is provided by each app's asset catalog (resolved from the main bundle).
+// The branded wordmark, sized to the stage (46% of its smaller dimension) so it reads at the same vertical
+// proportion from a phone to the TV, matching the web display's 46vmin idle/sleep mark (§13, Branding).
+// The image asset "OpenObjectLogo" is provided by each app's asset catalog (resolved from the main bundle).
 private struct StageMark: View {
+    let size: CGFloat
+
     var body: some View {
         Image("OpenObjectLogo")
             .renderingMode(.template)
             .resizable()
             .scaledToFit()
-            .frame(width: 500, height: 500)
+            .frame(width: size, height: size)
             .foregroundStyle(.white)
             .accessibilityLabel("OpenObject")
     }
@@ -123,10 +131,11 @@ private struct StageMark: View {
 // progress so the opening beat never reads as empty or broken.
 struct ConnectingView: View {
     let name: String
+    let markSize: CGFloat
 
     var body: some View {
         VStack(spacing: 32) {
-            StageMark()
+            StageMark(size: markSize)
             Text("Connecting to \(name)…")
                 .font(.title3)
                 .foregroundStyle(.secondary)
@@ -140,10 +149,11 @@ struct ConnectingView: View {
 // rather than what is missing. Shown when connected to a Host whose rotation has nothing renderable.
 struct IdleSplashView: View {
     let address: String
+    let markSize: CGFloat
 
     var body: some View {
         VStack(spacing: 32) {
-            StageMark()
+            StageMark(size: markSize)
             Text("Add art at \(address)")
                 .font(.title3)
                 .foregroundStyle(.secondary)
@@ -157,12 +167,13 @@ struct IdleSplashView: View {
 // few points on a slow cycle so a static mark can't sit on the panel (anti-burn-in). Mirrors the web
 // display's .asleep mark: opacity 0.05, a random +/-6 pt shift every 90s gliding over a 4s ease.
 struct SleepView: View {
+    let markSize: CGFloat
     @State private var drift: CGSize = .zero
 
     var body: some View {
         ZStack {
             Color.black
-            StageMark()
+            StageMark(size: markSize)
                 .opacity(0.05)
                 .offset(drift)
                 .animation(.easeInOut(duration: 4), value: drift)

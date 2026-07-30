@@ -66,9 +66,11 @@ targets:
         NSLocalNetworkUsageDescription: "OpenObject finds Hosts on your local network to show their art."
         NSBonjourServices:
           - _openobject._tcp
-        # A launch screen is required for the app to run full-screen at native size on modern iOS; an
-        # empty dict is the system default (a plain background), which suits our black stage.
-        UILaunchScreen: {}
+        # A launch screen is required for the app to run full-screen at native size on modern iOS. Give it
+        # a black background (the LaunchBackground color asset) so an always-dark art app never flashes
+        # white before its UI loads (the default would be the system background, i.e. white in Light mode).
+        UILaunchScreen:
+          UIColorName: LaunchBackground
         # Orientation: the app DECLARES every orientation it ever uses. The Host picker locks itself to
         # landscape at runtime (per-screen, G3); the art stage follows the device (G2). iPad allows all
         # four, iPhone omits upside-down per convention.

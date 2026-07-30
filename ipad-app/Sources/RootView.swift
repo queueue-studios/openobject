@@ -15,7 +15,7 @@ struct RootView: View {
                 HostPickerView(model: model)
             case .display(let host):
                 ArtStageView(player: model.player, host: host, pipeline: model.pipeline,
-                             muted: !model.soundOn)
+                             muted: !model.soundOn, onExit: { model.showPicker() })
             }
         }
         .ignoresSafeArea()

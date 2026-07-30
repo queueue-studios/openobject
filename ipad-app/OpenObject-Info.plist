@@ -29,7 +29,10 @@
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>OpenObject finds Hosts on your local network to show their art.</string>
 	<key>UILaunchScreen</key>
-	<dict/>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
