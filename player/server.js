@@ -930,6 +930,9 @@ const withConnectedFlags = (item) => {
     rpcUrl: c && c.liveRpc ? c.rpc : null,
     crop: c && c.crop ? c.crop : null, // art occupies this centered fraction; display zooms it edge to edge
     aspect: c && c.aspect ? c.aspect : null, // declared aspect → display letterboxes it natively (§6)
+    // A GPU-heavy collection's pixel density for a FRAME display (display.js applies it only there); other
+    // displays keep the bundle's own default. Lets the weak XXL GPU render inkField ~4x lighter (§8).
+    framePixelDensity: c && c.framePixelDensity != null ? c.framePixelDensity : null,
   };
 };
 
@@ -994,6 +997,7 @@ app.get('/api/display', ah(async (_req, res) => {
     asleep: settings.asleep,
     retroArcade: settings.retroArcade, // hidden self-playing demo: the display swaps to the canvas
     muted: settings.muted, // web display Sound: Off mutes uploaded video (§12)
+    role: identity.deviceRole(), // 'frame' | 'standalone': lets the Display pick a frame-safe render density
     source: 'library',
   });
 }));

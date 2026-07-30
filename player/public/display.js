@@ -50,6 +50,8 @@ let items = [];
 let durationMs = 8000;
 let mode = 'sequence';
 let muted = true; // the web display's Sound setting (§12): true = video muted. Set from /api/display each poll.
+let deviceRole = null; // 'frame' | 'standalone', from /api/display each poll — lets render() pick a frame-safe
+                       // pixel density for a GPU-heavy connected collection. Comes with the items (no race).
 
 let pos = -1; // index in `items` of the piece on screen
 let currentId = null; // its library id — survives reordering as the library changes
@@ -137,6 +139,9 @@ function render(layer, item, onReady) {
     const srcNoFrag = srcHashIdx >= 0 ? srcUrl.slice(0, srcHashIdx) : srcUrl;
     const qIdx = srcNoFrag.indexOf('?');
     if (qIdx >= 0) params.push(srcNoFrag.slice(qIdx + 1));               // per-piece seed (shared bundles)
+    // A GPU-heavy collection (inkField) renders at a lighter pixelDensity on the weak frame GPU: pass the
+    // bundle's own ?_pix param ONLY on a frame Display, so a capable display keeps the sharper default (§8).
+    if (item.framePixelDensity != null && deviceRole === 'frame') params.push('_pix:' + item.framePixelDensity);
     if (item.rpcUrl) params.push('rpc_url=' + encodeURIComponent(item.rpcUrl)); // live RPC override
     if (item.animate) params.push('ooanim=1');                          // fire the bundle's animate hook
     if (item.speed != null) params.push('oospeed=' + encodeURIComponent(item.speed)); // 0..10 cosine sweep speed
@@ -328,6 +333,7 @@ function apply(state) {
   durationMs = state.durationMs;
   mode = state.mode;
   muted = !!state.muted; // web display Sound: Off mutes uploaded video (§12)
+  if (state.role) deviceRole = state.role; // this Host's role, for a frame-safe render density (see render())
 
   if (state.retroArcade) return enterArcade(); // hidden self-playing demo (easter egg) owns the stage
   if (arcadeOn) exitArcade();                  // just left the demo — fall through and resume the rotation

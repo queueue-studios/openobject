@@ -463,6 +463,14 @@ const REGISTRY = [
     // for a mixed-format series); a non-square token letterboxes on the bare stage natively (§6).
     animateDefault: false,
     animatable: false,
+    // GPU-heavy (per-frame full-canvas shaders). In collector mode the bundle renders at pixelDensity 2
+    // (double the recording's baked canvas, e.g. ~1800x1800 for the square token), which the XXL's weak GPU
+    // cannot sustain: it stutters, and a two-piece crossfade dropped the WebGL context (blank + flashing).
+    // On a FRAME display we pass the bundle's own `?_pix:1` to render at pixelDensity 1 (a quarter of the
+    // pixels, CSS-upscaled to the panel: softer but smooth, and fine for an ink painting); a capable display
+    // (a Mac) keeps the sharper default 2. Applied at display time per device role (display.js), so it needs
+    // no re-mirror: an existing piece picks it up as soon as the display updates. See §20 2026-07-29.
+    framePixelDensity: 1,
     // The bundle ships an "artist" mode (a full in-page editor) and a "collector" mode (clean, cursor
     // hidden, auto-play, loop pinned on); collector only auto-engages on the fxhash platform, so force it.
     // That one flip yields the clean display AND the loop. Then the INKFIELD_HOOK (black stage + HUD off)
