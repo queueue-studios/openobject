@@ -25,6 +25,7 @@ public struct ArtStageCore: View {
         self.muted = muted
     }
 
+    @Environment(\.scenePhase) private var scenePhase
     @State private var shownID: String?
     @State private var shownMedia: RenderableMedia?
     @State private var shownFit: Fit = .fit
@@ -62,6 +63,12 @@ public struct ArtStageCore: View {
         // playing video defeats it on its own, but stills and animations do not, so hold it off here.
         .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
+        // Re-assert idle-defeat when the app returns to the foreground: iOS resets isIdleTimerDisabled to
+        // false whenever the app backgrounds, and .onAppear does NOT fire again on foreground, so without
+        // this the stage would stop defeating auto-lock after any background/foreground cycle.
+        .onChange(of: scenePhase) { _, phase in
+            UIApplication.shared.isIdleTimerDisabled = (phase == .active)
+        }
     }
 
     // The non-art background for right now (§13): the Connecting mark until the Host first answers, then

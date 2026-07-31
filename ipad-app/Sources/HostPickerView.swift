@@ -9,6 +9,7 @@ import DisplayCore
 struct HostPickerView: View {
     @Bindable var model: AppModel
     @FocusState private var addressFocused: Bool
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack {
@@ -39,6 +40,13 @@ struct HostPickerView: View {
             .padding(28)
         }
         .onAppear { model.startDiscoveryIfPicking() }
+        // First launch: the Local Network permission is granted while a browse is already in flight, which
+        // the in-flight browser does not pick up. When the app becomes active again (right after that
+        // permission alert is dismissed) with nothing found yet, restart browsing so the Host appears
+        // without a manual relaunch.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active && model.hosts.isEmpty { model.rescan() }
+        }
     }
 
     @ViewBuilder private var discoveredHosts: some View {

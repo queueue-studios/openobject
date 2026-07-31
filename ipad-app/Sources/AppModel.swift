@@ -70,6 +70,22 @@ final class AppModel {
         }
     }
 
+    /// Re-kick discovery from scratch. Needed on first launch: the NWBrowser started before the Local
+    /// Network permission prompt does not pick up the grant, so once the user allows it (the app becomes
+    /// active again) we restart browsing and the Host appears without a manual relaunch. Also serves as a
+    /// manual rescan. No-op unless the picker is showing.
+    func rescan() {
+        guard route == .picker else { return }
+        discovery.stop()
+        discovery.start()
+        scanning = true
+        scanFloor?.cancel()
+        scanFloor = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(4))
+            self?.scanning = false
+        }
+    }
+
     /// Leave the art stage for the picker. Stops playback so nothing polls in the background; the picker
     /// restarts discovery when it appears.
     func showPicker() {

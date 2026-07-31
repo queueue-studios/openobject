@@ -66,6 +66,11 @@ targets:
         NSLocalNetworkUsageDescription: "OpenObject finds Hosts on your local network to show their art."
         NSBonjourServices:
           - _openobject._tcp
+        # Hosts serve over plain HTTP on the LAN (the frame and a Mac; no TLS on a home network), so allow
+        # local-network HTTP through App Transport Security. NSAllowsLocalNetworking covers .local names and
+        # private-range IPs only; it does NOT permit arbitrary public HTTP (a public review Host is HTTPS).
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         # A launch screen is required for the app to run full-screen at native size on modern iOS. Give it
         # a black background (the LaunchBackground color asset) so an always-dark art app never flashes
         # white before its UI loads (the default would be the system background, i.e. white in Light mode).
