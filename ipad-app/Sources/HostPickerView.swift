@@ -51,43 +51,44 @@ struct HostPickerView: View {
 
     @ViewBuilder private var discoveredHosts: some View {
         if model.hosts.isEmpty {
-            VStack(spacing: 14) {
-                if model.scanning {
-                    ProgressView().tint(.white).scaleEffect(1.2)
-                    Text("Looking for Hosts on your network…")
-                        .font(.title3).foregroundStyle(.secondary)
-                } else {
-                    Text("No Hosts found on your network.")
-                        .font(.title3).foregroundStyle(.secondary)
-                    Text("Once an OpenObject Host is running on your network, it will appear here automatically.")
-                        .font(.callout).foregroundStyle(.tertiary)
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .frame(minHeight: 120)
+            emptyState
         } else {
             VStack(spacing: 16) {
                 Text("Choose a Host").font(.headline).foregroundStyle(.secondary)
                 VStack(spacing: 12) {
                     ForEach(model.hosts) { host in
-                        Button { model.select(host) } label: {
-                            HStack(spacing: 14) {
-                                Image(systemName: "play.tv")
-                                Text(host.name).font(.title3).fontWeight(.medium).lineLimit(1)
-                                Spacer(minLength: 0)
-                            }
-                            .padding(.vertical, 16).padding(.horizontal, 20)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(.white)
+                        PickerRow(icon: "play.tv", title: host.name) { model.select(host) }
                     }
                 }
             }
             .frame(minHeight: 120)
         }
+    }
+
+    // The empty state (§13): honest that no Host was found. When the public Gallery actually answers
+    // (probe-gated), it offers the OpenObject Gallery so the screen is never a dead end. The Gallery row is
+    // styled exactly like a discovered-Host row (same size/area); its name plus the framed-picture icon say
+    // what it is, so no instructional copy is needed. When the Gallery is unreachable (or still being
+    // probed) the plain "it will appear here automatically" reassurance stands in its place.
+    @ViewBuilder private var emptyState: some View {
+        VStack(spacing: 14) {
+            if model.scanning {
+                ProgressView().tint(.white).scaleEffect(1.2)
+                Text("Looking for Hosts on your network…")
+                    .font(.title3).foregroundStyle(.secondary)
+            } else {
+                Text("No Hosts found on your network.")
+                    .font(.title3).foregroundStyle(.secondary)
+                if model.galleryReachable == true {
+                    PickerRow(icon: "photo.artframe", title: "OpenObject Gallery") { model.connectToGallery() }
+                } else {
+                    Text("Once an OpenObject Host is running on your network, it will appear here automatically.")
+                        .font(.callout).foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                }
+            }
+        }
+        .frame(minHeight: 120)
     }
 
     @ViewBuilder private var manualEntry: some View {
@@ -116,6 +117,31 @@ struct HostPickerView: View {
     private func submit() {
         addressFocused = false
         Task { await model.submitManualEntry() }
+    }
+}
+
+// A tappable row in the picker: an SF Symbol + a title in a rounded fill, full-width. Shared by the
+// discovered-Host rows (play.tv) and the empty-state OpenObject Gallery row (photo.artframe) so both read
+// at the same size and area; only the icon and label differ (§13).
+private struct PickerRow: View {
+    let icon: String
+    let title: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: icon)
+                Text(title).font(.title3).fontWeight(.medium).lineLimit(1)
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 16).padding(.horizontal, 20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.white)
     }
 }
 

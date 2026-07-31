@@ -30,6 +30,11 @@ final class AppModel {
     var manualError: String?
     private(set) var scanning = false
 
+    /// Whether the public OpenObject Gallery answered its last probe: nil while checking, then true/false.
+    /// The picker offers the Gallery in its empty state ONLY when this is true, so a no-internet / CDN-down
+    /// state falls back to the plain "No Hosts found" copy instead of a dead button (§12/§13).
+    private(set) var galleryReachable: Bool?
+
     // The app-owned Sound setting (§10): whether this device plays a scored video's audio. Sticky and
     // default On; the device's own volume/mute is the loudness control above it. Only uploaded videos can
     // carry audio here (Connected scored pieces are skipped), so this gates exactly that.
@@ -40,6 +45,7 @@ final class AppModel {
 
     @ObservationIgnored private let store: HostStore
     @ObservationIgnored private var scanFloor: Task<Void, Never>?
+    @ObservationIgnored private var galleryProbe: Task<Void, Never>?
 
     init(store: HostStore = UserDefaultsHostStore()) {
         self.store = store
@@ -61,6 +67,7 @@ final class AppModel {
     func startDiscoveryIfPicking() {
         guard route == .picker else { return }
         discovery.start()
+        probeGallery()
         scanning = true
         // Hold "Looking…" briefly so a Host about to resolve doesn't flash the empty copy first (§13).
         scanFloor?.cancel()
@@ -78,6 +85,7 @@ final class AppModel {
         guard route == .picker else { return }
         discovery.stop()
         discovery.start()
+        probeGallery()
         scanning = true
         scanFloor?.cancel()
         scanFloor = Task { [weak self] in
@@ -108,6 +116,35 @@ final class AppModel {
         clearManualEntry()
         player.start(host: host)
         route = .display(host)
+    }
+
+    /// Probe the public OpenObject Gallery (a short-timeout GET of its /api/display) so the picker only
+    /// offers it when it will actually work (§13). Runs alongside discovery; the result drives the
+    /// empty-state row. No-op-safe to call repeatedly (each call supersedes the last probe).
+    func probeGallery() {
+        galleryProbe?.cancel()
+        galleryReachable = nil
+        galleryProbe = Task { [weak self] in
+            let config = URLSessionConfiguration.ephemeral
+            config.timeoutIntervalForRequest = 3
+            config.waitsForConnectivity = false
+            let client = DisplayClient(session: URLSession(configuration: config))
+            let ok = (try? await client.fetchDisplay(from: .gallery)) != nil
+            guard !Task.isCancelled else { return }
+            self?.galleryReachable = ok
+        }
+    }
+
+    /// Connect to the public OpenObject Gallery WITHOUT remembering it (§12): unlike select(host) it saves
+    /// no default Host, so the next launch returns to the picker and re-discovers the owner's real frame
+    /// rather than reopening the Gallery. Offered only from the probe-gated empty-state row.
+    func connectToGallery() {
+        discovery.stop()
+        scanFloor?.cancel()
+        galleryProbe?.cancel()
+        clearManualEntry()
+        player.start(host: .gallery)
+        route = .display(.gallery)
     }
 
     /// Connect to a typed address (§5). A malformed entry, or one no Host answers, is a plain error (§13)

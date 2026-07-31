@@ -48,43 +48,43 @@ struct HostPickerView: View {
         .background(Color.black)
         .onAppear {
             model.startDiscoveryIfPicking()
-            pinFocusToFirstHost()
+            pinInitialFocus()
         }
         // Hosts arrive (and re-sort) asynchronously over Bonjour, so keep focus on whichever row is
         // currently first until the owner moves it themselves - otherwise a late host that sorts ahead
         // leaves focus stranded on the wrong row (as it did on the second row before this).
-        .onChange(of: model.hosts) { _, _ in pinFocusToFirstHost() }
+        .onChange(of: model.hosts) { _, _ in pinInitialFocus() }
+        // The Gallery row appears only after its probe answers (which lands after onAppear), so steer focus
+        // onto it then, the same way a discovered host gets it.
+        .onChange(of: model.galleryReachable) { _, _ in pinInitialFocus() }
         .onChange(of: focusedHost) { _, newValue in
-            // Any focus resting somewhere other than the current first row is the owner navigating (a
-            // lower row, or the address field, which clears focusedHost). Once that happens, stop steering.
-            if newValue != model.hosts.first?.id { ownerTookFocus = true }
+            // Focus resting anywhere other than the expected initial row (the first host, or the Gallery row
+            // when it is offered) is the owner navigating. Once that happens, stop steering.
+            if newValue != expectedInitialFocus { ownerTookFocus = true }
         }
     }
 
-    // Keep initial focus on the first host row while the list is still settling, and only until the owner
-    // has taken focus somewhere themselves (so a late-arriving host never yanks the cursor from under them).
-    private func pinFocusToFirstHost() {
-        guard !ownerTookFocus, let first = model.hosts.first else { return }
-        focusedHost = first.id
+    // Keep initial focus on the primary action while the screen is still settling, and only until the owner
+    // has taken focus themselves (so a late-arriving host never yanks the cursor from under them). That
+    // primary action is the first discovered host, or (when none is found yet) the OpenObject Gallery row
+    // once its probe answers.
+    private func pinInitialFocus() {
+        guard !ownerTookFocus else { return }
+        if let first = model.hosts.first {
+            focusedHost = first.id
+        } else if model.galleryReachable == true {
+            focusedHost = Host.gallery.id
+        }
+    }
+
+    // Where initial focus should rest: the first host, else the Gallery row when it is offered.
+    private var expectedInitialFocus: String? {
+        model.hosts.first?.id ?? (model.galleryReachable == true ? Host.gallery.id : nil)
     }
 
     @ViewBuilder private var discoveredHosts: some View {
         if model.hosts.isEmpty {
-            VStack(spacing: 20) {
-                if model.scanning {
-                    ProgressView().scaleEffect(1.6).tint(.white)
-                    Text("Looking for Hosts on your network…")
-                        .font(.title3).foregroundStyle(.secondary)
-                } else {
-                    Text("No Hosts found on your network.")
-                        .font(.title3).foregroundStyle(.secondary)
-                    Text("Your Apple TV is ready to connect. Once an OpenObject Host is running on your network, it will appear here automatically.")
-                        .font(.callout).foregroundStyle(.tertiary)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: 1100)
-                }
-            }
-            .frame(minHeight: 200)
+            emptyState
         } else {
             VStack(spacing: 24) {
                 Text("Choose a Host")
@@ -107,6 +107,44 @@ struct HostPickerView: View {
             }
             .frame(minHeight: 200)
         }
+    }
+
+    // The empty state (§13): honest that no Host was found. When the public Gallery actually answers
+    // (probe-gated), it offers the OpenObject Gallery so the screen is never a dead end. The Gallery row is
+    // a focusable row styled like a discovered-Host row (photo.artframe instead of play.tv); its name says
+    // what it is, so no instructional copy. Unreachable (or still probing) shows the reassurance copy.
+    @ViewBuilder private var emptyState: some View {
+        VStack(spacing: 20) {
+            if model.scanning {
+                ProgressView().scaleEffect(1.6).tint(.white)
+                Text("Looking for Hosts on your network…")
+                    .font(.title3).foregroundStyle(.secondary)
+            } else {
+                Text("No Hosts found on your network.")
+                    .font(.title3).foregroundStyle(.secondary)
+                if model.galleryReachable == true {
+                    VStack(spacing: 16) {
+                        Button { model.connectToGallery() } label: {
+                            HStack(spacing: 20) {
+                                Image(systemName: "photo.artframe")
+                                Text("OpenObject Gallery").font(.title2).lineLimit(1)
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .focused($focusedHost, equals: Host.gallery.id)
+                    }
+                    .frame(width: 1500)
+                } else {
+                    Text("Your Apple TV is ready to connect. Once an OpenObject Host is running on your network, it will appear here automatically.")
+                        .font(.callout).foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 1100)
+                }
+            }
+        }
+        .frame(minHeight: 200)
     }
 
     @ViewBuilder private var manualEntry: some View {

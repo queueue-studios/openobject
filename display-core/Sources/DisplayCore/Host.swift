@@ -51,3 +51,18 @@ public extension Host {
         return Host(id: baseURL.absoluteString, name: host, baseURL: baseURL, version: nil)
     }
 }
+
+public extension Host {
+    /// The public OpenObject Gallery: a hosted demo Host the picker offers in its empty state (no Host
+    /// found on the network) so a new owner (or an App Store reviewer) sees real art immediately without
+    /// running a Host of their own (§12/§13). It is an ordinary Host (this app is a dumb client of its
+    /// /api/display); the art lives on that public origin, never in the app or repo (§3). Choosing it is
+    /// NON-persisting (AppModel.connectToGallery), so the next launch still discovers the owner's real
+    /// frame. The picker only shows it when a live probe of this origin answers, so it is never a dead
+    /// button. HTTPS, so it needs no ATS exception (unlike LAN Hosts).
+    static let gallery = Host(
+        id: "openobject-gallery",
+        name: "OpenObject Gallery",
+        baseURL: URL(string: "https://gallery.openobject.io")!
+    )
+}
