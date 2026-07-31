@@ -40,6 +40,7 @@ final class AppModel {
     @ObservationIgnored private let store: HostStore
     @ObservationIgnored private var scanFloor: Task<Void, Never>?
     @ObservationIgnored private var galleryProbe: Task<Void, Never>?
+    @ObservationIgnored private var connectWatchdog: Task<Void, Never>?
 
     init(store: HostStore = UserDefaultsHostStore()) {
         self.store = store
@@ -51,6 +52,7 @@ final class AppModel {
         if let remembered = store.loadDefaultHost() {
             route = .display(remembered)
             player.start(host: remembered)
+            startRememberedHostWatchdog()
         }
     }
 
@@ -74,6 +76,7 @@ final class AppModel {
     /// Leave the art stage for the picker (the Menu/Back action, §14). Stops playback so nothing polls in
     /// the background; the picker restarts discovery when it appears.
     func showPicker() {
+        connectWatchdog?.cancel()
         player.stop()
         clearManualEntry()
         route = .picker
@@ -91,6 +94,7 @@ final class AppModel {
         store.saveDefaultHost(host)
         discovery.stop()
         scanFloor?.cancel()
+        connectWatchdog?.cancel()
         clearManualEntry()
         player.start(host: host)
         route = .display(host)
@@ -120,9 +124,31 @@ final class AppModel {
         discovery.stop()
         scanFloor?.cancel()
         galleryProbe?.cancel()
+        connectWatchdog?.cancel()
         clearManualEntry()
         player.start(host: .gallery)
         route = .display(.gallery)
+    }
+
+    /// Cold-launch recovery: when the app opens straight to a remembered Host that turns out to be gone,
+    /// don't sit on "Connecting…" forever. If the Host hasn't answered within a short grace period (and has
+    /// never connected this session), fall back to the picker, which discovers Hosts and offers the Gallery.
+    /// A Host that connects and later drops still holds its last frame (§16); this covers only the
+    /// never-connected launch case, so a real Host that is simply slow to boot still gets picked up (either
+    /// here, or by discovery once the picker is showing).
+    private func startRememberedHostWatchdog() {
+        connectWatchdog?.cancel()
+        connectWatchdog = Task { [weak self] in
+            for _ in 0..<16 {                                    // ~8s, checked every 0.5s
+                try? await Task.sleep(for: .milliseconds(500))
+                guard let self, !Task.isCancelled else { return }
+                if self.player.hasConnected { return }           // connected in time: stay on the art
+                guard case .display = self.route else { return }  // user already moved on
+            }
+            guard let self, !Task.isCancelled,
+                  case .display = self.route, !self.player.hasConnected else { return }
+            self.showPicker()                                    // never answered: recover to the picker
+        }
     }
 
     /// Connect to a typed address (§5). A malformed entry, or one no Host answers, is a plain error (§13)

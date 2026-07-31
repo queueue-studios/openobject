@@ -126,7 +126,9 @@ struct HostPickerView: View {
                     VStack(spacing: 16) {
                         Button { model.connectToGallery() } label: {
                             HStack(spacing: 20) {
-                                Image(systemName: "photo.artframe")
+                                // photo.artframe reads smaller than play.tv at the same size (more built-in
+                                // padding), so bump it to match the discovered-host rows.
+                                Image(systemName: "photo.artframe").imageScale(.large)
                                 Text("OpenObject Gallery").font(.title2).lineLimit(1)
                                 Spacer(minLength: 0)
                             }

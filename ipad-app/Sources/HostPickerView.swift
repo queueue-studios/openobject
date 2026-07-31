@@ -80,7 +80,7 @@ struct HostPickerView: View {
                 Text("No Hosts found on your network.")
                     .font(.title3).foregroundStyle(.secondary)
                 if model.galleryReachable == true {
-                    PickerRow(icon: "photo.artframe", title: "OpenObject Gallery") { model.connectToGallery() }
+                    PickerRow(icon: "photo.artframe", title: "OpenObject Gallery", iconFont: .title3) { model.connectToGallery() }
                 } else {
                     Text("Once an OpenObject Host is running on your network, it will appear here automatically.")
                         .font(.callout).foregroundStyle(.tertiary)
@@ -126,12 +126,16 @@ struct HostPickerView: View {
 private struct PickerRow: View {
     let icon: String
     let title: String
+    // Per-icon size: different SF Symbols read at different visual sizes at the same point size, so a glyph
+    // with more built-in padding (photo.artframe) is bumped to match a fuller one (play.tv). Default keeps
+    // the host row's icon unchanged.
+    var iconFont: Font = .body
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 14) {
-                Image(systemName: icon)
+                Image(systemName: icon).font(iconFont)
                 Text(title).font(.title3).fontWeight(.medium).lineLimit(1)
                 Spacer(minLength: 0)
             }
