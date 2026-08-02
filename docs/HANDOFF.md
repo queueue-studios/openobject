@@ -526,6 +526,24 @@ Since 2026-06-19 there is also **`docs/MAC-DISPLAY-SETUP.md`**, a standalone **n
 
 **Folder Collections is documented below; it is now largely built (Phase A local and the Phase B frame), leaving the Apple TV client as the one remaining seam.** Earlier seams once listed here have since shipped (Connected Collections, §8; SVG support, §6) or were dropped as out of scope; build notes for what shipped live in §20.
 
+### Golden Lining as a pre-rendered video: a per-piece WebKit fallback (noted 2026-08-02)
+
+Render **Golden Lining** (Juicy Julio, `dune-reveries-editions` token 1) to a seamless looping MP4 at two sizes, roughly 2K and 4K, so the viewer apps can play it as a plain video clip. The piece renders correctly on Chromium but is broken on WebKit (grey/black tile garbage on Safari and iPhone, from the per-frame `filter(GRAY)` canvas readback; §20, 2026-06-30), so it is exactly the kind of piece a video could rescue.
+
+**Scope this narrowly.** This is *not* the general "the Host pre-renders every Connected piece" idea recorded in `docs/TVOS-APP-PLAN.md` §2, which Matt has set aside. It is a targeted workaround for the handful of pieces that fail on WebKit, and it is **gated on two conditions**: (1) a Safari survey of all 13 collections shows only a few incompatibilities, so a per-piece fallback is proportionate rather than a de facto second rendering path, and (2) the video is judged a fair representation of the work. If many pieces fail, the blanket native-only rule stands instead.
+
+**Why this piece is the right candidate.** Most Connected pieces would go stale as video: the live on-chain ones (Perfect Everything, Pendulum) and the time-of-day one (Lost in Moffat County) change after capture. Golden Lining does not. It is a `fixedToken` piece whose bundle is fully localized (`localizeAbsolute`), so it already plays offline and deterministically; a capture stays faithful indefinitely. It is also the only route to this piece on **Apple TV**, where no web engine exists and none can be added.
+
+**What to render.** Capture our own bundle output, not the artist's verbatim original, so the frame's transforms are baked in (the `SPEED_HOOK` cosine sweep and the `hideSelectors: ['#p5_loading']` suppression); this follows the same "the archive must match the frame version" rule the desktop archival bundles use. Three specifics fall out of the collection definition in `player/src/collections.js`:
+
+- **Aspect, not a square.** The piece declares `aspect: '2124 / 1698'` (a 5:4 landscape photo letterboxed on the bare stage, §6). Render at integer multiples of that composition, 1x = 2124x1698 for the "2K" asset and 2x = 4248x3396 for the "4K", so a native player letterboxes it identically to the iframe. A 16:9 or square canvas would bake in padding the stage is supposed to supply.
+- **The loop closes for free.** The animation is a cosine sweep of the global b&w/colour opacity, so it is inherently periodic: one full cosine period is a frame-exact seamless loop with no crossfade needed. This is unlike the social demo loops, which need geometry to close on a wall bounce.
+- **The Speed control cannot survive.** `speedControl` (0..10, default 2) drives that sweep, and a video bakes in one value. Decide whether to render only the default (2) and drop the control on video-fallback displays, or render a small set of speeds; note that speed 0 (static full colour) is a still, not a loop.
+
+**Pipeline.** The tooling exists already: headless Chrome via CDP plus ffmpeg, the same path used for the social demo loops.
+
+**Open decisions.** Whether the fallback video ships inside the collection bundle or is fetched from the Host on demand; whether the viewer apps choose it automatically (a per-collection "not WebKit safe" flag, which fits how `CapabilityFilter` already skips what it cannot render) or the owner opts in; and how the Library/Rotation UI represents a piece that is connected on one display and video on another.
+
 ### Apple TV picker: review the per-Host row icon size (noted 2026-08-01)
 
 The icon to the left of each Host row in the tvOS picker (the `play.tv` SF Symbol) reads relatively small next to the same icon in the iPhone and iPad picker, noticed in the App Store screenshots. Do a detailed review of the tvOS host-row icon size and bring it up to match the iPhone visually (the empty-state Gallery row already carries an `imageScale(.large)` bump for a related reason, §20). Cosmetic and non-blocking; deferred by Matt on 2026-08-01, not worth a redo before the tvOS submission.
