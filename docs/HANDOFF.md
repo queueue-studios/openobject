@@ -526,6 +526,24 @@ Since 2026-06-19 there is also **`docs/MAC-DISPLAY-SETUP.md`**, a standalone **n
 
 **Folder Collections is documented below; it is now largely built (Phase A local and the Phase B frame), leaving the Apple TV client as the one remaining seam.** Earlier seams once listed here have since shipped (Connected Collections, §8; SVG support, §6) or were dropped as out of scope; build notes for what shipped live in §20.
 
+### Apple TV picker: review the per-Host row icon size (noted 2026-08-01)
+
+The icon to the left of each Host row in the tvOS picker (the `play.tv` SF Symbol) reads relatively small next to the same icon in the iPhone and iPad picker, noticed in the App Store screenshots. Do a detailed review of the tvOS host-row icon size and bring it up to match the iPhone visually (the empty-state Gallery row already carries an `imageScale(.large)` bump for a related reason, §20). Cosmetic and non-blocking; deferred by Matt on 2026-08-01, not worth a redo before the tvOS submission.
+
+### tvOS App Transport Security: no local-networking exception (noted 2026-08-01)
+
+`ipad-app` declares `NSAppTransportSecurity / NSAllowsLocalNetworking = true` (added in the G5 on-device fixes, so a real iPhone/iPad can reach a Host's plain HTTP on the LAN). **`tv-app` declares no ATS key at all**, yet the tvOS app is device-verified reaching the frame over plain HTTP. So it works today, but the two shells differ for no deliberate reason and the tvOS behavior is unexplained rather than designed. Investigate why tvOS permits the cleartext LAN load, and if the answer is "by luck of the current OS default", add the same `NSAllowsLocalNetworking` key to `tv-app/project.yml` for parity and durability. Not urgent: the App Store Gallery path is HTTPS and unaffected.
+
+Related, and the reason this surfaced: manual entry of a bare hostname builds an **http://** origin (`Host.manualEntry` prepends `http://` unless a scheme is typed), so any public Host typed without `https://` is blocked by ATS. The App Review notes therefore spell out `https://gallery.openobject.io` in full.
+
+### Privacy policy: the Gallery is an internet Host, not a LAN Host (noted 2026-08-01)
+
+`site/privacy/` says the Apple TV and iPad apps "talk only to a Host ... **on the same network**". That predates the OpenObject Gallery, which is a public demo Host reached over the internet (`gallery.openobject.io`). The substantive claim is still true (nothing is collected, nothing is uploaded to us), but the sentence is now incomplete. Add a line covering it, e.g. "If you choose the OpenObject Gallery, the app connects over the internet to a demo Host we publish, which serves sample artwork and collects nothing about you." Then re-sync the **Apple TV Privacy Policy** text in App Store Connect, which must match the published page (tvOS requires the policy as literal text, since a TV cannot open a URL).
+
+### Skip the export-compliance dialog on every build (noted 2026-08-01)
+
+Neither app sets `ITSAppUsesNonExemptEncryption`, so App Store Connect flags each uploaded build "Missing Compliance" and asks the App Encryption Documentation question by hand. Both apps use only the OS's HTTPS (no bundled or implemented cryptography), so adding `ITSAppUsesNonExemptEncryption = NO` to `ipad-app/project.yml` and `tv-app/project.yml` answers it declaratively and permanently. Do it before the iOS submission.
+
 ### Folder Collections (Phase A local BUILT 2026-07-08, §20; Phase B frame BUILT 2026-07-11, §20; Apple TV DESIGNED 2026-07-10, not yet built)
 
 **Goal.** Let an owner show a whole folder of files as the display, without the tedium of uploading them one by one. A folder of, say, 500 short clips becomes a single selectable source.

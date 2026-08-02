@@ -33,7 +33,7 @@ settings:
     ARCHS: arm64
     ONLY_ACTIVE_ARCH: "NO"
     SWIFT_VERSION: "5.0"         # the UI layer; DisplayCore builds in its own Swift 6 mode
-    MARKETING_VERSION: "1.6.0"   # shared version (sourced from player/package.json; release.sh syncs)
+    MARKETING_VERSION: "1.6.1"   # shared version (sourced from player/package.json; release.sh syncs)
     CURRENT_PROJECT_VERSION: "1"
     # Signed for on-device testing (Phase C6) with the Queueue Studios LLC team (J87JRCN9RM). Automatic
     # signing lets Xcode provision a development profile for a paired Apple TV on the first device build;
