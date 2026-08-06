@@ -75,6 +75,15 @@ is a better answer than any native reimplementation.
 
 ### Why this also settles the iPad question
 
+> **Superseded for iPad by measurement, 2026-08-05.** The section below assumed WebKit
+> would corrupt Connected art generally, inferring it from Golden Lining. A survey of all
+> 14 collections plus an uploaded SVG in Safari found that **only Golden Lining fails**;
+> the other 13 render correctly, and SVG animates properly too. The iPad conclusion here
+> therefore no longer holds, and the path is reopened with Golden Lining skipped per
+> piece. See HANDOFF §17, "Connected Collections on the viewer apps". **The Apple TV
+> reasoning above is unaffected and still stands**: tvOS has no web engine at all, so
+> nothing in that survey applies to it.
+
 iPadOS *does* have `WKWebView`, so an iPad app could in principle render Connected art in
 a web view. It should not, for a reason already on the record: `MAC-APP-PLAN.md` §5 locks
 "**drive real Google Chrome**" for the Mac display precisely *because* an in-app
