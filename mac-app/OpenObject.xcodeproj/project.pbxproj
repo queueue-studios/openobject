@@ -17,6 +17,7 @@
 		989C2BEC4A064E2E7549246F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B206D206987C3DD8432B568 /* AppDelegate.swift */; };
 		9A9D20263F7592EA61A23764 /* EngineHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0482993B9F86DEC061D393ED /* EngineHost.swift */; };
 		A9DFEEA4837EE50FB3EBBA44 /* DisplayActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5435E254684C651D7E4BAF06 /* DisplayActions.swift */; };
+		F01419E64F637FA485CEEA70 /* AutoDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DA49202A08B0E79EF92E4EC /* AutoDisplay.swift */; };
 		F62B69C9AAE0135AAD7EB35F /* HostDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8908E88C7524511930497EDF /* HostDiscovery.swift */; };
 /* End PBXBuildFile section */
 
@@ -30,6 +31,7 @@
 		58E5EAFDEBAABEBDFDC5CCFA /* OpenObjectApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenObjectApp.swift; sourceTree = "<group>"; };
 		5B206D206987C3DD8432B568 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8908E88C7524511930497EDF /* HostDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostDiscovery.swift; sourceTree = "<group>"; };
+		9DA49202A08B0E79EF92E4EC /* AutoDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoDisplay.swift; sourceTree = "<group>"; };
 		9F495F9E260E654A7FF423B1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E005BA69E941B01F3C40FABC /* RoleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoleStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -59,6 +61,7 @@
 			isa = PBXGroup;
 			children = (
 				5B206D206987C3DD8432B568 /* AppDelegate.swift */,
+				9DA49202A08B0E79EF92E4EC /* AutoDisplay.swift */,
 				55DE3081F59FD00A056D232F /* ContentView.swift */,
 				5435E254684C651D7E4BAF06 /* DisplayActions.swift */,
 				3659DF56DF0C102C316D13E4 /* DisplayController.swift */,
@@ -178,6 +181,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				989C2BEC4A064E2E7549246F /* AppDelegate.swift in Sources */,
+				F01419E64F637FA485CEEA70 /* AutoDisplay.swift in Sources */,
 				6BAE82DA228EBEB676DC7524 /* ContentView.swift in Sources */,
 				A9DFEEA4837EE50FB3EBBA44 /* DisplayActions.swift in Sources */,
 				39E0A47149F27C20E155F445 /* DisplayController.swift in Sources */,

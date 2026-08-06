@@ -56,10 +56,23 @@ struct OpenObjectApp: App {
     }
 }
 
-// Settings pane: the Dock icon — Auto (follow the system appearance), or a fixed Light/Dark. Labeled
-// "Dock icon" so future settings sit alongside it (moving to tabs once there's more than one).
+// Settings pane: the Dock icon, and Auto Display's inactivity interval.
+//
+// Deliberately ONE pane, not tabs. An earlier note here anticipated moving to a tabbed Settings window
+// as soon as a second setting arrived; two settings do not justify that (it would feel emptier and cost
+// more clicks than a single pane). Revisit at five or six. (Matt, 2026-08-02; HANDOFF §17.)
 struct AppIconSettings: View {
     @AppStorage(AppIcon.key) private var iconStyle = AppIcon.white.rawValue
+    @AppStorage(AutoDisplayInterval.key) private var autoSeconds = AutoDisplayInterval.never.rawValue
+    @State private var displaySleepMinutes: Int?
+
+    // The chosen interval loses the race when macOS would blank the screen first (HANDOFF §17).
+    private var losesToDisplaySleep: Bool {
+        guard let sleep = displaySleepMinutes,
+              let choice = AutoDisplayInterval(rawValue: autoSeconds), choice != .never
+        else { return false }
+        return choice.minutes >= sleep
+    }
 
     var body: some View {
         Form {
@@ -70,9 +83,42 @@ struct AppIconSettings: View {
             }
             .pickerStyle(.radioGroup)
             .onChange(of: iconStyle) { AppIcon.apply() }
+
+            // Labeled with the feature's NAME, not a description of it, mirroring Apple's own control
+            // (System Settings > Wallpaper > "Start Screen Saver", whose values carry the interval).
+            // That keeps the name the docs and Help use visible in the UI, and matches the noun-label
+            // form of the Dock icon row above. The row reads "Auto Display: After 10 minutes".
+            Picker("Auto Display", selection: $autoSeconds) {
+                ForEach(AutoDisplayInterval.menuOrder) { Text($0.label).tag($0.rawValue) }
+            }
+
+            // An always-visible caption under the control, which is what System Settings itself does
+            // under nearly every row: convention, not added hint text. "Works like a screen saver" is
+            // the fastest mental model there is, used as a simile while the feature keeps its own name
+            // (it is not one, and does not appear in the System Settings screen saver list). "Inactive"
+            // rather than "idle" to match Apple's own wording in the settings this sits beside.
+            Text("Works like a screen saver, displaying your art full screen when your Mac has been "
+                 + "inactive for a while. Press any key or move the pointer to return.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if losesToDisplaySleep, let sleep = displaySleepMinutes {
+                Label(
+                    "Your Mac turns its display off after \(sleep) minute\(sleep == 1 ? "" : "s"), "
+                    + "so the screen goes dark before the art starts. Choose a shorter time here, or a "
+                    + "longer one in System Settings > Lock Screen.",
+                    systemImage: "exclamationmark.triangle"
+                )
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .padding(20)
-        .frame(width: 380)
+        .frame(width: 430)
+        .onAppear { displaySleepMinutes = AutoDisplayController.displaySleepMinutes() }
+        .onChange(of: autoSeconds) { displaySleepMinutes = AutoDisplayController.displaySleepMinutes() }
     }
 }
 

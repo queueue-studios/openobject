@@ -24,10 +24,13 @@ final class DisplayActions: ObservableObject {
         resolveActiveBase { base in NSWorkspace.shared.open(base) }
     }
 
-    // Open the active Host's /display in a full-screen Chrome kiosk.
-    func openDisplay() {
+    // Open the active Host's /display in a full-screen Chrome kiosk. Auto Display passes
+    // `pinToPrimaryScreen` so the art lands on the one screen it has not blacked out (HANDOFF §17).
+    func openDisplay(pinToPrimaryScreen: Bool = false) {
         let display = self.display
-        resolveActiveBase { base in display.show(url: base.appendingPathComponent("display")) }
+        resolveActiveBase { base in
+            display.show(url: base.appendingPathComponent("display"), pinToPrimaryScreen: pinToPrimaryScreen)
+        }
     }
 
     func stopDisplay() { display.stop() }

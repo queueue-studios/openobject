@@ -38,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let roleStore = RoleStore()
     let display = DisplayController()
     lazy var actions = DisplayActions(engine: engine, discovery: discovery, roleStore: roleStore, display: display)
+    lazy var autoDisplay = AutoDisplayController(display: display, actions: actions)
     private var cancellables = Set<AnyCancellable>()
     private var appearanceObserver: NSObjectProtocol?
 
@@ -50,6 +51,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor in if AppIcon.current == .auto { AppIcon.apply() } }
         }
         discovery.start() // always browse, so the Hosts list stays live in either role
+        // Auto Display watches for inactivity (HANDOFF §17). Safe to start unconditionally: its default
+        // is Never, and at Never the tick does nothing, so an owner who ignores the feature is unaffected.
+        autoDisplay.start()
 
         // Start/stop the local Host to match the chosen role. @Published replays the current value to
         // a new subscriber, so this also performs the initial start (host) or no-op (viewer) on launch.
@@ -65,6 +69,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        autoDisplay.stop()
         display.stop()
         discovery.stop()
         engine.stop()

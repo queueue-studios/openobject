@@ -28,7 +28,12 @@ final class DisplayController: ObservableObject {
     }
 
     // Open the given URL full-screen in a Chrome kiosk window. One display at a time.
-    func show(url: URL) {
+    //
+    // `pinToPrimaryScreen` steers the kiosk onto the screen carrying the menu bar. Auto Display passes
+    // it because it blacks out the other screens, so the art has to land on the one screen it left
+    // alone (HANDOFF §17). The manual path leaves it off, keeping its long-standing behavior of opening
+    // wherever Chrome would naturally open.
+    func show(url: URL, pinToPrimaryScreen: Bool = false) {
         guard isChromeInstalled else {
             state = .failed("Google Chrome is required to show the display.")
             return
@@ -41,7 +46,7 @@ final class DisplayController: ObservableObject {
 
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: chromePath)
-        proc.arguments = [
+        var args = [
             "--kiosk",                                   // full-screen, zero chrome (HANDOFF §6)
             "--user-data-dir=\(profile.path)",           // dedicated profile; never touches the user's Chrome
             "--no-first-run",
@@ -57,8 +62,12 @@ final class DisplayController: ObservableObject {
             "--disable-component-update",
             "--check-for-update-interval=31536000",
             "--password-store=basic",
-            url.absoluteString,
         ]
+        // Chrome picks its screen from the window position, then goes full-screen on that one. The
+        // primary screen's origin is (0,0) in Chrome's top-left coordinate space.
+        if pinToPrimaryScreen { args.append("--window-position=0,0") }
+        args.append(url.absoluteString)
+        proc.arguments = args
         proc.terminationHandler = { [weak self] _ in
             Task { @MainActor in
                 guard let self, self.process != nil else { return }
