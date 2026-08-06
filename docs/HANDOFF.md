@@ -600,6 +600,10 @@ The one thing Safari cannot answer is app memory budget, since a `WKWebView` hos
 
 **Apple TV is unchanged by all of this** and stays native-only.
 
+**Sequencing: submit the iOS app FIRST, unchanged, then build this (Matt, 2026-08-06).** Nothing in these findings makes the staged iOS build wrong. It is complete, device-verified, and correct as designed (native rendering, no Connected art); `ipad-app/` has had zero commits since the 1.6.1 submission bump, same as `tv-app/`. **Do not open `ipad-app` before it ships.** Doing so would mean submitting something other than what was tested, would put a brand-new capability in front of a first App Review, and would leave a dirty tree if tvOS review comes back needing a respin. So: tvOS clears review, iOS submits at 1.6.1 unchanged, and Connected art becomes the natural follow-on release once there is a shipped baseline to compare against. The two open checks above (inkField, iPhone) fit naturally into that gap.
+
+**On whether excluding Connected art from the iOS app was a mistake: it was not.** Matt read it that way once the survey landed. But `TVOS-APP-PLAN.md` §2 reasoned from a real, reproducible bug and the conclusion followed from what was known; the flaw was that the evidence came from the wrong surface, and the on-device check that would have caught it was removed as redundant (see the correction above). The plan was sound on the information available. Recorded so the decision is not relitigated as an oversight.
+
 ### Golden Lining as a pre-rendered video: a per-piece WebKit fallback (noted 2026-08-02)
 
 Render **Golden Lining** (Juicy Julio, `dune-reveries-editions` token 1) to a seamless looping MP4 at two sizes, roughly 2K and 4K, so the viewer apps can play it as a plain video clip. The piece renders correctly on Chromium but is broken on WebKit (grey/black tile garbage on Safari and iPhone, from the per-frame `filter(GRAY)` canvas readback; §20, 2026-06-30), so it is exactly the kind of piece a video could rescue.
