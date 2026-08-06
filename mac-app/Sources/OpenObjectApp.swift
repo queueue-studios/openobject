@@ -35,7 +35,10 @@ struct OpenObjectApp: App {
             DisplayCommands(display: appDelegate.display, actions: appDelegate.actions)
             // Sparkle's "Check for Updates…" in the standard spot, just under "About OpenObject".
             CommandGroup(after: .appInfo) {
+                // Present but grayed out in Debug (where the updater is off), matching the stable-menu
+                // convention the Display menu above already follows.
                 Button("Check for Updates…") { updater.checkForUpdates() }
+                    .disabled(!updater.isEnabled)
             }
         }
 
@@ -125,12 +128,30 @@ struct AppIconSettings: View {
 // Wraps Sparkle's updater so a SwiftUI menu item can trigger a check (MAC-APP-PLAN §C3). Sparkle reads
 // SUFeedURL + SUPublicEDKey from Info.plist; startingUpdater:true begins Sparkle's automatic background
 // checks (scheduled, with the user's consent prompt on first run).
+//
+// OFF IN DEBUG BUILDS. A local Debug build is ad-hoc signed (`CODE_SIGN_IDENTITY: "-"`), so when
+// Sparkle's background check goes to touch an app bundle signed by the real team, macOS App Management
+// blocks it and posts "OpenObject was prevented from modifying apps on your Mac". Nothing is broken:
+// it is noise inherent to running an unsigned local build alongside an installed release, and it would
+// invite someone to grant App Management rights to an unsigned binary, which they should not do.
+// Release builds are unaffected, and provably so: `scripts/release.sh` builds `-configuration Release`,
+// and SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG is set only on the Debug configuration.
 final class UpdaterViewModel: ObservableObject {
-    private let controller: SPUStandardUpdaterController
+    /// False in Debug builds, where the updater is never started and the menu item is disabled.
+    let isEnabled: Bool
+    private let controller: SPUStandardUpdaterController?
+
     init() {
+        #if DEBUG
+        isEnabled = false
+        controller = nil
+        #else
+        isEnabled = true
         controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+        #endif
     }
-    func checkForUpdates() { controller.checkForUpdates(nil) }
+
+    func checkForUpdates() { controller?.checkForUpdates(nil) }
 }
 
 // The top-left "Display" menu (shown when OpenObject is the active app). Mirrors the display controls
