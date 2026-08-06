@@ -85,6 +85,8 @@ final class AutoDisplayController: ObservableObject {
     private var triggerIdle: TimeInterval = 0
     /// When we triggered, so a display that never comes up can be backed out of (see `stallTimeout`).
     private var triggeredAt = Date.distantPast
+    /// Where the pointer was before it was parked, so it can be put back on the way out.
+    private var pointerHome: CGPoint?
 
     /// If the kiosk has not reached `.running` this long after triggering, give up and undo. Without
     /// this, a Viewer-mode Mac whose remembered Host is not currently on the network would black out its
@@ -133,6 +135,10 @@ final class AutoDisplayController: ObservableObject {
     }
 
     private func tick() {
+        // Catch a kiosk that went away without telling us, so a stale `.running` cannot wedge the trigger
+        // (or leave a live "Stop Display" in the menus). Cheap: one property read.
+        display.reconcileIfExited()
+
         let setting = AutoDisplayInterval.current
         let idle = Self.systemIdleSeconds()
 
@@ -160,6 +166,37 @@ final class AutoDisplayController: ObservableObject {
         showBlackout()
         actions.openDisplay(pinToPrimaryScreen: true)
         schedule(showingPoll)
+        parkPointer()
+    }
+
+    // Get the arrow off the art by parking it in the bottom-left corner, then put it back on exit.
+    //
+    // `display.css` already sets `cursor: none`, but a browser only applies that once the pointer MOVES
+    // over the page, and Auto Display's trigger condition is precisely that nobody has touched the mouse.
+    // So the arrow sits on the art every time. (The frame dodges this with a blank X cursor theme, which
+    // has no macOS equivalent.) A one-pixel nudge to make the browser re-evaluate was tried and CANNOT
+    // work: `CGWarpMouseCursorPosition` moves the pointer without posting an input event, which is exactly
+    // why it is safe here, and equally why the page never sees a move. Those two goals are in direct
+    // opposition, since any motion a browser would notice is by definition an input event that would end
+    // the session. Parking sidesteps it entirely: this is Matt's own manual habit, automated.
+    //
+    // Safe for the same measured reason: warping does not touch the idle clock (3.16s -> 3.63s across a
+    // warp, 2026-08-06), so it cannot make Auto Display dismiss itself.
+    //
+    // Deliberately NOT applied to the manual Open Display: there the art stays until it is stopped, so the
+    // pointer is the owner's only route to the menu bar and Stop Display. Here any movement ends the
+    // session anyway, so nothing is taken away.
+    private func parkPointer() {
+        let here = CGEvent(source: nil)?.location
+        pointerHome = here
+        let b = CGDisplayBounds(CGMainDisplayID())
+        CGWarpMouseCursorPosition(CGPoint(x: b.minX, y: b.maxY - 1))
+    }
+
+    /// Put the pointer back where the owner left it, so returning feels like nothing moved.
+    private func restorePointer() {
+        if let home = pointerHome { CGWarpMouseCursorPosition(home) }
+        pointerHome = nil
     }
 
     private func finish(stopDisplay: Bool) {
@@ -167,6 +204,7 @@ final class AutoDisplayController: ObservableObject {
         triggerIdle = 0
         if stopDisplay { actions.stopDisplay() }
         hideBlackout()
+        restorePointer()
         schedule(waitingPoll)
     }
 

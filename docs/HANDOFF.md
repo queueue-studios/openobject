@@ -552,7 +552,9 @@ Mirroring the whole list, long end included, follows Matt's stated principle: so
 
 **No tabs in Settings.** This is the app's second setting, and the note at `mac-app/Sources/OpenObjectApp.swift:59` anticipated moving the Settings window to tabs at that point. Deliberately not doing so: two settings do not justify a tabbed window, which would feel emptier and cost more clicks than the single pane. Keep one pane with two labeled rows (Dock icon, Auto Display) and revisit tabs at five or six settings. (Matt, 2026-08-02.)
 
-**Known cosmetic limitation: the mouse pointer stays visible.** `display.css` already sets `cursor: none`, but a browser only applies that rule once the pointer moves over the page, which is exactly what has not happened when Auto Display fires (its trigger condition is that nobody touched the mouse). So a manual Open Display hides the pointer immediately while an auto trigger reliably leaves an arrow sitting on the art. The frame solves this with a blank X cursor theme (`XCURSOR_PATH` in `installer/kiosk/start-kiosk.sh`), which has no macOS equivalent. **Left alone deliberately:** the obvious fix, nudging the pointer programmatically to trigger the CSS, risks resetting the idle clock and making the feature dismiss itself the instant it appears. (Matt, 2026-08-06: "not worth any risky changes".)
+**The mouse pointer is parked, not hidden (solved 2026-08-06).** `display.css` already sets `cursor: none`, but a browser only applies that rule once the pointer moves over the page, which is exactly what has not happened when Auto Display fires. So the arrow sat on the art every time. **The obvious fix cannot work:** nudging the pointer to make the browser re-evaluate was tried and abandoned, because `CGWarpMouseCursorPosition` moves it *without posting an input event* (measured: the idle clock kept climbing across a warp, 3.16s to 3.63s), which is precisely why it is safe to call here and equally why the page never sees a move. Those two goals are in direct opposition: any motion a browser would notice is by definition an input event that would end the session.
+
+**What shipped instead** is Matt's own manual habit, automated: warp the pointer to the bottom-left corner when Auto Display starts, and back to where he left it on exit. One corner pixel instead of an arrow over the art. **Deliberately not applied to the manual Open Display**, where the art stays until stopped and the pointer is the owner's only route to the menu bar and Stop Display; under Auto Display any movement ends the session anyway, so nothing is taken away. (The frame solves the same problem with a blank X cursor theme, `XCURSOR_PATH` in `installer/kiosk/start-kiosk.sh`, which has no macOS equivalent.)
 
 **Explicitly not in scope: opening the display at login.** The app already restores its role and its chosen Host across launches (`RoleStore`), and a Host-mode Mac starts its engine unconditionally at launch, so an "open the display when the app opens" option would be easy. Matt does not want it. Note for whoever revisits it: in *viewer* mode it would race Bonjour discovery, because `DisplayActions.resolveActiveBase` silently returns when the remembered Host is not yet in the live list, so it would need a wait-and-retry rather than a fire-once call.
 
@@ -720,6 +722,23 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-08-06: Chrome is launched through LaunchServices, so macOS stops blaming us for Chrome's housekeeping
+
+Matt kept getting a security notification, **"OpenObject was prevented from modifying apps on your Mac."** Two wrong explanations were offered before the log was actually read (an unsigned local Debug build sharing the bundle id, then Sparkle), and both were guesses dressed up as diagnoses. The log settled it:
+
+```
+16:12:33.818  Google Chrome[83176] starts
+16:12:34.142  App Management notification posted
+```
+
+**0.3 seconds after Chrome launched**, on a run where nothing was updating. **Cause:** `DisplayController` executed `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome` directly as a child process, which made OpenObject Chrome's parent and therefore its **responsible process** for TCC purposes. So when Chrome touched its own app bundle at startup (finalizing one of its auto-updates), macOS App Management blocked it and attributed it to **us**. Not cosmetic on two counts: it shows users a security warning naming OpenObject for something Chrome did, and it can stop Chrome completing its own updates.
+
+**Fix:** open the `.app` through `NSWorkspace.openApplication` instead, so Chrome is its own responsible process. `createsNewApplicationInstance = true` is load-bearing; without it the call could adopt the owner's already-running Chrome and ignore every switch, including `--kiosk` and the separate profile. Every Chrome flag, the kiosk, the dedicated `--user-data-dir`, and the power assertion are unchanged, so rendering is untouched.
+
+**What the rewrite cost, and the gap it exposed.** Stopping and exit-detection had to change too: a child `Process` reported its own exit via `terminationHandler`, while a LaunchServices app reports through `NSWorkspace.didTerminateApplicationNotification`. **Matt's Cmd-Q test proved that notification is not dependable** here: the kiosk had quit and the app still reported `.running`, leaving a live "Stop Display" in the menus. That is worse than cosmetic, because Auto Display skips its trigger while a display is already running, so a missed exit would **silently disable the feature** until relaunch. Added `reconcileIfExited()`, a direct `isTerminated` read called from Auto Display's existing tick, which catches the kiosk going away by any route (quit, crash, force-quit) and is sturdier than the handler it replaced. Matt re-tested and the stale button was gone.
+
+**Verified on Matt's Mac:** manual Open Display (full-screen, no Chrome UI, correct profile), Return to Display, Stop Display, Cmd-Q reconciliation, and Auto Display end to end with no notification. **Setup Guide unchanged** (no user-facing behavior changes; the notification's absence is the whole point).
 
 ### 2026-08-06: inkField rendered a BLACK SCREEN everywhere; its sketch was never mirrored
 
