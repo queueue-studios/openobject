@@ -528,7 +528,9 @@ Since 2026-06-19 there is also **`docs/MAC-DISPLAY-SETUP.md`**, a standalone **n
 
 ### Auto Display: the Mac shows art after a period of inactivity (noted 2026-08-02)
 
-A screensaver-like behavior for the Mac app: after a chosen period with no keyboard or mouse activity, the Mac shows the rotation full-screen; the first touch of the keyboard or trackpad puts the desktop back exactly as it was. Designed with Matt 2026-08-02, refined and device-tested 2026-08-05, not built. Named **Auto Display** (deliberately *not* "screen saver", for the reason in "Why not an actual screen saver" below).
+> **BUILT AND SHIPPED, 2026-08-06.** Released in **1.7.0** (`f38c025`), polished in **1.7.2** (`8685759`: the pointer parked off the art, and Chrome launched through LaunchServices). This entry is kept in place as the design record, since every decision below still describes shipped behavior; the build notes are in §20 and the owner-facing description is in `docs/MAC-DISPLAY-SETUP.md`.
+
+A screensaver-like behavior for the Mac app: after a chosen period with no keyboard or mouse activity, the Mac shows the rotation full-screen; the first touch of the keyboard or trackpad puts the desktop back exactly as it was. Designed with Matt 2026-08-02, device-tested and shipped 2026-08-06. Named **Auto Display** (deliberately *not* "screen saver", for the reason in "Why not an actual screen saver" below).
 
 **Default Never means zero impact, and that is a hard requirement.** An owner must be able to run OpenObject without it changing their Mac's idle behavior at all. That holds by construction: the power assertion lives in exactly one place, taken in `DisplayController.show()` and released in `stop()`, so an app that is running and hosting but not displaying holds no assertion. With Auto Display set to **Never** (the default) the app never starts the display on its own, so it never takes the assertion on its own, and the Mac sleeps and blanks exactly as it always did. The only way OpenObject affects idle behavior is with art actually on screen. Do not regress this.
 
@@ -722,6 +724,16 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-08-06: Auto Display shipped (1.7.0), the Mac shows art after a period of inactivity
+
+The full design record, including every decision and the reasoning behind it, is **§17 "Auto Display"**; this is the build note. Shipped in **1.7.0** (`f38c025`) and polished in **1.7.2** (`8685759`).
+
+**It is a trigger, not a renderer**, which is what made it small: `AutoDisplayController` decides *when* to call the `DisplayController.show()` / `stop()` that the manual Open Display path already used, so it inherits full Chrome fidelity with every Connected Collection, and nothing was reimplemented. Idle is read from `CGEventSource.secondsSinceLastEventType`, which needs **no permissions** (a global event monitor would have required Accessibility). Default **Never**, and at Never no timer runs and no power assertion is taken, so an owner who ignores the feature is unaffected: that guarantee is a hard requirement, not a side effect.
+
+**Shipped behavior:** Apple's exact interval list (from System Settings > Wallpaper > Start Screen Saver, read off the real UI, not recalled), one pop-up labeled with the feature name plus an always-visible caption, a warning when the chosen interval loses to the system display-off timer, all screens covered with art on the main one and the rest black, and the pointer parked in a corner rather than left on the art.
+
+**Two failure modes were closed by review and by Matt's testing rather than by the original design:** a stall timeout, so a Viewer-mode Mac whose Host is off the network backs out instead of stranding black screens with no art; and `reconcileIfExited()`, after a Cmd-Q test showed a missed kiosk exit could leave a stale `.running` and silently disable the trigger. **Setup Guide:** `docs/MAC-DISPLAY-SETUP.md` gained an Auto Display section in the same change.
 
 ### 2026-08-06: Chrome is launched through LaunchServices, so macOS stops blaming us for Chrome's housekeeping
 
