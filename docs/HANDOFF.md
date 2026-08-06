@@ -765,7 +765,16 @@ document.write('<script src="' + src + '"><\/script>');
 
 This is the same class as The Bloom's `CONFIG.MUSIC_URL` (§20, 2026-07-20) and as inkField's own `lib/<token>.json` recording, both of which `extraAssets` already covered. The irony is that the entry itself documented "that fetch is dynamic, so the attribute scan never sees it" for the recording, and the same sentence was true of the sketch. **Fix:** `extraAssets` gains `script.js` (~370 KB, the desktop/frame path) and `script2mobile.js` (~8 KB, the phone path, kept so the bundle is complete offline on any display).
 
-**Why it was not caught, which is the part worth keeping.** inkField was "verified in the browser harness" (§20, 2026-07-29), and the harness loads a copy that already has every file. **A harness cannot catch a missing-asset bug by construction**, because the bug lives in the add-and-mirror flow, not in the render. inkField had therefore never actually rendered through our own mirror on any device, including the frame; the density and grid-overlay work that followed was all done against the artist's complete copy. **Standing rule for any new Connected piece: verify it through the real add flow and play it from the mirror, not only in the harness.**
+**It was not broken from the start: THE ARTIST REPLACED THE ARTWORK (established 2026-08-06 while rebuilding the archives).** The token's on-chain `animation_url` changed between the 2026-07-29 add and today:
+
+```
+was  ipfs://QmU9zSohxwf7iRwXGN3oPEuuqB9G25tdbwDVtqJxj6QVZe/index.html#<token>
+now  ipfs://QmXQX4FWZvtS5DbBYauS9WsjekXR1fgQiHL5uFt82EFVMq/index.html#<token>
+```
+
+The earlier bundle loaded the sketch with a **static** `<script src="script.js">`, which the scan saw and mirrored correctly, so inkField genuinely worked when it was added. The replacement introduced the runtime `document.write` switcher (the new phone path, `script2mobile.js`), which the scan cannot see. Token id, contract, traits and preview image are unchanged; only the artwork bundle was swapped. **The lesson generalizes past this piece: a Connected piece can break with no change on our side at all**, because the mirror is written once at add time against whatever the artist's URL served that day. Nothing currently detects that a collection's upstream bundle has been replaced.
+
+**Why the harness would not have caught it either.** inkField was "verified in the browser harness" (§20, 2026-07-29), and the harness loads a copy that already has every file, so **a harness cannot catch a missing-asset bug by construction**: the bug lives in the add-and-mirror flow, not in the render. **Standing rule for any new Connected piece: verify it through the real add flow and play it from the mirror, not only in the harness.**
 
 **Remediation.** The mirror is written once at add time, so the registry fix only helps future adds: an existing install needs a **remove and re-add** of each inkField piece (the same rule as the grid-overlay entry below). Matt's Mac was repaired in place by dropping the two files straight into `~/Library/Application Support/OpenObject/data/collections/inkfield/`, which is exactly what the fixed mirror now produces; verified rendering afterward (canvas 1800x1800 at the default density 2, the grid overlay and HUD present, the recording replaying). **Setup Guide unchanged:** this restores intended behavior rather than changing it, and the guides do not describe individual collections.
 
