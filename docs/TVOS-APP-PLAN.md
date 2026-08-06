@@ -46,7 +46,7 @@ Two consequences follow, and they shape everything else:
 
 1. **The app cannot wrap `/display`.** It must be a **native reimplementation of the
    Display role**: SwiftUI and AVFoundation rendering directly against the Host's API.
-2. **Connected Collections cannot render on tvOS.** Every one of the 13 collections is an
+2. **Connected Collections cannot render on tvOS.** Every Connected Collection is an
    HTML page whose JavaScript must *execute* to produce the art: p5.js, three.js, canvas
    generators, loaded in an iframe at `/collections/<slug>/index.html`
    (`player/public/display.js`). They are programs, not files.
