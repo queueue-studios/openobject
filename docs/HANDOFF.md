@@ -721,6 +721,23 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-08-06: inkField rendered a BLACK SCREEN everywhere; its sketch was never mirrored
+
+Matt added inkField on the Mac app (1.7.0, the first release carrying it) and got a black stage, pinned or in rotation. **The mirrored bundle was missing the sketch itself.** The piece requests `script.js`, the mirror never downloaded it, the server answered the 404 with HTML, and the browser refused it on strict MIME checking (`Refused to execute script ... MIME type ('text/html')`), so p5 never started and nothing drew.
+
+**Why the scan missed it.** `index.html` chooses its entry point at runtime and injects it with `document.write`, so no `src` attribute exists for the relative-asset scan to find:
+
+```js
+var src = (window._inkMobilePhone && !window._inkForceLive) ? 'script2mobile.js' : 'script.js';
+document.write('<script src="' + src + '"><\/script>');
+```
+
+This is the same class as The Bloom's `CONFIG.MUSIC_URL` (§20, 2026-07-20) and as inkField's own `lib/<token>.json` recording, both of which `extraAssets` already covered. The irony is that the entry itself documented "that fetch is dynamic, so the attribute scan never sees it" for the recording, and the same sentence was true of the sketch. **Fix:** `extraAssets` gains `script.js` (~370 KB, the desktop/frame path) and `script2mobile.js` (~8 KB, the phone path, kept so the bundle is complete offline on any display).
+
+**Why it was not caught, which is the part worth keeping.** inkField was "verified in the browser harness" (§20, 2026-07-29), and the harness loads a copy that already has every file. **A harness cannot catch a missing-asset bug by construction**, because the bug lives in the add-and-mirror flow, not in the render. inkField had therefore never actually rendered through our own mirror on any device, including the frame; the density and grid-overlay work that followed was all done against the artist's complete copy. **Standing rule for any new Connected piece: verify it through the real add flow and play it from the mirror, not only in the harness.**
+
+**Remediation.** The mirror is written once at add time, so the registry fix only helps future adds: an existing install needs a **remove and re-add** of each inkField piece (the same rule as the grid-overlay entry below). Matt's Mac was repaired in place by dropping the two files straight into `~/Library/Application Support/OpenObject/data/collections/inkfield/`, which is exactly what the fixed mirror now produces; verified rendering afterward (canvas 1800x1800 at the default density 2, the grid overlay and HUD present, the recording replaying). **Setup Guide unchanged:** this restores intended behavior rather than changing it, and the guides do not describe individual collections.
+
 ### 2026-07-29: inkField grid overlay restored (it is the artist's intended render, not chrome)
 
 Follow-up to the two inkField entries below. The initial add's `INKFIELD_HOOK` suppressed the sketch's on-canvas grid overlay (a faint full-canvas grid, a tracking box that follows the brush, and live `Max/Count/Dir` + `C/B/S/P` readouts), which each token's recording bakes **on**. I had read it as an authoring/debug HUD. It is not: it shows on OpenSea and on fxhash, so it is part of the artist's intended render. Matt caught the divergence by comparing OpenObject to the OpenSea render and made the call: keep the overlay. Fix: drop the HUD suppression from `INKFIELD_HOOK` (the black-stage §6 background it also sets stays), so the recording's `showGridOverlay: true` now stands and OpenObject matches the canonical render. Because the hook is baked into the mirror, an existing frame needs a Software Update **and** a remove/re-add of each piece to pick it up (unlike the display-time density param). The desktop archival bundles are to be rebuilt after the on-frame check.

@@ -456,7 +456,18 @@ const REGISTRY = [
     // setup() never runs, so it must be mirrored too. (The piece also preloads shaders/*.frag, but those
     // 404 on IPFS by design and fall back to the inlined shader.js, so they are left alone. No
     // localizeAbsolute: the only absolute refs are a hidden logo/link, not render assets.)
-    extraAssets: ['lib/{token}.json', 'lib/inconsolata.otf'],
+    // THE SKETCH ITSELF is loaded dynamically too, which is the whole reason a mirrored inkField rendered
+    // as a black screen until 2026-08-06. index.html picks its entry point at runtime and injects it with
+    // document.write, so no `src` attribute exists for the scan to find:
+    //     var src = (window._inkMobilePhone && !window._inkForceLive) ? 'script2mobile.js' : 'script.js';
+    //     document.write('<script src="' + src + '"><\/script>');
+    // Without script.js in the bundle the request 404s, the server answers with HTML, and the browser
+    // refuses it on strict MIME checking, so nothing ever draws. Both entry points are named here:
+    // script.js (~370 KB) is the desktop/frame path, script2mobile.js (~8 KB) the phone one, kept so the
+    // bundle is complete offline on any display. This slipped through because inkField was verified in the
+    // browser harness against a copy that already had the file, never through the add-and-mirror flow
+    // (§20, 2026-07-29); the harness cannot catch a missing-asset bug by construction.
+    extraAssets: ['lib/{token}.json', 'lib/inconsolata.otf', 'script.js', 'script2mobile.js'],
     // Self-animating: collector mode auto-plays the recording and loops it on its own, so no Animate control.
     // Per-token FORMAT varies (e.g. #31 Portrait, #38 Square) and the sketch sizes its own canvas to the
     // recording and scales-to-fit on black, so there is no collection-level aspect (one value would be wrong
