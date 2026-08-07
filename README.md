@@ -33,7 +33,7 @@ network.
 |---|:---:|:---:|:---:|---|
 | **Mac** | ✓ | ✓ | ✓ | Available |
 | **Infinite Objects XXL** frame | ✓ | ✓ | ✓ | Available (advanced) |
-| **Apple TV** | - | - | ✓ | Coming soon |
+| **Apple TV** | - | - | ✓ | [Available on the App Store](https://apps.apple.com/app/id6797132025) |
 | **iPad** | - | - | ✓ | Coming soon |
 
 Your **Mac** and the **frame** are self-contained: each holds your art, is controlled from a browser,
