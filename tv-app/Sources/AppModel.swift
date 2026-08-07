@@ -73,6 +73,44 @@ final class AppModel {
         }
     }
 
+    /// Coming back into the app from the Apple TV's Home screen. A remembered Host reopens straight to its
+    /// art, exactly as a cold launch does (§5).
+    ///
+    /// It has to be handled HERE and not only in init, because init is the one place it used to live and
+    /// tvOS rarely re-runs it: pressing Menu on the art stage goes to the picker and a second press exits,
+    /// so the app is almost always suspended with the picker showing. Returning then resumed that same
+    /// picker, and the remembered Host was never consulted — art only came back after a hard close, which
+    /// is the one path that does cold-launch. An owner who left the app watching art should get art back.
+    ///
+    /// Only fires on a real background -> foreground transition (the caller checks), so sitting on the
+    /// picker mid-session to choose a different Host is never yanked away to the old one.
+    func returnedToForeground() {
+        guard route == .picker else { return }                 // watching art already: nothing to restore
+        guard let remembered = store.loadDefaultHost() else {
+            if hosts.isEmpty { rescan() }                      // nothing remembered: just refresh the list
+            return
+        }
+        select(remembered)
+        startRememberedHostWatchdog()                          // a Host that has since gone comes back here
+    }
+
+    /// Re-kick discovery from scratch, the escape hatch the tvOS picker was missing: browsing here is
+    /// started once from onAppear, so anything that left it empty (a browser that failed, a Local Network
+    /// grant that landed after the browse began) had no way back short of force-quitting the app. Also
+    /// serves as a manual rescan. No-op unless the picker is showing.
+    func rescan() {
+        guard route == .picker else { return }
+        discovery.stop()
+        discovery.start()
+        probeGallery()
+        scanning = true
+        scanFloor?.cancel()
+        scanFloor = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(4))
+            self?.scanning = false
+        }
+    }
+
     /// Leave the art stage for the picker (the Menu/Back action, §14). Stops playback so nothing polls in
     /// the background; the picker restarts discovery when it appears.
     func showPicker() {

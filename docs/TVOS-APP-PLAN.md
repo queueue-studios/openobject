@@ -163,7 +163,10 @@ chrome-legal territory; the art stage never is.
 - **Manual entry of a Host address**, for when Bonjour fails. A hedge against the known
   mDNS fragility on Matt's network, and the mechanism that makes App Store review
   workable (§12).
-- A remembered default Host, so the app opens straight to art on later launches.
+- A remembered default Host, so the app opens straight to art on later launches AND whenever
+  the owner returns to the app from the Apple TV's Home screen. Both matter: Menu on the art
+  stage goes to the picker and a second Menu exits, so the app is usually suspended showing
+  the picker, and only a hard close ever cold-launches.
 - A manual rescan.
 - Native rendering of the Host's rotation: duration, Sequence/Shuffle, Pin, Fit/Fill,
   crossfade, and live folding-in of changes without restarting the loop.

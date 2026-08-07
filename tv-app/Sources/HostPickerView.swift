@@ -7,6 +7,8 @@ import DisplayCore
 struct HostPickerView: View {
     @Bindable var model: AppModel
 
+    @Environment(\.scenePhase) private var scenePhase
+
     // Which host row holds focus. We steer initial focus onto the first row (people read top-down) so the
     // remote's primary action is right there on arrival, instead of tvOS's default of the bottom control.
     @FocusState private var focusedHost: String?
@@ -49,6 +51,17 @@ struct HostPickerView: View {
         .onAppear {
             model.startDiscoveryIfPicking()
             pinInitialFocus()
+        }
+        // Returning to the app reopens the remembered Host's art, and otherwise restarts browsing so the
+        // picker is never a stale empty list (an Apple TV that slept, or a browse that began before the
+        // Local Network grant, used to leave it empty with no way to retry).
+        //
+        // Gated on the previous phase so it is a real return from the background, not any other pass
+        // through .active: arriving here from the art stage mid-session must NOT bounce straight back to
+        // the Host the owner just left.
+        .onChange(of: scenePhase) { previous, phase in
+            guard phase == .active, previous == .background || previous == .inactive else { return }
+            model.returnedToForeground()
         }
         // Hosts arrive (and re-sort) asynchronously over Bonjour, so keep focus on whichever row is
         // currently first until the owner moves it themselves - otherwise a late host that sorts ahead
