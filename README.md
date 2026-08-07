@@ -31,8 +31,8 @@ network.
 
 | Device | Host | Control | Display | Status |
 |---|:---:|:---:|:---:|---|
-| **Mac** | ✓ | ✓ | ✓ | Available |
-| **Infinite Objects XXL** frame | ✓ | ✓ | ✓ | Available (advanced) |
+| **Mac** | ✓ | ✓ | ✓ | [Available for download](https://github.com/queueue-studios/openobject/releases/latest) |
+| **Infinite Objects XXL** frame | ✓ | ✓ | ✓ | [Available (advanced)](docs/SETUP-GUIDE.md) |
 | **Apple TV** | - | - | ✓ | [Available on the App Store](https://apps.apple.com/us/app/openobject/id6797132025) |
 | **iPad** | - | - | ✓ | Coming soon |
 
