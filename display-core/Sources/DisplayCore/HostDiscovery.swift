@@ -25,6 +25,20 @@ public final class HostDiscovery {
     @ObservationIgnored private var browser: NWBrowser?
     @ObservationIgnored private var resolved: [NWEndpoint: Host] = [:]   // endpoint -> its resolved Host
     @ObservationIgnored private var pending: Set<NWEndpoint> = []        // endpoints currently being resolved
+    @ObservationIgnored private var seen: [NWEndpoint: Discovered] = [:] // last browse snapshot, keyed for retry
+    @ObservationIgnored private var sweeper: Task<Void, Never>?
+    // Bumped by every start/stop. In-flight resolves and restart timers carry the generation they began
+    // under and drop out if it has moved on, so a previous browse session can never write into a new one.
+    @ObservationIgnored private var generation = 0
+
+    /// How long a single resolve may take before it counts as unreachable, and how often unresolved
+    /// services are retried while browsing.
+    private nonisolated static let resolveTimeout: TimeInterval = 3
+    private nonisolated static let retryInterval: Duration = .seconds(5)
+
+    // Network.framework delivers callbacks on the queue it is handed and documents a SERIAL queue; the
+    // browser and every resolve share this one (it was .global(), a concurrent queue).
+    @ObservationIgnored private nonisolated static let queue = DispatchQueue(label: "io.openobject.discovery")
 
     /// - Parameter serviceType: the Bonjour service, `_openobject._tcp` by default (matches
     ///   player/src/discovery.js).
@@ -35,6 +49,8 @@ public final class HostDiscovery {
     /// Begin browsing. Idempotent.
     public func start() {
         guard browser == nil else { return }
+        generation += 1
+        let generation = self.generation
         let descriptor = NWBrowser.Descriptor.bonjourWithTXTRecord(type: serviceType, domain: nil)
         let browser = NWBrowser(for: descriptor, using: .tcp)
         browser.browseResultsChangedHandler = { [weak self] results, _ in
@@ -44,21 +60,28 @@ public final class HostDiscovery {
                            txt: HostDiscovery.txtDict(result.metadata),
                            serviceName: HostDiscovery.serviceName(result.endpoint))
             }
-            Task { @MainActor in self?.handle(snapshot) }
+            Task { @MainActor in self?.handle(snapshot, generation: generation) }
         }
         browser.stateUpdateHandler = { [weak self] state in
-            if case .failed = state { Task { @MainActor in self?.stop() } }
+            // A failed browser used to end discovery for the whole app session (stop(), never restarted),
+            // which left the picker permanently empty with no way back. Rebuild it instead.
+            if case .failed = state { Task { @MainActor in self?.restart(generation: generation) } }
         }
         self.browser = browser
-        browser.start(queue: .global())
+        browser.start(queue: HostDiscovery.queue)
+        startSweeper(generation: generation)
     }
 
     /// Stop browsing and clear the list.
     public func stop() {
+        generation += 1
+        sweeper?.cancel()
+        sweeper = nil
         browser?.cancel()
         browser = nil
         resolved.removeAll()
         pending.removeAll()
+        seen.removeAll()
         hosts = []
     }
 
@@ -70,27 +93,59 @@ public final class HostDiscovery {
         let serviceName: String
     }
 
-    private func handle(_ snapshot: [Discovered]) {
+    private func handle(_ snapshot: [Discovered], generation: Int) {
+        guard generation == self.generation else { return }
         let current = Set(snapshot.map(\.endpoint))
         // Drop Hosts whose service disappeared.
         for endpoint in Array(resolved.keys) where !current.contains(endpoint) { resolved[endpoint] = nil }
         pending.formIntersection(current)
+        seen = Dictionary(snapshot.map { ($0.endpoint, $0) }, uniquingKeysWith: { _, last in last })
         rebuild()
+        resolveOutstanding(generation: generation)
+    }
 
-        // Resolve newly-seen services to a reachable address, then add them.
-        for entry in snapshot where resolved[entry.endpoint] == nil && !pending.contains(entry.endpoint) {
+    /// Resolve every service that is visible but not yet resolved. Called on each browse change AND on the
+    /// retry sweep: a resolve that fails (or times out) leaves the endpoint unresolved, and browse results
+    /// do not change again while the Host sits happily on the network, so without the sweep one bad probe
+    /// hid a live Host until the app was force-quit.
+    private func resolveOutstanding(generation: Int) {
+        for entry in seen.values where resolved[entry.endpoint] == nil && !pending.contains(entry.endpoint) {
             pending.insert(entry.endpoint)
             Task { @MainActor [weak self] in
                 let address = await HostDiscovery.resolve(entry.endpoint)
-                guard let self else { return }
+                guard let self, generation == self.generation else { return }
                 self.pending.remove(entry.endpoint)
                 guard let address,
                       let host = Host.fromBonjour(serviceName: entry.serviceName, txt: entry.txt,
                                                   host: address.host, port: address.port)
-                else { return }
+                else { return }   // unreachable for now; the sweeper tries again
                 self.resolved[entry.endpoint] = host
                 self.rebuild()
             }
+        }
+    }
+
+    private func startSweeper(generation: Int) {
+        sweeper?.cancel()
+        sweeper = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: HostDiscovery.retryInterval)
+                guard let self, !Task.isCancelled, generation == self.generation else { return }
+                self.resolveOutstanding(generation: generation)
+            }
+        }
+    }
+
+    /// Tear the browser down and build a fresh one after a short pause (a failed browser cannot be
+    /// restarted in place). Guarded by generation so it never races a stop() or a manual restart.
+    private func restart(generation: Int) {
+        guard generation == self.generation else { return }
+        stop()
+        let next = self.generation
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard let self, next == self.generation else { return }   // stopped or restarted meanwhile
+            self.start()
         }
     }
 
@@ -118,29 +173,38 @@ public final class HostDiscovery {
 
     // Resolve a Bonjour service endpoint to a reachable host:port by opening (then immediately
     // cancelling) a TCP connection and reading the resolved remote endpoint. This doubles as a
-    // reachability check. Returns nil if it never resolves.
+    // reachability check. Returns nil if it does not resolve within `resolveTimeout`.
+    //
+    // The timeout is load-bearing, not belt-and-braces. NWConnection reports a momentarily unusable path
+    // as `.waiting` (NOT `.failed`) and then waits indefinitely by design, so the `default: break` below
+    // used to strand the continuation forever: the endpoint stayed in `pending`, `resolveOutstanding`
+    // skipped it, and a Host that was advertising perfectly well never appeared again for the life of the
+    // app. `.waiting` now simply runs out the clock and reports unreachable, and the sweeper retries.
     private nonisolated static func resolve(_ endpoint: NWEndpoint) async -> (host: String, port: Int)? {
         await withCheckedContinuation { (continuation: CheckedContinuation<(host: String, port: Int)?, Never>) in
             let connection = NWConnection(to: endpoint, using: .tcp)
             let once = ResumeOnce(continuation)
+            let finish: (@Sendable ((host: String, port: Int)?) -> Void) = { value in
+                once.resume(returning: value)
+                connection.cancel()
+            }
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
                     if let remote = connection.currentPath?.remoteEndpoint,
                        case let .hostPort(host, port) = remote {
-                        once.resume(returning: (hostString(host), Int(port.rawValue)))
+                        finish((hostString(host), Int(port.rawValue)))
                     } else {
-                        once.resume(returning: nil)
+                        finish(nil)
                     }
-                    connection.cancel()
                 case .failed, .cancelled:
-                    once.resume(returning: nil)
-                    connection.cancel()
+                    finish(nil)
                 default:
-                    break
+                    break   // .waiting / .preparing: covered by the timeout below
                 }
             }
-            connection.start(queue: .global())
+            queue.asyncAfter(deadline: .now() + resolveTimeout) { finish(nil) }   // no-op once resumed
+            connection.start(queue: queue)
         }
     }
 

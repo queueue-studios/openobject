@@ -29,4 +29,28 @@ import Foundation
         let response = try await DisplayClient().fetchDisplay(from: host)
         #expect(response.source == .library || response.source == .folder)
     }
+
+    // Regression: the pick-a-Host / leave / come-back cycle. Choosing a Host stops discovery and returning
+    // to the picker starts it again, so a Host has to be found on EVERY pass, not just the first. It was
+    // not: a resolve that hit NWConnection's `.waiting` never resumed, stranding the endpoint in `pending`
+    // forever, so the second pass showed an empty picker (only the Gallery) with no way to retry short of
+    // force-quitting. `resolve` now times out and a sweeper re-tries unresolved services.
+    @Test(.enabled(if: LiveDiscoveryTests.enabled))
+    @MainActor
+    func rediscoversAcrossStopAndStart() async throws {
+        let discovery = HostDiscovery()
+        defer { discovery.stop() }
+
+        for pass in 1...3 {
+            discovery.start()
+            var found: DisplayCore.Host?
+            for _ in 0..<150 {                                   // ~15s: a retry sweep is 5s apart
+                if let host = discovery.hosts.first { found = host; break }
+                try await Task.sleep(for: .milliseconds(100))
+            }
+            _ = try #require(found, "no Host discovered on pass \(pass) (found on earlier passes)")
+            discovery.stop()
+            #expect(discovery.hosts.isEmpty)                     // stop clears the list
+        }
+    }
 }
