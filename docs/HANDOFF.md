@@ -604,7 +604,9 @@ The one thing Safari cannot answer is app memory budget, since a `WKWebView` hos
 
 **Apple TV is unchanged by all of this** and stays native-only.
 
-**Sequencing: submit the iOS app FIRST, unchanged, then build this (Matt, 2026-08-06).** Nothing in these findings makes the staged iOS build wrong. It is complete, device-verified, and correct as designed (native rendering, no Connected art); `ipad-app/` has had zero commits since the 1.6.1 submission bump, same as `tv-app/`. **Do not open `ipad-app` before it ships.** Doing so would mean submitting something other than what was tested, would put a brand-new capability in front of a first App Review, and would leave a dirty tree if tvOS review comes back needing a respin. So: tvOS clears review, iOS submits at 1.6.1 unchanged, and Connected art becomes the natural follow-on release once there is a shipped baseline to compare against. The two open checks above (inkField, iPhone) fit naturally into that gap.
+**Sequencing: submit the iOS app FIRST, unchanged, then build this (Matt, 2026-08-06).** Nothing in these findings makes the staged iOS build wrong. It is complete, device-verified, and correct as designed (native rendering, no Connected art). **Do not open `ipad-app` before it ships.** Doing so would mean submitting something other than what was tested, would put a brand-new capability in front of a first App Review, and would leave a dirty tree if tvOS review comes back needing a respin. So: iOS submits unchanged, and Connected art becomes the natural follow-on release once there is a shipped baseline to compare against. The two open checks above (inkField, iPhone) fit naturally into that gap.
+
+**Amended 2026-08-07: the pair now ships at 1.6.2, not 1.6.1.** Two tvOS bugs surfaced on the real Apple TV the day the App Store build went live, so `tv-app/` and `display-core/` are no longer untouched since submission (`55adc30`, `bd25f1e`), and both shells moved to 1.6.2 together (`a2dc043`). The "do not open `ipad-app`" rule still holds in substance: its only change is that version bump, so the iOS binary is still the device-verified build, and it debuts at 1.6.2 so the two apps stay matched. **The iOS side of the App Store record still reads 1.0**, a placeholder from when the record was created; it must be set to 1.6.2 by hand before submitting.
 
 **On whether excluding Connected art from the iOS app was a mistake: it was not.** Matt read it that way once the survey landed. But `TVOS-APP-PLAN.md` §2 reasoned from a real, reproducible bug and the conclusion followed from what was known; the flaw was that the evidence came from the wrong surface, and the on-device check that would have caught it was removed as redundant (see the correction above). The plan was sound on the information available. Recorded so the decision is not relitigated as an oversight.
 
@@ -642,9 +644,9 @@ Related, and the reason this surfaced: manual entry of a bare hostname builds an
 
 `site/privacy/` says the Apple TV and iPad apps "talk only to a Host ... **on the same network**". That predates the OpenObject Gallery, which is a public demo Host reached over the internet (`gallery.openobject.io`). The substantive claim is still true (nothing is collected, nothing is uploaded to us), but the sentence is now incomplete. Add a line covering it, e.g. "If you choose the OpenObject Gallery, the app connects over the internet to a demo Host we publish, which serves sample artwork and collects nothing about you." Then re-sync the **Apple TV Privacy Policy** text in App Store Connect, which must match the published page (tvOS requires the policy as literal text, since a TV cannot open a URL).
 
-### Skip the export-compliance dialog on every build (noted 2026-08-01)
+### Skip the export-compliance dialog on every build (noted 2026-08-01, DONE 2026-08-06)
 
-Neither app sets `ITSAppUsesNonExemptEncryption`, so App Store Connect flags each uploaded build "Missing Compliance" and asks the App Encryption Documentation question by hand. Both apps use only the OS's HTTPS (no bundled or implemented cryptography), so adding `ITSAppUsesNonExemptEncryption = NO` to `ipad-app/project.yml` and `tv-app/project.yml` answers it declaratively and permanently. Do it before the iOS submission.
+Neither app set `ITSAppUsesNonExemptEncryption`, so App Store Connect flagged each uploaded build "Missing Compliance" and asked the App Encryption Documentation question by hand. Both apps use only the OS's HTTPS (no bundled or implemented cryptography), so `ITSAppUsesNonExemptEncryption = false` now sits in both `project.yml` files (`92a1181`), answering it declaratively and permanently. Confirmed on the 1.6.2 tvOS upload, which was not flagged.
 
 ### Folder Collections (Phase A local BUILT 2026-07-08, §20; Phase B frame BUILT 2026-07-11, §20; Apple TV DESIGNED 2026-07-10, not yet built)
 
@@ -724,6 +726,18 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-08-07: two Apple TV bugs found on the real device the day it shipped, fixed in 1.6.2
+
+Both were reported by Matt within a day of the App Store build going live, and neither was reachable from the test suite. `dns-sd` on the Mac proved the frame was still advertising on both interfaces, which ruled out a repeat of the Wi-Fi power-save drop (§17) and pointed at the app.
+
+**Hosts vanished from the picker.** `HostDiscovery.resolve()` opens a throwaway TCP connection to turn a discovered service into a reachable address. It resumed its continuation on `.ready`, `.failed` and `.cancelled`, but `NWConnection` reports a momentarily unusable path as **`.waiting`**, which fell to `default: break` and, having no timeout, never resumed. The endpoint stayed in `pending` forever and `handle()` skips anything pending, so one unlucky probe hid a live Host for the rest of the app session. Nothing anywhere retried: `resolveOutstanding` ran only on browse *changes*, and a happily-advertising Host generates none. Fixed in `55adc30` with a 3s resolve timeout, a 5s sweep that retries unresolved services, a browser rebuild on `.failed` (it used to call `stop()` and end discovery outright), and a generation counter so a stale resolve cannot write into a new browse session. Network.framework callbacks also moved off `.global()` onto a serial queue, as documented. This is `display-core`, so the Mac and iPad apps benefit too. An opt-in live regression test (`rediscoversAcrossStopAndStart`) runs the find/stop/find cycle three times.
+
+**The remembered Host was ignored on return.** Reopening it lived only in `AppModel.init`, which tvOS rarely re-runs: **Menu on the art stage goes to the picker and a second Menu exits**, so the app is almost always suspended showing the picker, and returning simply resumed that view. Art only came back after a hard close, the one path that truly cold-launches. Fixed in `bd25f1e` by handling the background to foreground transition as well, gated on the *previous* scene phase so backing out to the picker mid-session is never bounced back into the Host just left. The same change adds the manual rescan §5 always specified but `tv-app` never had.
+
+**Deliberately not ported to the iPad app.** The asymmetry is the exit path, not the device: on iOS you leave from the art stage, so the app already resumes to art, and a picker showing on resume means the owner genuinely chose it. The same code would fire mainly where it is least wanted.
+
+Shipped as **1.6.2** (`a2dc043`), both shells moved together so the App Store pair stays matched; tvOS uploaded as build 2 and submitted the same day.
 
 ### 2026-08-06: Auto Display shipped (1.7.0), the Mac shows art after a period of inactivity
 
