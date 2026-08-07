@@ -32,7 +32,10 @@ settings:
     ARCHS: arm64
     ONLY_ACTIVE_ARCH: "NO"
     SWIFT_VERSION: "5.0"          # the UI layer; DisplayCore builds in its own Swift 6 mode
-    MARKETING_VERSION: "1.6.1"    # shared version (sourced from player/package.json; release.sh syncs)
+    # Kept in lockstep with tv-app (see the note there): the two App Store apps always ship the same
+    # marketing version so the pair stays matched. Build number stays 1 because iOS has never uploaded a
+    # build; it is a per-platform counter, so it does not have to match tvOS's.
+    MARKETING_VERSION: "1.6.2"
     CURRENT_PROJECT_VERSION: "1"
     TARGETED_DEVICE_FAMILY: "1,2" # Universal: 1 = iPhone, 2 = iPad
     # Signed for on-device testing (Phase G5) with the Queueue Studios LLC team (J87JRCN9RM). Automatic

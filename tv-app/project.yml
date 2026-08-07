@@ -33,8 +33,13 @@ settings:
     ARCHS: arm64
     ONLY_ACTIVE_ARCH: "NO"
     SWIFT_VERSION: "5.0"         # the UI layer; DisplayCore builds in its own Swift 6 mode
-    MARKETING_VERSION: "1.6.1"   # shared version (sourced from player/package.json; release.sh syncs)
-    CURRENT_PROJECT_VERSION: "1"
+    # The App Store apps run their own version line while they catch up to the platform (player/mac-app/
+    # frame are ahead, at 1.7.2); release.sh does NOT bump these, so they are set by hand and tvOS + iOS
+    # are always moved TOGETHER so the pair ships matched. 1.6.2 = the tvOS discovery + remembered-Host
+    # fixes. Bump CURRENT_PROJECT_VERSION on every upload: App Store Connect rejects a build number it
+    # has already seen, even when the marketing version changed.
+    MARKETING_VERSION: "1.6.2"
+    CURRENT_PROJECT_VERSION: "2"
     # Signed for on-device testing (Phase C6) with the Queueue Studios LLC team (J87JRCN9RM). Automatic
     # signing lets Xcode provision a development profile for a paired Apple TV on the first device build;
     # the simulator still builds ad-hoc ("Sign to Run Locally"). Phase E adds App Store distribution.
