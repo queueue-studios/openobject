@@ -315,7 +315,9 @@ with §3.
 
 ### Note for later: offline / portable playback
 
-Recorded as a possible future enhancement (raised 2026-07-28), not v1. Today the app is a
+Recorded as a possible future enhancement (raised 2026-07-28), not v1. **The item now lives on
+the enhancements list, HANDOFF §17 "Offline / portable playback on the viewer apps" (2026-08-08),
+which also covers the iOS side; this note stays as the engine-level detail.** Today the app is a
 live viewer that plays cache-first, so a *running* session keeps cycling already-seen pieces
 even if the Host drops off Wi-Fi. That is a side effect of the media cache, not a feature,
 and three things keep it from being a real "load it at home, then take it off the network"
@@ -325,8 +327,17 @@ memory from the last poll, so a relaunch while offline has nothing to play and s
 Connecting. A genuine portable mode would need the rotation manifest persisted, a real
 non-purgeable offline store kept separate from the cache, an explicit "Download for offline"
 choice (the app stays a viewer and does not own art, §3), and an offline launch path that
-plays the saved set instead of waiting to connect. Wanted on the list; the need may or may
-not arise.
+plays the saved set instead of waiting to connect.
+
+**Settled 2026-08-08: not on tvOS, ever, for a platform reason.** tvOS guarantees an app only
+**500 KB** of persistent storage; anything larger lives in `Library/Caches`, which the OS may
+delete when space is low and the app is not running (app plus cache also cannot exceed 4 GB).
+On-Demand Resources cannot hold an owner's art, since ODR assets are authored at build time and
+hosted on the App Store. So "load it at home, carry it to a gallery, plug in with no network"
+cannot be made durable here: the purge window is exactly the unplugged-and-not-running state.
+The feature lives on as an **iOS-only** enhancement (HANDOFF §17), which is not a parity gap in
+rendering; only holding media is affected, and a remembered Host fits inside 500 KB, which is why
+`UserDefaultsHostStore` is unaffected.
 
 ---
 
