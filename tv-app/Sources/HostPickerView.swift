@@ -106,7 +106,13 @@ struct HostPickerView: View {
                     ForEach(model.hosts) { host in
                         Button { model.select(host) } label: {
                             HStack(spacing: 20) {
-                                Image(systemName: "play.tv")
+                                // Sized against the row's own label, not left at the default. An
+                                // Image with no font takes the default body size, and tvOS spreads its
+                                // type scale much wider than iOS does, so a body icon beside a .title2
+                                // label reads far smaller here than the same pairing does on iPhone and
+                                // iPad (where the picker runs a .body icon beside a .title3 label, a
+                                // much closer pair). .title3 restores roughly the iOS proportion.
+                                Image(systemName: "play.tv").font(.title3)
                                 Text(host.name).font(.title2).lineLimit(1)
                                 Spacer(minLength: 0)
                             }
@@ -140,8 +146,9 @@ struct HostPickerView: View {
                         Button { model.connectToGallery() } label: {
                             HStack(spacing: 20) {
                                 // photo.artframe reads smaller than play.tv at the same size (more built-in
-                                // padding), so bump it to match the discovered-host rows.
-                                Image(systemName: "photo.artframe").imageScale(.large)
+                                // padding), so bump it to match the discovered-host rows. Carries the same
+                                // .title3 as those rows, with .large keeping the relative compensation.
+                                Image(systemName: "photo.artframe").font(.title3).imageScale(.large)
                                 Text("OpenObject Gallery").font(.title2).lineLimit(1)
                                 Spacer(minLength: 0)
                             }

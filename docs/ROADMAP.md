@@ -38,9 +38,7 @@ Size is a rough sense of the job, not a promise.
 |----|------|---------------|-------|
 | E1 | Connected Collections on the iPad/iPhone app via `WKWebView`, plus the skip mechanism and the "Chrome Only" pill | HANDOFF §17 "Connected Collections on the viewer apps" | Large. **Gated:** do not open `ipad-app` until the submitted iOS build is approved. Two checks first: inkField untested, iPhone untested |
 | E2 | Golden Lining as a pre-rendered looping video, a per-piece WebKit fallback | HANDOFF §17 "Golden Lining as a pre-rendered video" | Provisionally retired. Closes for good when E1's two checks pass |
-| E3 | Offline / portable playback so an iPad holds its art and plays it off the network. **iOS only**; tvOS is closed by its 500 KB persistent-storage limit | HANDOFF §17 "Offline / portable playback"; `TVOS-APP-PLAN.md` §9 | Medium. Cheap first step: test iPad to USB-C-HDMI mirroring |
-| E4 | Apple TV picker: the icon at the left of each Host row (the `play.tv` symbol) reads smaller than the same icon in the iPhone and iPad picker. Bring it up to match | HANDOFF §17 "Apple TV picker" | Small, cosmetic. **Committed.** Noticed in the App Store screenshots and deferred before the tvOS submission |
-| E5 | tvOS App Transport Security parity: `ipad-app` declares `NSAllowsLocalNetworking` so a real device can reach a Host's plain HTTP on the LAN, `tv-app` declares no ATS key at all yet works anyway. Find out why, then add the key for parity | HANDOFF §17 "tvOS App Transport Security" | Small. **Committed.** Works today, so the risk is relying on an undocumented default |
+| E3 | Offline / portable playback: the **iPad** holds its own art and keeps playing with no network. **Wanted, to pursue later** (Matt, 2026-08-08). iPad only, permanently: the Apple TV variant is closed by tvOS storage limits (D14) | HANDOFF §17 "Offline / portable playback"; `TVOS-APP-PLAN.md` §9 | Medium. Needs a persistent store, a "Download for offline" choice, the manifest persisted, and an offline launch path |
 | E6 | Retro Arcade easter egg on tvOS / iPad. `arcade.js` is dependency-free canvas 2D and maps onto SpriteKit or SwiftUI Canvas; a Siri Remote D-pad is a better trigger than a keyboard | `TVOS-APP-PLAN.md` §5 | Medium. Post-v1 by choice |
 | E19 | Teach `release.sh` to bump `tv-app/` and `ipad-app/project.yml`, or decide deliberately that the app shells track their own version line. Today the script skips them, so the two App Store apps sit at 1.6.2 behind the platform at 1.7.2 | memory: version-bump-release-workflow | Small. Formerly W5, reclassified 2026-08-08: this is a change with a trigger, not something to observe. Trigger: when the apps catch up to the platform version |
 
@@ -104,6 +102,8 @@ Settled. Do not re-pitch without new information; if the answer changes, say wha
 | D11 | Watching for a recurrence of the frame's Bonjour / Wi-Fi drops. The `iwlwifi` power-save fix shipped and is reboot-confirmed (§20 2026-07-28); passive watching adds nothing, and a recurrence would simply be a new bug | 2026-08-08 |
 | D12 | Eyeballing inkField on the real frame at `framePixelDensity` 1. Accepted as shipped on the harness verification (§20 2026-07-29) | 2026-08-08 |
 | D13 | Capturing the Gatekeeper "downloaded from the Internet" prompt from a real download. The Setup Guide's wording stands unverified; worst case an owner meets one unexplained warning once | 2026-08-08 |
+
+| D14 | Offline / portable playback on **Apple TV**. tvOS guarantees an app 500 KB of persistent storage and may delete cached media exactly when the device is unplugged and the app is not running, so "load at home, carry it, plug in with no network" cannot be made durable there. Closed by the platform, not by preference; the iPad version stays alive as E3. Do not re-open on parity grounds | 2026-08-08 |
 
 ## Unknowns to supply
 

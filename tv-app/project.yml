@@ -75,6 +75,18 @@ targets:
         NSLocalNetworkUsageDescription: "OpenObject finds Hosts on your local network to show their art."
         NSBonjourServices:
           - _openobject._tcp
+        # Declares that this app talks to plain HTTP Hosts on the owner's own network, matching
+        # ipad-app. It is NOT what makes that work: ATS covers public host names only, and a Host is
+        # reached either by an IP literal (HostDiscovery.resolve returns a dotted quad) or by a .local
+        # or unqualified name typed into manual entry, none of which ATS evaluates. Verified on the
+        # tvOS 26 simulator 2026-08-08: with no ATS key at all, the app loaded /api/display and its
+        # media over cleartext from both a LAN IP literal and a .local name. The key is here for
+        # intent and durability, not because anything depends on it.
+        # Worth knowing if this ever DOES break: NSAllowsLocalNetworking does not cover IP literals,
+        # so if a future OS starts blocking cleartext to an IP, this key will not save the discovered-
+        # Host path; that would need NSExceptionDomains entries in CIDR notation.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     settings:
       base:
         PRODUCT_NAME: OpenObject

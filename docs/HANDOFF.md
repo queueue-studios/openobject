@@ -588,24 +588,6 @@ Render **Golden Lining** (Juicy Julio, `dune-reveries-editions` token 1) to a se
 
 **Open decisions.** Whether the fallback video ships inside the collection bundle or is fetched from the Host on demand; whether the viewer apps choose it automatically (a per-collection "not WebKit safe" flag, which fits how `CapabilityFilter` already skips what it cannot render) or the owner opts in; and how the Library/Rotation UI represents a piece that is connected on one display and video on another.
 
-### Apple TV picker: review the per-Host row icon size (noted 2026-08-01)
-
-The icon to the left of each Host row in the tvOS picker (the `play.tv` SF Symbol) reads relatively small next to the same icon in the iPhone and iPad picker, noticed in the App Store screenshots. Do a detailed review of the tvOS host-row icon size and bring it up to match the iPhone visually (the empty-state Gallery row already carries an `imageScale(.large)` bump for a related reason, §20). Cosmetic and non-blocking; deferred by Matt on 2026-08-01, not worth a redo before the tvOS submission.
-
-### tvOS App Transport Security: no local-networking exception (noted 2026-08-01)
-
-`ipad-app` declares `NSAppTransportSecurity / NSAllowsLocalNetworking = true` (added in the G5 on-device fixes, so a real iPhone/iPad can reach a Host's plain HTTP on the LAN). **`tv-app` declares no ATS key at all**, yet the tvOS app is device-verified reaching the frame over plain HTTP. So it works today, but the two shells differ for no deliberate reason and the tvOS behavior is unexplained rather than designed. Investigate why tvOS permits the cleartext LAN load, and if the answer is "by luck of the current OS default", add the same `NSAllowsLocalNetworking` key to `tv-app/project.yml` for parity and durability. Not urgent: the App Store Gallery path is HTTPS and unaffected.
-
-Related, and the reason this surfaced: manual entry of a bare hostname builds an **http://** origin (`Host.manualEntry` prepends `http://` unless a scheme is typed), so any public Host typed without `https://` is blocked by ATS. The App Review notes therefore spell out `https://gallery.openobject.io` in full.
-
-### Mac stay-awake while serving a folder to another screen (noted 2026-07-11, still open)
-
-A Folder Collection is served by the Mac app over the LAN, so a Mac that goes into **full system sleep** stops serving and a frame or Apple TV can only play what it has already cached. §20 (2026-07-11) listed this as remaining and it still is: `grep beginActivity` finds exactly one call site, `DisplayController` (`mac-app/Sources/DisplayController.swift:169`), which is taken when **art is on screen on that Mac**, not when the Mac is merely hosting. So a Mac that is serving a folder to another screen, its own display dark, holds no assertion.
-
-**The fix, per the design in the Folder Collections entry below:** the app holds an assertion that keeps the **system** awake while letting the **monitor** sleep, so an owner never has to find "Prevent automatic sleeping when the display is off" themselves. **Display sleep is already a non-issue** (the monitor going dark leaves the Mac serving); only full system sleep bites, and only for an *uncached* fetch.
-
-**Hard constraint on how it is scoped.** Auto Display's "**Default Never means zero impact**" rule is load-bearing and must not be regressed: an app that is running and hosting but not displaying must hold no assertion. So this assertion cannot be taken at launch or while merely hosting. It must be scoped to **actively serving a folder to a remote client**, taken when that starts and released when it stops, which keeps the guarantee intact for every owner who never uses a Folder Collection.
-
 ### Offline / portable playback on the viewer apps (noted 2026-07-28)
 
 Let the **iPad/iPhone** app genuinely **hold** its art, so a device that has been shown a rotation at home keeps playing it with the Host gone, and can be carried away from the network entirely. Recorded first as a note in `docs/TVOS-APP-PLAN.md` §9 and lifted here on 2026-08-08 so it sits with the rest of the open work. **iOS only: the Apple TV half is closed by the platform**, for the measured reason below, and that asymmetry is deliberate rather than an unfinished edge.
@@ -711,6 +693,22 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-08-08: two tvOS picker/networking follow-ups closed (§17 icon size, ATS)
+
+Both were logged on 2026-08-01 as non-blocking follow-ups to the tvOS submission and are now done. Roadmap rows E4 and E5 (`docs/ROADMAP.md`), retired with this entry.
+
+**The per-Host row icon now matches its label.** The picker's `play.tv` symbol carried no font of its own, so it rendered at the default body size beside a `.title2` label. That reads fine on iOS, where the picker pairs a `.body` icon with a `.title3` label, but **tvOS spreads its type scale much wider**, so the same pairing left the icon visibly undersized next to the name: the gap Matt spotted in the App Store screenshots. Fixed by sizing the icon against the row it lives in, `.font(.title3)`, which restores roughly the iOS proportion rather than guessing at a scale factor. The Gallery row's `photo.artframe` keeps its `.imageScale(.large)` compensation (that glyph carries more built-in padding) and now takes the same `.title3` underneath, so the two row types still agree. Verified on the tvOS 26 simulator with a before/after capture: the icon goes from noticeably short of the label's cap height to matching it. **On-device confirmation is Matt's**, since the real Apple TV is where he noticed it.
+
+**ATS: the tvOS app needed no exception, and now carries one anyway.** §17 asked why `tv-app` reached the frame's plain HTTP with no ATS key while `ipad-app` declares `NSAllowsLocalNetworking`, and whether that was luck of a current default. **Measured rather than reasoned**, on the tvOS 26 simulator against a scratch cleartext host on the Mac's own LAN address: with **no ATS key at all**, the app fetched `/api/display` and its media successfully from **both** a LAN IP literal (`http://192.168.1.41:8791`) and a `.local` name (`http://<mac>.local:8791`), rendering the test image full-bleed in each case.
+
+So the answer is not luck: **ATS covers public host names only**, and a Host is reached either by an IP literal (`HostDiscovery.resolve` returns a dotted quad, so every discovered Host is one) or by a `.local`/unqualified name typed into manual entry. None of those is a destination ATS evaluates.
+
+`NSAllowsLocalNetworking: true` was added to `tv-app/project.yml` regardless, matching `ipad-app`: it declares the intent, costs nothing, and means the two shells no longer differ for no reason. Re-verified after adding it that both address forms still render, so the key is inert rather than harmful. **One thing worth keeping**, because the original note assumed otherwise and a future reader might take false comfort: `NSAllowsLocalNetworking` **does not cover IP literals**. If a future OS ever does start blocking cleartext to an IP, this key will not save the discovered-Host path, which is precisely the path that uses them; that would need `NSExceptionDomains` entries in CIDR notation.
+
+**Neither change reaches an owner until the next App Store build.** `tv-app` source now differs from the 1.6.2 binary in review.
+
+**Files:** `tv-app/Sources/HostPickerView.swift`, `tv-app/project.yml` (+ regenerated `OpenObject-Info.plist`), `docs/ROADMAP.md`, this entry. `player/`, `installer/`, `mac-app/`, `ipad-app/`, `display-core/`, and `display-ui/` untouched, so the frame, the Mac app and the iOS app are unaffected. **Setup Guide unchanged** (nothing owner-facing changed: one icon size and an inert declaration). (Matt, 2026-08-08.)
 
 ### 2026-08-07: two Apple TV bugs found on the real device the day it shipped, fixed in 1.6.2
 
