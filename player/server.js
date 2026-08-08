@@ -936,6 +936,30 @@ const withConnectedFlags = (item) => {
   };
 };
 
+// The display's own front-end fingerprint (roadmap E21). A Software Update restarts the PLAYER but not
+// Chromium, so a change to display.css / display.js / the markup used to sit on disk unseen while the
+// panel kept rendering the files it loaded at boot: the update reported success and the frame looked
+// stale until someone restarted the kiosk. The display polls this in /api/display and reloads itself
+// when it changes, so a front-end change lands on the panel like any other update.
+//
+// Scoped to the four files the display page actually loads, NOT the whole public dir: a control-panel
+// edit must not blink the art. Re-stats at most every 2s, so a poll every 5s per display is free.
+const DISPLAY_ASSETS = ['display.html', 'display.css', 'display.js', 'arcade.js'];
+let assetSig = { at: 0, value: '' };
+function displayAssetSignature() {
+  const now = Date.now();
+  if (now - assetSig.at < 2000) return assetSig.value;
+  let acc = '';
+  for (const f of DISPLAY_ASSETS) {
+    try {
+      const st = fs.statSync(path.join(PUBLIC_DIR, f));
+      acc += `${f}:${st.size}:${Math.round(st.mtimeMs)};`;
+    } catch { acc += `${f}:missing;`; }
+  }
+  assetSig = { at: now, value: crypto.createHash('sha1').update(acc).digest('hex').slice(0, 12) };
+  return assetSig.value;
+}
+
 app.get('/api/display', ah(async (_req, res) => {
   const settings = currentSettings();
 
@@ -967,6 +991,7 @@ app.get('/api/display', ah(async (_req, res) => {
         retroArcade: settings.retroArcade,
         muted: settings.muted, // web display Sound (§12); folder media is video-capable too
         source: 'folder',
+        assets: displayAssetSignature(), // E21: front-end changed → the display reloads itself
       });
     }
   }
@@ -986,6 +1011,7 @@ app.get('/api/display', ah(async (_req, res) => {
       retroArcade: settings.retroArcade,
       muted: settings.muted, // web display Sound (§12)
       source: 'folder',
+      assets: displayAssetSignature(), // E21: front-end changed → the display reloads itself
     });
   }
   const pinned = settings.pinnedId != null ? db.getLibraryItem(settings.pinnedId) : null;
@@ -997,6 +1023,7 @@ app.get('/api/display', ah(async (_req, res) => {
     asleep: settings.asleep,
     retroArcade: settings.retroArcade, // hidden self-playing demo: the display swaps to the canvas
     muted: settings.muted, // web display Sound: Off mutes uploaded video (§12)
+    assets: displayAssetSignature(), // E21: front-end changed → the display reloads itself
     role: identity.deviceRole(), // 'frame' | 'standalone': lets the Display pick a frame-safe render density
     source: 'library',
   });

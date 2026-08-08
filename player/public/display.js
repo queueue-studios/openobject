@@ -361,9 +361,24 @@ function apply(state) {
   if (items.length === 1) freeHiddenLayer(); // lone/pinned: drop any leftover iframe still rendering behind it
 }
 
+// The front-end fingerprint this page was loaded with (roadmap E21). A Software Update restarts the
+// player but NOT Chromium, so a change to this file, display.css or the markup would otherwise sit on
+// disk while the panel kept rendering what it loaded at boot, until someone restarted the kiosk. When
+// the server reports a different signature the page has been superseded, so reload it.
+let assetSig = null;
+
+function checkAssets(state) {
+  if (!state.assets) return;                 // an older Host that does not send it: nothing to do
+  if (assetSig === null) { assetSig = state.assets; return; }
+  if (state.assets === assetSig) return;
+  location.reload();
+}
+
 async function tick() {
   try {
-    apply(await fetch('/api/display').then((r) => r.json()));
+    const state = await fetch('/api/display').then((r) => r.json());
+    checkAssets(state);
+    apply(state);
   } catch {
     /* offline or restarting — keep showing what's up; playback is local (§9) */
   }

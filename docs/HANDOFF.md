@@ -797,6 +797,24 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-08-08: the frame's panel no longer shows a stale front end after an update (E21)
+
+Roadmap **E21**, retired with this entry. Found the hard way the same day: the idle caption was resized, Software Update reported success, `grep` proved the new file was on the frame, and the panel kept showing the old size until the kiosk was restarted by hand.
+
+**The cause.** Software Update restarts the **player**, not **Chromium**. Server-side changes therefore appear immediately, which is why every previous update looked like it applied cleanly. A change that lives purely in the browser (`display.css`, `display.js`, the display markup) sat on disk unseen, because the kiosk keeps rendering the files it loaded at boot and `display.js` never reloads. The update was reporting success over a stale panel, and that would have applied to every screen E8 adds.
+
+**The fix is one signal and one line of client logic.** `/api/display` now carries an **`assets`** fingerprint, a short hash of the size and mtime of the four files the display page actually loads (`display.html`, `display.css`, `display.js`, `arcade.js`). `display.js` remembers the value it started with and calls `location.reload()` when it changes. The display already polls every 5 seconds, so this needed no new machinery and no new request.
+
+**Scoped deliberately to those four files, not the whole `public/` directory**: a control-panel edit must never blink the art. Verified both directions on a scratch Host: touching `display.css` changed the fingerprint (so the panel reloads), and touching `control.css` did not. The reload itself was verified end to end by marking the live page, changing a file, and watching the mark disappear while the display carried on rendering.
+
+**Old Hosts are handled**: a missing `assets` field is treated as "nothing to do", so an app or display talking to an older Host behaves exactly as before.
+
+**`OO_NO_MDNS=1` was added to make that test safe** (`player/src/discovery.js`). A stray mDNS responder on Matt's Mac is a known way to break `.local` resolution for everything on that machine, including reaching the real frame at `openobject.local`, so the scratch Host served normally while advertising nothing. Off by default; normal Hosts are unaffected. It is worth keeping for any future local test.
+
+**Not done:** the control panel has the same staleness in principle (an owner with the page open keeps old JS until they refresh). Left alone because a browser tab is refreshed by the person looking at it, whereas the frame's panel has nobody to refresh it.
+
+**Files:** `player/server.js` (the fingerprint, added to all three `/api/display` shapes), `player/public/display.js` (remember and reload), `player/src/discovery.js` (`OO_NO_MDNS`), `docs/ROADMAP.md`, this entry. **Setup Guide unchanged**: nothing owner-facing changed except that updates now land on the panel by themselves, which is what the guide already implies. (Matt, 2026-08-08.)
+
 ### 2026-08-08: the frame's Wi-Fi moved to NetworkManager, and the handoff that could never work (E8 stages 1-2)
 
 Groundwork for **E8** (Wi-Fi onboarding). Raising a setup access point needs NetworkManager to own the radio, and no frame's did.

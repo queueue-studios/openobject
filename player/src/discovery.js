@@ -22,6 +22,14 @@ const SERVICE_TYPE = 'openobject';
 // Advertise this Host. Returns a handle with .stop() to withdraw the record on shutdown. Never
 // throws: on any error it logs and returns a no-op handle so callers need no try/catch.
 function advertise({ name, port, id, version }) {
+  // OO_NO_MDNS=1 starts a Host that serves normally but advertises nothing. This exists for running a
+  // second player on a machine that already matters on the network: a stray mDNS responder is a known
+  // way to break `.local` resolution for everything else on that Mac, including reaching the real
+  // frame at openobject.local (§20). Off by default, so normal Hosts are unaffected.
+  if (process.env.OO_NO_MDNS === '1') {
+    console.log('[discovery] OO_NO_MDNS=1: serving without advertising');
+    return { stop() {} };
+  }
   let bonjour = null;
   try {
     const { Bonjour } = require('bonjour-service');
