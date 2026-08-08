@@ -47,12 +47,28 @@ if nmcli -t -f DEVICE,STATE device status | grep -q "^${WIFI}:connected$"; then
 fi
 
 # ── The credentials to re-join with ─────────────────────────────────────────────────
+# Three places they can live, because Debian's installer picks one depending on the path taken:
+#   1. wpa-ssid / wpa-psk lines directly in /etc/network/interfaces (the common ifupdown case),
+#   2. a wpa-conf line there naming a wpa_supplicant file,
+#   3. a /etc/wpa_supplicant/wpa_supplicant*.conf on its own.
+# The real XXL turned out to be case 1 (2026-08-08), which the first cut of this script missed.
 SSID="${OO_WIFI_SSID:-}" PSK="${OO_WIFI_PSK:-}"
-WPA_CONF="$(ls /etc/wpa_supplicant/wpa_supplicant*.conf 2>/dev/null | head -n1 || true)"
-if [ -z "$SSID" ] && [ -n "$WPA_CONF" ]; then
-  SSID="$(grep -oP '(?<=ssid=")[^"]+' "$WPA_CONF" | head -n1 || true)"
-  PSK="$(grep -oP '(?<=psk=")[^"]+'  "$WPA_CONF" | head -n1 || true)"
-fi
+
+read_wpa_conf() {   # $1 = a wpa_supplicant.conf; fills SSID/PSK if still empty
+  [ -f "$1" ] || return 0
+  [ -n "$SSID" ] || SSID="$(grep -oP '(?<=ssid=")[^"]+' "$1" 2>/dev/null | head -n1 || true)"
+  [ -n "$PSK"  ] || PSK="$(grep -oP  '(?<=psk=")[^"]+'  "$1" 2>/dev/null | head -n1 || true)"
+}
+
+for f in /etc/network/interfaces /etc/network/interfaces.d/*; do
+  [ -f "$f" ] || continue
+  [ -n "$SSID" ] || SSID="$(sed -nE 's/^[[:space:]]*wpa-ssid[[:space:]]+"?([^"]*[^"[:space:]])"?[[:space:]]*$/\1/p' "$f" | head -n1)"
+  [ -n "$PSK"  ] || PSK="$(sed -nE  's/^[[:space:]]*wpa-psk[[:space:]]+"?([^"]*[^"[:space:]])"?[[:space:]]*$/\1/p'  "$f" | head -n1)"
+  conf="$(sed -nE 's/^[[:space:]]*wpa-conf[[:space:]]+(\S+)[[:space:]]*$/\1/p' "$f" | head -n1)"
+  [ -n "$conf" ] && read_wpa_conf "$conf"
+done
+for c in /etc/wpa_supplicant/wpa_supplicant*.conf; do read_wpa_conf "$c"; done
+
 [ -n "$SSID" ] || die "could not work out the Wi-Fi name; re-run with OO_WIFI_SSID=... OO_WIFI_PSK=..."
 [ -n "$PSK"  ] || warn "no passphrase found — assuming an open network"
 ok "will re-join: $SSID"
