@@ -25,6 +25,7 @@ SNAP_DIR="/var/backups"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 SNAP="${SNAP_DIR}/openobject-net-${STAMP}.tar.gz"
 REVERT="/usr/local/sbin/oo-net-revert"
+INFLIGHT="/run/openobject-handoff-in-progress"   # guard-suppression flag; /run clears on reboot
 
 exec > >(tee -a "$LOG") 2>&1
 log()  { printf '\n▶ %s\n' "$*"; }
@@ -33,6 +34,8 @@ warn() { printf '  ! %s\n' "$*" >&2; }
 die()  { printf '\n✗ %s\n' "$*" >&2; exit 1; }
 
 log "OpenObject Wi-Fi handoff  ($(date))"
+: > "$INFLIGHT"                      # set FIRST: the armed guard must never fire mid-handoff
+trap 'rm -f "$INFLIGHT"' EXIT
 [ "$(id -u)" -eq 0 ] || die "run as root"
 command -v nmcli >/dev/null || die "nmcli not installed"
 
@@ -99,6 +102,13 @@ cat > "$REVERT" <<REVERT_EOF
 set -uo pipefail
 exec >> "$LOG" 2>&1
 if [ "\${1:-}" != "--force" ]; then
+  # The handoff itself drops the link for a few seconds. Without this the guard could fire
+  # mid-operation, see "offline", and revert-and-reboot in the middle of it (observed on the
+  # real frame 2026-08-08: OnBootSec fires immediately on an already-booted system).
+  if [ -e "$INFLIGHT" ]; then
+    printf '  . undo check (%s): handoff in progress, standing by\n' "\$(date)"
+    exit 0
+  fi
   gw=\$(ip route show default 2>/dev/null | awk '/default/{print \$3; exit}')
   if [ -n "\$gw" ] && ping -c 1 -W 2 "\$gw" >/dev/null 2>&1; then
     printf '  . undo check (%s): online, leaving the handoff in place\n' "\$(date)"
@@ -128,6 +138,8 @@ cat > /etc/systemd/system/oo-net-revert.timer <<'UNIT_EOF'
 [Unit]
 Description=OpenObject: periodic safety check after the Wi-Fi handoff
 [Timer]
+# OnBootSec covers a reboot inside the risk window. It also fires the moment the timer is armed
+# on an already-booted system, which is why the revert checks the in-progress flag first.
 OnBootSec=90
 OnActiveSec=3min
 OnUnitActiveSec=3min
