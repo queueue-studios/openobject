@@ -49,6 +49,8 @@ Size is a rough sense of the job, not a promise.
 |----|------|---------------|-------|
 | E8 | Wi-Fi onboarding: an `OpenObject-Setup` AP plus captive page, folding into the existing Network card. **Stages 1-2 done 2026-08-08** (the frame's Wi-Fi is on NetworkManager, and `install.sh` no longer carries a handoff that could never succeed); **stage 3, setup mode itself, is what remains** | HANDOFF §11; §20 2026-08-08; the original XXL's own flow, which Matt captured in screenshots, is the reference | Large. Surfaces only when the frame cannot connect (Matt, 2026-08-08). No QR codes: the network name and password in plain text, as the original did. Old credentials are never deleted, so a returning network just works |
 
+| E21 | The frame's panel keeps showing the old front end after a Software Update. The update restarts the player, not Chromium, so a change to `display.css`, `display.js` or the display markup does not appear until the kiosk reloads (`sudo systemctl restart openobject-kiosk`) or the frame reboots. The display already polls every ~5s, so it has a natural place to notice the server's version changed and reload itself | HANDOFF §20 2026-08-08 (found while shipping the caption size) | Small. Affects every future front-end change, including all of E8's screens, and the update currently reports success while the panel is stale |
+
 ### The Mac app
 
 | ID | Item | Design record | Notes |

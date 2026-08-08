@@ -282,19 +282,60 @@ the stock XXL's Wi-Fi setup; it's a proven flow worth building on. Observed: the
 the phone then shows "configuration in progress, wait for confirmation on the screen," and the frame
 confirms "Successfully Connected… searching for updates and rebooting."
 
-Refinements to adopt for OpenObject (Phase 2, build with the hardware):
-- **QR codes on the frame's setup screen**, the biggest win. The branded boot/idle screen, in its "no
-  network yet" state, *becomes* the setup screen: mark + a **join-AP QR** (one-tap join, no typing) + an
-  **open-config QR** (one tap to the captive page) + a manual fallback (network name, password, URL).
-- **Plain labels** on the config page, "Wi-Fi network name" and "Password", not "SSID" / "Pass Phrase".
-- **Pick the network from a scanned list** rather than typing the SSID (typo-proof; manual entry as a
-  fallback for hidden networks).
-- **Two-screen confirmation**, when the frame leaves its own AP to join home Wi-Fi, the phone loses
-  contact with it, so success is confirmed on the **frame's screen** ("Connected ✓") while the phone
-  shows "applying, watch the frame."
-- **Recovery line + self-heal**, on failure the setup AP returns; tell the user to re-join it and retry.
-- **AP naming/password**, `OpenObject-<id>` (a short unique suffix so two frames don't collide); open
-  network vs. a QR-encoded password is a Phase-2 call (the join-QR makes a password basically free).
+Refinements sketched 2026-06-13, **now superseded in part by the settled design below**. Kept for the
+reasoning: QR codes on the frame's setup screen (dropped, see below); **plain labels** on the config
+page, "Wi-Fi network name" and "Password", not "SSID" / "Pass Phrase"; **pick the network from a
+scanned list** rather than typing it (typo-proof, with manual entry as the fallback for hidden
+networks); **two-screen confirmation**, since the frame leaves its own AP to join home Wi-Fi and the
+phone therefore loses contact, so success is confirmed on the **frame's screen** while the phone says
+to watch the frame; and a **recovery path**, the setup AP returning on failure so the owner can retry.
+
+### Setup mode: the settled design (Matt, 2026-08-08)
+
+Decided with mockups against the real screens; the E8 build starts from here rather than from the 2026-06-13 sketch.
+
+**When it appears.** Only when the frame **cannot connect** to a known network. It is not a mode the
+owner can enter on a whim, and there is no "change my Wi-Fi" entry point in the control panel: if the
+frame is reachable, the network it is on is working.
+
+**Old credentials are never deleted.** A new network is added, not swapped in. So a router that comes
+back, or a house the frame returns to, simply reconnects with nothing to redo. This also answers what
+happens when someone mistypes a new password: nothing is lost, because nothing was removed.
+
+**No QR codes**, reversing the 2026-06-13 sketch that called them "the biggest win". They would need a
+QR encoder in the codebase, and the network name and password in plain text already work for everyone
+(the stock XXL printed both as its own fallback). Easy to add later if it is ever wanted.
+
+**AP identity.** Network **`OpenObject-Setup`**, password **`openobject`**, and the frame's address on
+its own network pinned to **192.168.4.1** (NetworkManager's shared mode would otherwise default to
+10.42.0.1; 192.168.4.1 is the conventional device-setup address and reads more familiar). The
+2026-06-13 sketch proposed a `-<id>` suffix so two frames could not collide; dropped as vanishingly
+rare against the cost of a longer name to read and type.
+
+**The frame's screen.** The idle screen's own rules, with more caption lines where it has one, so the
+screen is not a new design but the same one saying more:
+
+- Wordmark **46vmin**, `#f2f2f2`, at the **identical position** to the idle screen. This is load-bearing:
+  the idle screen centres the whole group, so a taller caption drags the mark upward (measured 69px on
+  an 1100px canvas, ~120px on the panel) and the logo would visibly jump between states. Reserve exactly
+  one caption line's height and let the extra lines hang below into the black.
+- Body text **3.0vmin** in `#5b5b5b`, the shipped caption size (§20 2026-08-08), with the values the
+  owner types in `#8a8a8a`, exactly as the idle screen treats its address.
+- One header line, **"Connect to Wi-Fi"**, at **3.5vmin** in `#f2f2f2` with a blank line beneath it.
+  Emphasis by size and brightness only: no new weight, no new colour, nothing the palette lacks.
+  **Not** "Connect to Wi-Fi…" with an ellipsis, which reads as *in progress* and would collide with the
+  genuine progress state on the confirmation screen.
+- The copy, verbatim: **"Connect to Wi-Fi" / "On your phone, join the network OpenObject-Setup" /
+  "Password: openobject" / "Then go to openobject.local (or 192.168.4.1) in your browser."**
+- The longest line (the last) measures **80% of the panel width**, so it is the constraint if any of
+  these strings ever grow.
+
+**Confirmation and failure** follow from the same rules and need no new design: the wordmark plus a
+single caption line, exactly the idle screen's shape. Success is shown on the **frame**, because the
+phone loses contact the moment the frame leaves its own AP to join the home network.
+
+**The phone page follows the control panel**, not the display: it is a form, and it should feel like the
+panel the owner will use from then on.
 
 The stock screens themselves are reference only, captured here as learnings, not committed (art and
 photos never enter the repo, §8). Build none of this in Phase 1.
