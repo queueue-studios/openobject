@@ -77,7 +77,8 @@ NFT reader, though it now has **curated support for a few specific collections**
    it has power.
 3. Boot the installer and follow the **[installer runbook](../installer/README.md)**: install a
    minimal Debian, then run the OpenObject installer, which sets everything up and reboots into the
-   art. You join your home Wi-Fi during this install. (Optional: to keep a copy of the original
+   art. You join your home Wi-Fi during this install, and once the frame is online it downloads
+   OpenObject itself, so there's nothing to prepare on your computer and no second USB drive. (Optional: to keep a copy of the original
    software first, see the [backup appendix](appendix-backup-original.md). Most owners skip it.)
 4. When it finishes, the frame boots straight to the **OpenObject** screen. (On every power-up you'll briefly see the Infinite Objects logo first. That's the frame's own built-in startup logo, not OpenObject, and it's completely normal, it does not mean anything went wrong.)
 5. On any device, open **http://openobject.local** in a browser. If that doesn't work, for example

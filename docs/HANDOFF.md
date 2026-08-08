@@ -29,7 +29,7 @@ The mini PC is a **MeLE Quieter 3Q** (confirmed from the unit's label; the BIOS 
 |---|---|
 | Model | MeLE Quieter 3Q (BIOS board name `XXL`) |
 | CPU | Intel Celeron **N5105** (Jasper Lake / "JasperLake ULX"), 2.00 GHz, **x86-64**, _bench-confirmed 2026-06-13; earlier "N5100" was wrong_ |
-| RAM | 8 GB LPDDR4x _(typical config; not yet confirmed at bench)_ |
+| RAM | **8 GB**, confirmed on the running frame 2026-08-08 (`MemTotal` 7,877,248 kB = 7.5 GiB usable; the ~500 MiB balance is reserved by the iGPU and kernel). LPDDR4x is the vendor spec and was not separately verified, since capacity was the open question |
 | Storage | **~128 GB eMMC**, confirmed from Linux as **116.5 GiB** at `/dev/mmcblk0` (2026-06-13): EFI `p1` 512 MB + ext4 `p2` 116 GB, plus 4 MB `mmcblk0boot0/1`. UEFI device id `A3V012`. _(The earlier "~256 GB" came from the Android storage screen and was wrong, `lsblk` is authoritative; the original "128 GB" was right.)_ |
 | Expansion | microSD slot (pressure valve for larger libraries) |
 | Networking | Onboard Wi-Fi, Intel Jasper Lake **CNVi** `[8086:4df0]` (`iwlwifi`) + **Gigabit Ethernet** Realtek RTL8111/8168 `[10ec:0123]` (`r8169`), _both confirmed 2026-06-14_ |
@@ -110,9 +110,14 @@ This is the procedure to convert a stock XXL to OpenObject. It is performed once
 7. **Install OpenObject** to the eMMC. Two stages (full runbook: `installer/README.md`):
    **(a)** run the standard **Debian stable netinst**, wipe `/dev/mmcblk0`, choose a *minimal*
    system (untick the desktop; keep "standard system utilities"), set hostname `openobject`,
-   join Wi-Fi. **(b)** seed the OpenObject checkout to `/opt/openobject` (from a `git bundle` on
-   a USB stick) and run **`sudo bash /opt/openobject/installer/install.sh`**, it installs Node
-   22, Chromium + cage, Avahi, NetworkManager, the systemd units, and reboots into the kiosk.
+   join Wi-Fi. **(b)** clone the public repo straight onto the frame
+   (`sudo git clone https://github.com/queueue-studios/openobject.git /opt/openobject`) and run
+   **`sudo bash /opt/openobject/installer/install.sh`**, it installs Node 22, Chromium + cage,
+   Avahi, NetworkManager, the systemd units, and reboots into the kiosk. **No second USB stick is
+   needed** (simplified 2026-08-08, roadmap E20): Debian has already joined the Wi-Fi by this
+   point and `install.sh` needs the network regardless (apt, NodeSource), so the frame fetches its
+   own code. Seeding from a `git bundle` on a stick stays documented in `installer/README.md` as
+   the fallback for an unreachable GitHub.
 8. **Verify on the panel** before considering it done: the display comes up edge-to-edge at
    `/display`, `http://openobject.local` is reachable over Wi-Fi, an uploaded clip plays,
    **Restart** bounces the player, and an unplug/replug auto-boots back to the display.
@@ -460,11 +465,12 @@ lives at **`/opt/openobject`** (a real git checkout, `origin` → the GitHub rep
 data at **`/var/lib/openobject/{data,uploads}`** via `OO_DATA_DIR`/`OO_UPLOADS_DIR`, so a pull
 or a re-seed can never touch the library. The player listens on **port 80**
 (`CAP_NET_BIND_SERVICE`, still non-root) so the panel is plain `http://openobject.local`.
-**Self-update is wired but only goes live when the repo is public**, while private, a
-`git fetch` can't authenticate (we set `GIT_TERMINAL_PROMPT=0` so *Check for updates* fails fast
-and reports gracefully rather than hanging); making the repo public is the one-step follow-up.
-The bench unit is **seeded from a `git bundle`** of the local repo (private repo → no clone
-auth needed; full history preserved so self-update works once public).
+**Self-update is live** now that the repo is public (it was written while the repo was private,
+when a `git fetch` could not authenticate; `GIT_TERMINAL_PROMPT=0` is kept so any auth hiccup
+still fails fast and reports gracefully rather than hanging). Because the repo is public, a frame
+is now **cloned directly from GitHub** rather than seeded from a `git bundle` on a stick, which is
+what retired the second USB stick from the install (2026-08-08, roadmap E20); the bundle route
+survives in `installer/README.md` as the no-GitHub fallback.
 
 ### Servicing the installed frame (Phase 2)
 
@@ -706,7 +712,7 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 - [x] **Hardware models** (2026-06-13), UGreen 4-port USB 3.0 hub (**25946**); CableCreation **left-angle** USB 3.0 extension (**CC0516**); Logitech **K400 Plus**. Filled into §16 / Setup Guide.
 - [x] **Logo / OpenObject mark**, supplied by Matt; optimized marks in `assets/branding/` (source masters in `Logo/`, gitignored). Transparent / white-on-dark variants derived in Phase 1.
-- [~] **Bench-verified specs**, **BIOS-entry key `Del`** ✓; **Auto-Power-On = none / firmware auto-on** ✓ (no toggle exists); **CPU N5105** ✓; **UEFI + Secure-Boot-off** ✓; **eMMC = ~128 GB** (116.5 GiB at `/dev/mmcblk0`; corrected 2026-06-13 from the wrong "~256 GB") ✓; **onboard Wi-Fi works under Ubuntu 26.04 live** ✓ (2026-06-13 smoke test). **Wi-Fi module CONFIRMED at the bench (2026-06-14, `lspci -nnk` on installed Debian 13.5 / kernel 6.12.90):** **Intel Jasper Lake PCH CNVi Wi-Fi `[8086:4df0]`**, driver **`iwlwifi`** (this is the FCC TX ID `PD99560D2` part). **Debian's in-box `firmware-iwlwifi` drives it, Wi-Fi joined in the installer, no dongle needed**, closing the §3 Wi-Fi risk. Also captured: iGPU **Intel JasperLake UHD Graphics `[8086:4e61]`** driver **`i915`**; wired NIC **Realtek RTL8111/8168 `[10ec:0123]`** driver **`r8169`**. **Panel resolution CONFIRMED 2026-06-14: 1920×1920** (running framebuffer + native DRM mode; the iGPU also advertises 1920×1080 fallback modes). **Still TBD:** RAM.
+- [x] **Bench-verified specs**, **BIOS-entry key `Del`** ✓; **Auto-Power-On = none / firmware auto-on** ✓ (no toggle exists); **CPU N5105** ✓; **UEFI + Secure-Boot-off** ✓; **eMMC = ~128 GB** (116.5 GiB at `/dev/mmcblk0`; corrected 2026-06-13 from the wrong "~256 GB") ✓; **onboard Wi-Fi works under Ubuntu 26.04 live** ✓ (2026-06-13 smoke test). **Wi-Fi module CONFIRMED at the bench (2026-06-14, `lspci -nnk` on installed Debian 13.5 / kernel 6.12.90):** **Intel Jasper Lake PCH CNVi Wi-Fi `[8086:4df0]`**, driver **`iwlwifi`** (this is the FCC TX ID `PD99560D2` part). **Debian's in-box `firmware-iwlwifi` drives it, Wi-Fi joined in the installer, no dongle needed**, closing the §3 Wi-Fi risk. Also captured: iGPU **Intel JasperLake UHD Graphics `[8086:4e61]`** driver **`i915`**; wired NIC **Realtek RTL8111/8168 `[10ec:0123]`** driver **`r8169`**. **Panel resolution CONFIRMED 2026-06-14: 1920×1920** (running framebuffer + native DRM mode; the iGPU also advertises 1920×1080 fallback modes). **RAM CONFIRMED 2026-08-08: 8 GB** (`MemTotal` 7,877,248 kB on the running frame, i.e. 7.5 GiB usable after the iGPU/kernel reservation). **Nothing is now TBD in this list.**
 - [x] **GitHub repo**, created **private** (2026-06-11); goes public later.
 - [x] **Content model confirmed** (2026-06-11), library+select, not replace-on-upload.
 
@@ -715,6 +721,22 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-08-08: the frame install lost its second USB stick (E20)
+
+Roadmap **E20**, the half of the parked image work (§17 "Prebuilt release image") that needed no hardware to validate. Retired with this entry.
+
+**What changed.** The runbook used to have the owner build a `git bundle` on their Mac, format a stick FAT or exFAT so both macOS and the frame's Linux could read it, boot the frame, mount the stick, and clone from it. All of that is gone. The frame now runs `sudo git clone https://github.com/queueue-studios/openobject.git /opt/openobject` and then `install.sh`. **One USB stick for the whole install** (the Debian netinst), down from two, and a section of stick-formatting instructions disappears with it.
+
+**Why it works now and did not before.** The bundle existed because the repo was **private**: a clone could not authenticate, so the code had to be carried by hand. The repo has been public since 2026-07-03 and that instruction simply outlived its reason. Nothing else made the stick necessary: Debian has joined the Wi-Fi by that point in the procedure, and `install.sh` needs the network regardless for apt and NodeSource, so there was never an offline install to protect. Verified here with `git ls-remote` over HTTPS and `GIT_TERMINAL_PROMPT=0`: an anonymous clone resolves, so the documented command works with no credentials.
+
+**A bootstrap script was considered and dropped.** The E20 sketch called for a one-command `curl`-and-run bootstrap. Written out, the honest version is three plain commands (`apt install git`, `git clone`, `bash install.sh`), and a script to wrap them would add a file to maintain, a download-and-run-as-root pattern to justify, and a layer between the owner and what is actually happening. Three readable commands are the more revivable artifact, which is the point of the project. `install.sh` was already idempotent, so the re-run case needed nothing either.
+
+**The old path is kept, not deleted**, as `installer/README.md` "Fallback: seeding from a USB stick (no GitHub)", with the bundle command, the stick-format note, and the mount-and-clone steps intact. It is the answer if GitHub is ever unreachable or an owner would rather carry the code themselves, and §15's stale "self-update only goes live when the repo is public" note was corrected in the same pass.
+
+**Not done, deliberately:** E20 also proposed sharpening the Debian-installer walkthrough. The existing text was written from a real install and is accurate; expanding it would mean inventing screens nobody here has seen since, which is worse than leaving it. If it is ever expanded it should be written from the memory of someone who has run it.
+
+**Files:** `installer/README.md` (steps renumbered 0-3, the seed section rewritten as a fallback), `docs/HANDOFF.md` (§4 step 7b, the §15 private-repo note, this entry), `docs/SETUP-GUIDE.md` (§16 lockstep: step 3 now says the frame downloads OpenObject itself and no second drive is needed), `docs/ROADMAP.md`. **No code changed**, so the running frame, the player, and every app are untouched; `bash -n` re-checked on all four installer scripts. (Matt, 2026-08-08.)
 
 ### 2026-08-08: two tvOS picker/networking follow-ups closed (§17 icon size, ATS)
 
