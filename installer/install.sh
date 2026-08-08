@@ -17,7 +17,8 @@
 #   6. Set the hostname to `openobject` and start Avahi → reachable at openobject.local.
 #   7. Quiet the boot (no console spew / blanking / cursor on the panel).
 #   8. Disable Wi-Fi power-save (keeps the frame discoverable and connected; HANDOFF §3).
-#   9. Hand Wi-Fi to NetworkManager (non-fatal: leaves the working Wi-Fi alone if it can't).
+#   9. Hand Wi-Fi to NetworkManager via installer/net/nm-handoff.sh (non-fatal: a failure
+#      restores the working Wi-Fi and carries on).
 set -euo pipefail
 
 # ── Config (override via env if needed) ─────────────────────────────────────────────
@@ -229,54 +230,27 @@ done
 ok "Wi-Fi power-save disabled (now + persistent)"
 
 # ── 9. Hand Wi-Fi to NetworkManager (non-fatal) ─────────────────────────────────────
-# Do this LAST: every step above needed the network that the Debian installer set up. We try to
-# move Wi-Fi onto NetworkManager (the foundation for the future no-keyboard setup AP, §11) and
-# PROVE it works before disabling the old config. If anything fails we leave the working Wi-Fi
-# untouched and just warn — the frame still boots and serves locally.
+# Do this LAST: every step above needed the network the Debian installer set up.
+#
+# The handoff lives in installer/net/nm-handoff.sh rather than inline here, so the fresh-install
+# path and the retrofit path (an existing frame still on ifupdown) share ONE implementation, and
+# it is the implementation that has actually been run on real hardware (the XXL, 2026-08-08).
+#
+# The inline version this replaces could never succeed. Debian marks any interface named in
+# /etc/network/interfaces as UNMANAGED by NetworkManager, so NM could not join while ifupdown
+# still owned the radio, but the step only retired the ifupdown config AFTER NM had proved
+# itself: a deadlock, so every frame installed by that version stayed on ifupdown. The script
+# breaks it by freeing the device FIRST, having snapshotted the config so any failure restores it.
+#
+# OO_ARM_GUARD=0 because the owner is at the keyboard during an install: the persistent
+# revert-and-reboot guard that a remote retrofit needs would be the wrong trade here. A failure
+# still restores the old Wi-Fi, in place, and we carry on with a warning exactly as before.
 log "Handing Wi-Fi to NetworkManager"
-setup_networkmanager() {
-  systemctl enable NetworkManager >/dev/null 2>&1 || true
-  systemctl start  NetworkManager >/dev/null 2>&1 || { warn "NetworkManager won't start"; return 1; }
-  sleep 2
-
-  # Already managing a live Wi-Fi connection? Nothing to do.
-  if nmcli -t -f TYPE,STATE device status 2>/dev/null | grep -q '^wifi:connected'; then
-    ok "NetworkManager already owns Wi-Fi"; return 0
-  fi
-
-  # Reuse the SSID/PSK the Debian installer stored, so the owner needn't retype it.
-  local SSID="${OO_WIFI_SSID:-}" PSK="${OO_WIFI_PSK:-}" wpa
-  wpa="$(ls /etc/wpa_supplicant/wpa_supplicant*.conf 2>/dev/null | head -n1 || true)"
-  if [ -z "$SSID" ] && [ -n "$wpa" ]; then
-    SSID="$(grep -oP '(?<=ssid=")[^"]+' "$wpa" 2>/dev/null | head -n1 || true)"
-    PSK="$(grep -oP '(?<=psk=")[^"]+'  "$wpa" 2>/dev/null | head -n1 || true)"
-  fi
-  if [ -z "$SSID" ]; then
-    read -r -p "  Wi-Fi network name (SSID): " SSID || true
-    read -r -s -p "  Wi-Fi password: " PSK || true; echo
-  fi
-  [ -n "$SSID" ] || { warn "no SSID — skipping NM handoff"; return 1; }
-
-  nmcli radio wifi on >/dev/null 2>&1 || true
-  if ! nmcli device wifi connect "$SSID" password "$PSK" name openobject-wifi >/dev/null 2>&1; then
-    warn "NetworkManager couldn't join '$SSID' — leaving the existing Wi-Fi in place"; return 1
-  fi
-  nmcli connection modify openobject-wifi connection.autoconnect yes >/dev/null 2>&1 || true
-  sleep 3
-  curl -fsS -o /dev/null --max-time 8 https://deb.nodesource.com/ \
-    || { warn "NM joined but no internet yet — leaving the existing Wi-Fi in place"; return 1; }
-
-  # Proven good: now retire the installer's ifupdown Wi-Fi so NM owns the device after reboot.
-  for f in /etc/network/interfaces /etc/network/interfaces.d/*; do
-    [ -f "$f" ] || continue
-    if grep -qE '^\s*(allow-hotplug|auto|iface)\s+wl' "$f"; then
-      cp -a "$f" "$f.openobject.bak"
-      sed -i -E 's/^(\s*(allow-hotplug|auto|iface|wpa-|address|netmask|gateway|dns-).*wl.*)$/# \1  # disabled by OpenObject (NetworkManager owns Wi-Fi)/' "$f" || true
-    fi
-  done
-  ok "NetworkManager owns Wi-Fi (SSID: $SSID)"
-}
-setup_networkmanager || warn "Wi-Fi handoff skipped — the existing connection still works."
+if OO_ARM_GUARD=0 bash "${SELF_ROOT}/installer/net/nm-handoff.sh"; then
+  ok "Wi-Fi is on NetworkManager"
+else
+  warn "Wi-Fi handoff skipped, the existing connection still works."
+fi
 
 # ── Done ────────────────────────────────────────────────────────────────────────────
 log "Smoke test"

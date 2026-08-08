@@ -20,6 +20,8 @@
 # This is network configuration only.
 set -euo pipefail
 
+ARM_GUARD="${OO_ARM_GUARD:-1}"   # 0 during a fresh install: the owner is at the keyboard, so a
+                                 # persistent guard that reboots mid-install is the wrong trade.
 LOG="/var/log/openobject-nm-handoff.log"
 SNAP_DIR="/var/backups"
 STAMP="$(date +%Y%m%d-%H%M%S)"
@@ -32,6 +34,12 @@ log()  { printf '\n▶ %s\n' "$*"; }
 ok()   { printf '  ✓ %s\n' "$*"; }
 warn() { printf '  ! %s\n' "$*" >&2; }
 die()  { printf '\n✗ %s\n' "$*" >&2; exit 1; }
+
+# Roll back the way this run wants: a guarded run reboots into the restored config, an
+# install-time run restores in place so the installer can carry on and warn.
+revert_now() {
+  if [ "$ARM_GUARD" = "1" ]; then "$REVERT" --force; else "$REVERT" --force --no-reboot; fi
+}
 
 log "OpenObject Wi-Fi handoff  ($(date))"
 : > "$INFLIGHT"                      # set FIRST: the armed guard must never fire mid-handoff
@@ -94,7 +102,7 @@ ok "snapshot: $SNAP"
 # The revert is also CONDITIONAL: it restores the old config only if the frame is actually
 # offline. A firing while everything is fine is then a harmless no-op instead of silently undoing
 # a working handoff. Pass --force to roll back deliberately.
-log "Arming the automatic undo"
+log "Writing the undo"
 cat > "$REVERT" <<REVERT_EOF
 #!/usr/bin/env bash
 # Restore the pre-handoff network config and reboot, IF the frame has lost its network.
@@ -121,11 +129,18 @@ tar xzf "$SNAP" -C / || printf '  ! restoring the snapshot failed\n'
 systemctl disable NetworkManager >/dev/null 2>&1 || true
 systemctl enable --now openobject-netcheck.timer >/dev/null 2>&1 || true
 systemctl disable oo-net-revert.timer >/dev/null 2>&1 || true
+if [ "\${2:-}" = "--no-reboot" ] || [ "\${1:-}" = "--no-reboot" ]; then
+  printf '  = config restored (no reboot requested)\n'
+  exit 0
+fi
 printf '  = config restored, rebooting\n'
 systemctl reboot
 REVERT_EOF
 chmod +x "$REVERT"
+ok "undo written: $REVERT"
 
+if [ "$ARM_GUARD" = "1" ]; then
+log "Arming it as a persistent timer"
 cat > /etc/systemd/system/oo-net-revert.service <<'UNIT_EOF'
 [Unit]
 Description=OpenObject: undo the Wi-Fi handoff if the frame has lost its network
@@ -153,6 +168,9 @@ systemctl enable --now oo-net-revert.timer >/dev/null 2>&1 || die "could not arm
 ok "undo armed and persistent (survives a reboot); checks every ~3 minutes"
 ok "it only fires while the frame is OFFLINE, so it cannot undo a working handoff"
 ok "disarm with:  sudo systemctl disable --now oo-net-revert.timer"
+else
+  ok "guard not armed (OO_ARM_GUARD=0): a failure restores the old config in place, without rebooting"
+fi
 
 # The existing Wi-Fi watchdog re-ups the link whenever it sees no connectivity, and this procedure
 # deliberately drops the link for a moment. Left running it would fire mid-handoff and, on its
@@ -179,7 +197,7 @@ sleep 2
 # ── 4. Hand it to NetworkManager and join ───────────────────────────────────────────
 log "Handing $WIFI to NetworkManager"
 systemctl enable NetworkManager >/dev/null 2>&1 || true
-systemctl restart NetworkManager || { warn "NetworkManager would not start — reverting NOW"; "$REVERT" --force; exit 1; }
+systemctl restart NetworkManager || { warn "NetworkManager would not start, reverting NOW"; revert_now; exit 1; }
 sleep 3
 nmcli device set "$WIFI" managed yes >/dev/null 2>&1 || true
 nmcli radio wifi on >/dev/null 2>&1 || true
@@ -194,20 +212,20 @@ for attempt in 1 2 3; do
   nmcli device wifi rescan >/dev/null 2>&1 || true
   sleep 5
 done
-[ "$joined" -eq 1 ] || { warn "could not join $SSID — reverting NOW rather than waiting"; "$REVERT"; exit 1; }
+[ "$joined" -eq 1 ] || { warn "could not join $SSID, reverting NOW rather than waiting"; revert_now; exit 1; }
 nmcli connection modify openobject-wifi connection.autoconnect yes >/dev/null 2>&1 || true
 
 # ── 5. Prove it actually works before leaving it in place ───────────────────────────
 log "Verifying"
 sleep 4
 nmcli -t -f DEVICE,STATE device status | grep -q "^${WIFI}:connected$" \
-  || { warn "NM reports $WIFI not connected — reverting NOW"; "$REVERT"; exit 1; }
+  || { warn "NM reports $WIFI not connected, reverting NOW"; revert_now; exit 1; }
 ok "NetworkManager reports $WIFI connected"
 
 IP="$(nmcli -t -f IP4.ADDRESS device show "$WIFI" | head -n1 | cut -d: -f2- || true)"
 GW="$(ip route | awk '/^default/{print $3; exit}' || true)"
-[ -n "$GW" ] || { warn "no default route — reverting NOW"; "$REVERT"; exit 1; }
-ping -c 2 -W 3 "$GW" >/dev/null 2>&1 || { warn "gateway $GW unreachable — reverting NOW"; "$REVERT"; exit 1; }
+[ -n "$GW" ] || { warn "no default route, reverting NOW"; revert_now; exit 1; }
+ping -c 2 -W 3 "$GW" >/dev/null 2>&1 || { warn "gateway $GW unreachable, reverting NOW"; revert_now; exit 1; }
 ok "address $IP, gateway $GW reachable"
 
 log "Restarting the Wi-Fi watchdog"

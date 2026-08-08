@@ -722,6 +722,26 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-08-08: the frame's Wi-Fi moved to NetworkManager, and the handoff that could never work (E8 stages 1-2)
+
+Groundwork for **E8** (Wi-Fi onboarding). Raising a setup access point needs NetworkManager to own the radio, and no frame's did.
+
+**The bug: `install.sh` step 9 could never succeed.** It started NetworkManager, asked it to join the Wi-Fi, and only retired the old `ifupdown` config once NM had proved itself. But Debian marks any interface named in `/etc/network/interfaces` as **unmanaged** by NM, so NM could not join while `ifupdown` still owned the radio. A deadlock, and a silent one: the step is non-fatal by design, so it warned and left the working connection alone, every time. **Every frame installed this way is still on `ifupdown`**, confirmed on the real XXL (`wlp0s20f3 wifi unmanaged`). Breaking it means freeing the device **first**, which is the direction that can strand a wall-mounted frame whose Ethernet port is not reachable.
+
+**`installer/net/nm-handoff.sh`** does it with the undo armed before anything moves: snapshot the network config, write a revert, arm it, pause the watchdog, free the radio, let NM join, then verify association, default route, gateway reachability and the player before leaving it in place. Any failure reverts immediately rather than waiting.
+
+**Three design points earned by the real run.** (1) The guard is **not** a transient `systemd-run` timer: those do not survive a reboot, which is exactly when a broken network config would strand the frame. Real unit files instead. (2) It is **conditional**, restoring only while the frame is actually offline, so a stray firing cannot undo a working handoff. (3) It respects an **in-progress flag**. That third one was earned the hard way: on the real run the guard fired *the instant it was armed*, because `OnBootSec=90` is already in the past on a machine that booted hours ago. It happened to check while the link was still up and no-oped. A few seconds later it would have seen the link down mid-handoff and rebooted into the old config in the middle of the operation. Only the conditional check made that harmless; the flag makes it correct.
+
+**The watchdog had to be taught about NetworkManager first, or it would have sabotaged the handoff.** `oo-netcheck.sh` re-ups the link whenever it sees no connectivity and escalates to reloading the Wi-Fi driver. Against an NM-managed radio its `ifdown`/`ifup` does nothing useful and the driver reload would yank the device out from under NM mid-join, every 30 seconds. It now asks who manages the device and uses that stack's commands, so both field states work.
+
+**Verified on the real XXL, 2026-08-08.** `wlp0s20f3` went from `unmanaged` to `connected` at 192.168.1.53, gateway reachable, player answering, watchdog restored. Matt then confirmed from Safari that the control panel worked and that reordering the rotation was honored on the panel, so the whole chain survived. The credentials lookup needed one fix first: they live as `wpa-ssid`/`wpa-psk` lines in `/etc/network/interfaces` on this install, not in a `wpa_supplicant.conf`; the script now checks all three forms and stopped safely (before the snapshot, before arming) when it could not find them.
+
+**`install.sh` now calls that same script** with `OO_ARM_GUARD=0`, rather than carrying its own copy of the logic. The fresh-install path therefore runs the implementation that has been exercised on real hardware, and there is one place to fix. The guard is off there because the owner is at the keyboard during an install, so a persistent revert-and-reboot would be the wrong trade; a failure restores the old Wi-Fi in place and the installer carries on with a warning, exactly as before.
+
+**Unverifiable from here:** the fresh-install path itself needs a new frame install to exercise. Logged in `docs/ROADMAP.md` under pending device verification.
+
+**Files:** `installer/net/nm-handoff.sh` (new), `installer/net/oo-netcheck.sh` (NM-aware), `installer/install.sh` (step 9 delegates), `docs/ROADMAP.md`, this entry. **No player or app code changed.** (Matt, 2026-08-08.)
+
 ### 2026-08-08: the frame install lost its second USB stick (E20)
 
 Roadmap **E20**, the half of the parked image work (§17 "Prebuilt release image") that needed no hardware to validate. Retired with this entry.

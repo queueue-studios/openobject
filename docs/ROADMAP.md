@@ -47,7 +47,7 @@ Size is a rough sense of the job, not a promise.
 
 | ID | Item | Design record | Notes |
 |----|------|---------------|-------|
-| E8 | Wi-Fi onboarding: an `OpenObject-Setup` AP plus captive page, folding into the existing Network card | HANDOFF §11 | Large. **Committed** Phase 2 milestone |
+| E8 | Wi-Fi onboarding: an `OpenObject-Setup` AP plus captive page, folding into the existing Network card. **Stages 1-2 done 2026-08-08** (the frame's Wi-Fi is on NetworkManager, and `install.sh` no longer carries a handoff that could never succeed); **stage 3, setup mode itself, is what remains** | HANDOFF §11; §20 2026-08-08; the original XXL's own flow, which Matt captured in screenshots, is the reference | Large. Surfaces only when the frame cannot connect (Matt, 2026-08-08). No QR codes: the network name and password in plain text, as the original did. Old credentials are never deleted, so a returning network just works |
 
 ### The Mac app
 
@@ -90,6 +90,7 @@ checklist: the tag from E19 says what changed, this says what to look at.
 
 | Device | What to check | Landed |
 |--------|---------------|--------|
+| Frame (fresh install) | The `install.sh` Wi-Fi handoff now delegates to `nm-handoff.sh` with the guard off. The retrofit path is device-proven, but the fresh-install path cannot be exercised without installing a new frame, which nobody can currently do | `36b6ffa`, 2026-08-08 |
 | Apple TV | The per-Host row icon in the picker now matches its label size. Confirm on the real Apple TV, since that is where the undersized icon was noticed; the simulator before/after only proves the change took effect | `8adbbbe`, 2026-08-08 |
 
 ## Closed: decided against, or not worth tracking
