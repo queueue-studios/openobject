@@ -91,6 +91,7 @@ checklist: the tag from E19 says what changed, this says what to look at.
 
 | Device | What to check | Landed |
 |--------|---------------|--------|
+| Frame | The panel should now refresh itself when a display file changes, with no kiosk restart (E21). Verified on a scratch Host, not yet on real hardware. The first E8 screen is a real display-file change and is the natural proof: update the frame and watch the panel pick it up on its own | `b0c4b73`, 2026-08-08 |
 | Frame (fresh install) | The `install.sh` Wi-Fi handoff now delegates to `nm-handoff.sh` with the guard off. The retrofit path is device-proven, but the fresh-install path cannot be exercised without installing a new frame, which nobody can currently do | `36b6ffa`, 2026-08-08 |
 | Apple TV | The per-Host row icon in the picker now matches its label size. Confirm on the real Apple TV, since that is where the undersized icon was noticed; the simulator before/after only proves the change took effect | `8adbbbe`, 2026-08-08 |
 
