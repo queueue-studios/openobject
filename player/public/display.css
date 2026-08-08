@@ -137,13 +137,15 @@ body {
           mask: url(/assets/branding/openobject-logo.svg) center / contain no-repeat;
 }
 
-/* 3.5vmin matches what the Apple TV and iPad apps use for their own state text (ArtStageCore's
-   Connecting and idle lines are .title3, i.e. 38pt on a 1080pt stage = 3.5% of the smaller
-   dimension). The frame had been quieter than the apps at 2.4vmin for no deliberate reason; these
-   rare splash/connecting/state screens should read identically across every surface. */
+/* Sized for a 26" panel read from across a room, not to match a number elsewhere. Worth recording
+   what the other surfaces actually do, since the apps use FIXED point sizes and so have no single
+   relative size to match: .title3 is 3.5% of the short side on Apple TV, ~2.4% on iPad, ~5.1% on
+   iPhone. The frame sat at 2.4vmin (the iPad proportion, i.e. a reading-distance size), 3.5vmin
+   (the TV proportion) read too large on the real panel, and 3.0vmin is the judged middle.
+   The wordmark's 46vmin is the one size that genuinely is shared across every surface. */
 .hint {
   margin: 0;
-  font: 400 3.5vmin/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  font: 400 3.0vmin/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
   letter-spacing: 0.015em;
   color: var(--hint);
 }
