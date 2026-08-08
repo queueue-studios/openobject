@@ -1,7 +1,7 @@
 # OpenObject: Build & Handoff Specification
 
 > **Document type:** Implementation spec for Claude Code.
-> **Status:** Running on real hardware. The web app (Phase 1) plus the Debian and Chromium-kiosk installer (Phase 2B) are built and verified on an actual XXL frame, with over-the-air self-update working. Folder Collections is built on every surface (Phase A local + Phase B frame, 2026-07-11, plus the Apple TV, which needed no folder-specific code; §17/§20). What's left is later milestones (single-file release image, Wi-Fi onboarding AP, and real restart/shutdown). See §17 for open enhancements and §20 for the decision log.
+> **Status:** Running on real hardware. The web app (Phase 1) plus the Debian and Chromium-kiosk installer (Phase 2B) are built and verified on an actual XXL frame, with over-the-air self-update working. Folder Collections is built on every surface (Phase A local + Phase B frame, 2026-07-11, plus the Apple TV, which needed no folder-specific code; §17/§20). What's left is later **frame** milestones (single-file release image, Wi-Fi onboarding AP, and real restart/shutdown) plus **owner-facing docs for the two App Store apps** (`TVOS-APP-PLAN.md` Phase F: the Setup Guide has no Apple TV or iPad section, though both apps are submitted). See §17 for open enhancements and §20 for the decision log.
 > **Local project root:** `~/Code/OpenObject`
 > **GitHub repo:** `queueue-studios/openobject`, **public** since 2026-06-14 (created private 2026-06-11). Claude drives all git operations on Matt's approval.
 > **Website:** https://openobject.io
@@ -598,6 +598,14 @@ The icon to the left of each Host row in the tvOS picker (the `play.tv` SF Symbo
 
 Related, and the reason this surfaced: manual entry of a bare hostname builds an **http://** origin (`Host.manualEntry` prepends `http://` unless a scheme is typed), so any public Host typed without `https://` is blocked by ATS. The App Review notes therefore spell out `https://gallery.openobject.io` in full.
 
+### Mac stay-awake while serving a folder to another screen (noted 2026-07-11, still open)
+
+A Folder Collection is served by the Mac app over the LAN, so a Mac that goes into **full system sleep** stops serving and a frame or Apple TV can only play what it has already cached. §20 (2026-07-11) listed this as remaining and it still is: `grep beginActivity` finds exactly one call site, `DisplayController` (`mac-app/Sources/DisplayController.swift:169`), which is taken when **art is on screen on that Mac**, not when the Mac is merely hosting. So a Mac that is serving a folder to another screen, its own display dark, holds no assertion.
+
+**The fix, per the design in the Folder Collections entry below:** the app holds an assertion that keeps the **system** awake while letting the **monitor** sleep, so an owner never has to find "Prevent automatic sleeping when the display is off" themselves. **Display sleep is already a non-issue** (the monitor going dark leaves the Mac serving); only full system sleep bites, and only for an *uncached* fetch.
+
+**Hard constraint on how it is scoped.** Auto Display's "**Default Never means zero impact**" rule is load-bearing and must not be regressed: an app that is running and hosting but not displaying must hold no assertion. So this assertion cannot be taken at launch or while merely hosting. It must be scoped to **actively serving a folder to a remote client**, taken when that starts and released when it stops, which keeps the guarantee intact for every owner who never uses a Folder Collection.
+
 ### Offline / portable playback on the viewer apps (noted 2026-07-28)
 
 Let the **iPad/iPhone** app genuinely **hold** its art, so a device that has been shown a rotation at home keeps playing it with the Host gone, and can be carried away from the network entirely. Recorded first as a note in `docs/TVOS-APP-PLAN.md` §9 and lifted here on 2026-08-08 so it sits with the rest of the open work. **iOS only: the Apple TV half is closed by the platform**, for the measured reason below, and that asymmetry is deliberate rather than an unfinished edge.
@@ -670,7 +678,7 @@ Let the **iPad/iPhone** app genuinely **hold** its art, so a device that has bee
 
 The cache-lifecycle sub-questions once open here (eviction policy, manual controls, age-out, the budget default) are **resolved by the ephemeral session-buffer model above**: the buffer is wiped on reboot and on leaving folder mode, a manual **Clear cache** is provided, and the ~20 GB cap plus free-space floor is the budget. No persistent per-folder eviction policy is needed, because nothing folder-related survives a session. As built (2026-07-11): the cap is **~20 GB** plus a **15 GB free-space floor**, surfaced on the frame as a **Folder cache** meter ("Buffered X of 20 GB. Cache clears on reboot.") and a **Clear cache** button inside the frame's Folder Collections card.
 
-**Documentation.** The Setup Guide (§16) gained a **Folder Collections** section for the Phase A (local) behavior when it shipped (2026-07-08), scoped to the "computer as the display" path; it grew the frame specifics with Phase B (2026-07-11): the **Mac-serving requirements** (the app running, and the Mac not fully asleep while serving: the stay-awake setting or the app assertion above). A dedicated in-app **Folder Collections Help section** surfacing those basic requires/settings is a deferred nice-to-have (Matt, 2026-07-10).
+**Documentation.** The Setup Guide (§16) gained a **Folder Collections** section for the Phase A (local) behavior when it shipped (2026-07-08), scoped to the "computer as the display" path; it grew the frame specifics with Phase B (2026-07-11): the **Mac-serving requirements** (the app running, and the Mac not fully asleep while serving: the stay-awake setting or the app assertion above). A dedicated in-app **Folder Collections Help section** surfacing those basic requires/settings was deferred on 2026-07-10 and then **shipped the next day, 2026-07-12**, as the device-aware Help card in the Settings tab (§20): on a frame it explains hosting the Mac, adding the folder on the Mac's control panel, selecting it in Rotation > Source, and what "Mac unreachable" means; on a Mac Host it explains defining a folder there. **Nothing is open here.** (The stale "deferred" wording was corrected 2026-08-08.)
 
 ---
 
