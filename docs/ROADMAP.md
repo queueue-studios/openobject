@@ -40,13 +40,14 @@ Size is a rough sense of the job, not a promise.
 | E2 | Golden Lining as a pre-rendered looping video, a per-piece WebKit fallback | HANDOFF §17 "Golden Lining as a pre-rendered video" | Provisionally retired. Closes for good when E1's two checks pass |
 | E3 | Offline / portable playback: the **iPad** holds its own art and keeps playing with no network. **Wanted, to pursue later** (Matt, 2026-08-08). iPad only, permanently: the Apple TV variant is closed by tvOS storage limits (D14) | HANDOFF §17 "Offline / portable playback"; `TVOS-APP-PLAN.md` §9 | Medium. Needs a persistent store, a "Download for offline" choice, the manifest persisted, and an offline launch path |
 | E6 | Retro Arcade easter egg on tvOS / iPad. `arcade.js` is dependency-free canvas 2D and maps onto SpriteKit or SwiftUI Canvas; a Siri Remote D-pad is a better trigger than a keyboard | `TVOS-APP-PLAN.md` §5 | Medium. Post-v1 by choice |
-| E19 | Teach `release.sh` to bump `tv-app/` and `ipad-app/project.yml`, or decide deliberately that the app shells track their own version line. Today the script skips them, so the two App Store apps sit at 1.6.2 behind the platform at 1.7.2 | memory: version-bump-release-workflow | Small. Formerly W5, reclassified 2026-08-08: this is a change with a trigger, not something to observe. Trigger: when the apps catch up to the platform version |
+| E19 | Release tooling for the App Store apps: teach `release.sh` to bump `tv-app/` and `ipad-app/project.yml` (or decide deliberately that the shells track their own version line), **and tag each App Store submission** (e.g. `tvos-1.6.2-submitted`) | memory: version-bump-release-workflow | Small. Formerly W5, reclassified 2026-08-08. Today the shells sit at 1.6.2 behind the platform at 1.7.2, and **no tag marks a submitted build**, so "what changed since the binary in review" needs someone to remember which commit did the bump (`a2dc043`) rather than being a one-line query |
 
 ### The frame
 
 | ID | Item | Design record | Notes |
 |----|------|---------------|-------|
-| E7 | Single-file / prebuilt release image: a USB installer published as a GitHub Release asset, so an owner flashes one file instead of following the scripted install | HANDOFF §15; CLAUDE.md Phase 2 | Large. **Committed** Phase 2 milestone, and the biggest one for the revivability mission |
+| E7 | Single-file / prebuilt release image: a USB installer published as a GitHub Release asset, so an owner flashes one file instead of following the scripted install | HANDOFF §17 "Prebuilt release image"; §15 | Large. **PARKED 2026-08-08, no hardware to validate on** (the frame is done and untouchable, and the automated part is the destructive part). Unblock: a second unit, or a stranded owner willing to be first. The non-destructive friction work split out as E20 |
+| E20 | Reduce install friction without touching the destructive path: ship the checkout as a Release asset (`git bundle` or tarball), add a one-command bootstrap that fetches and runs `install.sh`, and sharpen the Debian-installer instructions to the exact screens and choices | HANDOFF §17 "Prebuilt release image" (the split) | Medium. Fully VM-validatable, no frame contact, no new destructive code. Split from E7 on 2026-08-08 |
 | E8 | Wi-Fi onboarding: an `OpenObject-Setup` AP plus captive page, folding into the existing Network card | HANDOFF §11 | Large. **Committed** Phase 2 milestone |
 | E9 | Real restart / shutdown. Today "Shut down" halts the PC and the panel shows its own no-signal pattern; a true cold-off needs HDMI-CEC or a smart plug | HANDOFF §10 | Medium, hardware-dependent. **Committed** Phase 2 milestone |
 
@@ -81,6 +82,17 @@ symptom recurs.
 | ID | Item | Design record | Notes |
 |----|------|---------------|-------|
 | W3 | Frame-only: switching Display Source from a folder back to the Library once made the frame's `display.js` go fully black. Never reproduced, and the native Apple TV handled the same switch fine | memory: tvos-app-plan-execution (2026-07-30) | Repro path: Mac Chrome at `http://openobject.local/display` with DevTools open during the switch |
+
+## Pending device verification
+
+Changes that are built and simulator-verified but have not been seen on the real hardware they
+affect. **A row is added in the same commit as the change**, so it cannot be forgotten later, and
+cleared when the check is done (or when the build carrying it ships). This is the pre-submission
+checklist: the tag from E19 says what changed, this says what to look at.
+
+| Device | What to check | Landed |
+|--------|---------------|--------|
+| Apple TV | The per-Host row icon in the picker now matches its label size. Confirm on the real Apple TV, since that is where the undersized icon was noticed; the simulator before/after only proves the change took effect | `8adbbbe`, 2026-08-08 |
 
 ## Closed: decided against, or not worth tracking
 
