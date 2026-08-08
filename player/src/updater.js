@@ -182,8 +182,15 @@ function isAppRelevantPath(file) {
 // device reboots. So a change to the display page or its self-playing demo (player/public/display.*
 // or arcade.js) or the kiosk launcher (installer/kiosk/) is the reboot-requiring kind; the update
 // view surfaces it (HANDOFF §15).
+// Does this update need the OWNER to do something after it lands? Since E21 (2026-08-08) the display
+// page reloads itself when its own files change, so a display-only update finishes on its own and
+// asking for a reboot would be telling the owner to do work that is already done.
+//
+// What still needs a reboot is the kiosk RUNTIME: the cage / Chromium launch scripts under
+// installer/kiosk/. A running kiosk keeps the flags and cursor theme it launched with, and nothing
+// re-reads those without restarting it.
 function isKioskFacingPath(file) {
-  return /^player\/public\/(display|arcade)\./.test(file) || file.startsWith('installer/kiosk/');
+  return file.startsWith('installer/kiosk/');
 }
 
 // ── Public API ──────────────────────────────────────────────────────

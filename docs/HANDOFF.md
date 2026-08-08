@@ -801,7 +801,11 @@ Living record of decisions taken during the build (newest first). When any of th
 
 Roadmap **E21**, retired with this entry. Found the hard way the same day: the idle caption was resized, Software Update reported success, `grep` proved the new file was on the frame, and the panel kept showing the old size until the kiosk was restarted by hand.
 
-**The cause.** Software Update restarts the **player**, not **Chromium**. Server-side changes therefore appear immediately, which is why every previous update looked like it applied cleanly. A change that lives purely in the browser (`display.css`, `display.js`, the display markup) sat on disk unseen, because the kiosk keeps rendering the files it loaded at boot and `display.js` never reloads. The update was reporting success over a stale panel, and that would have applied to every screen E8 adds.
+**The cause.** Software Update restarts the **player**, not **Chromium**. Server-side changes therefore appear immediately, which is why every previous update looked like it applied cleanly. A change that lives purely in the browser (`display.css`, `display.js`, the display markup) sat on disk unseen, because the kiosk keeps rendering the files it loaded at boot and `display.js` never reloads.
+
+**Correction to this entry's first draft (2026-08-08).** It said the update "reported success over a stale panel", which was unfair: the update flow **already detected this and told the owner to reboot**. `updater.js` matched display and kiosk paths and the control panel showed "After updating, reboot the frame to finish applying the display changes." So the staleness was known and handled, manually. What E21 changes is that a display-only update now finishes **by itself**, which is a better answer than asking for a reboot, not a fix for something broken.
+
+**Consequence, applied in the same pass:** that notice would now be stale advice, telling the owner to do work the panel has already done. `isKioskFacingPath` is narrowed to **`installer/kiosk/` only**, the cage and Chromium launch scripts, which a running kiosk genuinely keeps until it is restarted. Display and arcade files no longer trigger it. The message drops its display wording to "After updating, reboot the frame to finish applying it."
 
 **The fix is one signal and one line of client logic.** `/api/display` now carries an **`assets`** fingerprint, a short hash of the size and mtime of the four files the display page actually loads (`display.html`, `display.css`, `display.js`, `arcade.js`). `display.js` remembers the value it started with and calls `location.reload()` when it changes. The display already polls every 5 seconds, so this needed no new machinery and no new request.
 
@@ -813,7 +817,7 @@ Roadmap **E21**, retired with this entry. Found the hard way the same day: the i
 
 **Not done:** the control panel has the same staleness in principle (an owner with the page open keeps old JS until they refresh). Left alone because a browser tab is refreshed by the person looking at it, whereas the frame's panel has nobody to refresh it.
 
-**Files:** `player/server.js` (the fingerprint, added to all three `/api/display` shapes), `player/public/display.js` (remember and reload), `player/src/discovery.js` (`OO_NO_MDNS`), `docs/ROADMAP.md`, this entry. **Setup Guide unchanged**: nothing owner-facing changed except that updates now land on the panel by themselves, which is what the guide already implies. (Matt, 2026-08-08.)
+**Files:** `player/server.js` (the fingerprint, added to all three `/api/display` shapes), `player/public/display.js` (remember and reload), `player/src/discovery.js` (`OO_NO_MDNS`), `player/src/updater.js` + `player/public/control.js` (the narrowed reboot notice), `docs/ROADMAP.md`, this entry. **Setup Guide unchanged**: nothing owner-facing changed except that updates now land on the panel by themselves, which is what the guide already implies. (Matt, 2026-08-08.)
 
 ### 2026-08-08: the frame's Wi-Fi moved to NetworkManager, and the handoff that could never work (E8 stages 1-2)
 

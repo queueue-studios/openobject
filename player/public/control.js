@@ -831,7 +831,7 @@ async function checkUpdate() {
     `<div class="upd-headline">A newer version is available${when}</div>` +
       (list ? `<div class="upd-whats">What’s in it</div><ul class="upd-list">${list}</ul>` : '') +
       link +
-      (s.requiresReboot ? '<div class="upd-reboot">After updating, reboot the frame to finish applying the display changes.</div>' : '') +
+      (s.requiresReboot ? '<div class="upd-reboot">After updating, reboot the frame to finish applying it.</div>' : '') +
       (s.dirty ? '<div class="upd-warn">Heads-up: local file changes are present on this frame.</div>' : '')
   );
   showApply(true);
