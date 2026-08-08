@@ -46,10 +46,8 @@ Size is a rough sense of the job, not a promise.
 
 | ID | Item | Design record | Notes |
 |----|------|---------------|-------|
-| E7 | Single-file / prebuilt release image: a USB installer published as a GitHub Release asset, so an owner flashes one file instead of following the scripted install | HANDOFF §17 "Prebuilt release image"; §15 | Large. **PARKED 2026-08-08, no hardware to validate on** (the frame is done and untouchable, and the automated part is the destructive part). Unblock: a second unit, or a stranded owner willing to be first. The non-destructive friction work split out as E20 |
 | E20 | Reduce install friction without touching the destructive path: ship the checkout as a Release asset (`git bundle` or tarball), add a one-command bootstrap that fetches and runs `install.sh`, and sharpen the Debian-installer instructions to the exact screens and choices | HANDOFF §17 "Prebuilt release image" (the split) | Medium. Fully VM-validatable, no frame contact, no new destructive code. Split from E7 on 2026-08-08 |
 | E8 | Wi-Fi onboarding: an `OpenObject-Setup` AP plus captive page, folding into the existing Network card | HANDOFF §11 | Large. **Committed** Phase 2 milestone |
-| E9 | Real restart / shutdown. Today "Shut down" halts the PC and the panel shows its own no-signal pattern; a true cold-off needs HDMI-CEC or a smart plug | HANDOFF §10 | Medium, hardware-dependent. **Committed** Phase 2 milestone |
 
 ### The Mac app
 
@@ -116,6 +114,10 @@ Settled. Do not re-pitch without new information; if the answer changes, say wha
 | D13 | Capturing the Gatekeeper "downloaded from the Internet" prompt from a real download. The Setup Guide's wording stands unverified; worst case an owner meets one unexplained warning once | 2026-08-08 |
 
 | D14 | Offline / portable playback on **Apple TV**. tvOS guarantees an app 500 KB of persistent storage and may delete cached media exactly when the device is unplugged and the app is not running, so "load at home, carry it, plug in with no network" cannot be made durable there. Closed by the platform, not by preference; the iPad version stays alive as E3. Do not re-open on parity grounds | 2026-08-08 |
+
+| D15 | Real restart / shutdown, i.e. making the panel go genuinely dark instead of showing its own no-signal test pattern. Both routes need hardware Matt does not want: a smart plug, or HDMI-CEC, which PC HDMI outputs (Intel integrated graphics included) generally do not wire up, so it would mean a USB CEC dongle. Unplugging is an acceptable power-off for a wall-mounted frame, and Matt is happy with how Shut down behaves. Sleep already covers the everyday "screen dark, art stopped" case with no test pattern | 2026-08-08 |
+
+| D16 | Single-file / prebuilt release image (the USB installer as a Release asset). Closed off the roadmap 2026-08-08: validating it needs a second XXL to wipe, Matt considers his frame done and untouchable, and he does not expect ever to have another, so the row could never become actionable. Shipping it unvalidated is worse than not shipping it, since the automated part is the destructive part and the manual path is proven on real hardware. **The doable parts were split out first and live on as E20.** The full design record stays at HANDOFF §17 "Prebuilt release image", intact for a stranded owner who ever wants to pick it up | 2026-08-08 |
 
 ## Unknowns to supply
 
