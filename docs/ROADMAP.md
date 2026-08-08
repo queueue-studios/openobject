@@ -1,0 +1,112 @@
+# OpenObject roadmap: the one list of open work
+
+**Everything not yet done is one list, below.** Committed-but-undone work and optional
+ideas sit together on purpose, so the list can be reviewed and dispositioned in one pass.
+Where a row is already-committed work rather than a maybe, its note says so.
+
+If work is open, it has a row here. If it is not here, it is either shipped or was decided
+against, and the decision is in `HANDOFF.md` §20.
+
+**This file holds no reasoning.** Every row points at the design record that does. That
+split is deliberate: duplicated reasoning is what let four separate lists drift apart
+(§17, the HANDOFF status line, `TVOS-APP-PLAN.md` phases, and scattered notes), so a row
+here is one line plus a pointer, and it is cheap to keep honest.
+
+**IDs are stable and never reused.** Talk about work by its ID. When a row ships, delete
+the row and move its design record into §20; the ID retires with it. IDs were assigned
+once, at creation on 2026-08-08.
+
+**A `W` prefix means verify or observe, not build.** Those rows live in the same list, in
+their own group, because a separate watch list is just a second list someone has to
+remember to check. They are dispositioned the same way as everything else, and the bar for
+keeping one is high: "wait and hope nothing happens" is not a row, it is a closed item.
+
+The two lists after the main one are deliberately **not** to-dos: what was *decided
+against* so it is not re-pitched, and *unknowns* to supply.
+
+Last swept: 2026-08-08.
+
+---
+
+## Enhancements: the one list to disposition
+
+Size is a rough sense of the job, not a promise.
+
+### The apps (iPad, iPhone, Apple TV)
+
+| ID | Item | Design record | Notes |
+|----|------|---------------|-------|
+| E1 | Connected Collections on the iPad/iPhone app via `WKWebView`, plus the skip mechanism and the "Chrome Only" pill | HANDOFF §17 "Connected Collections on the viewer apps" | Large. **Gated:** do not open `ipad-app` until the submitted iOS build is approved. Two checks first: inkField untested, iPhone untested |
+| E2 | Golden Lining as a pre-rendered looping video, a per-piece WebKit fallback | HANDOFF §17 "Golden Lining as a pre-rendered video" | Provisionally retired. Closes for good when E1's two checks pass |
+| E3 | Offline / portable playback so an iPad holds its art and plays it off the network. **iOS only**; tvOS is closed by its 500 KB persistent-storage limit | HANDOFF §17 "Offline / portable playback"; `TVOS-APP-PLAN.md` §9 | Medium. Cheap first step: test iPad to USB-C-HDMI mirroring |
+| E4 | Apple TV picker: the icon at the left of each Host row (the `play.tv` symbol) reads smaller than the same icon in the iPhone and iPad picker. Bring it up to match | HANDOFF §17 "Apple TV picker" | Small, cosmetic. **Committed.** Noticed in the App Store screenshots and deferred before the tvOS submission |
+| E5 | tvOS App Transport Security parity: `ipad-app` declares `NSAllowsLocalNetworking` so a real device can reach a Host's plain HTTP on the LAN, `tv-app` declares no ATS key at all yet works anyway. Find out why, then add the key for parity | HANDOFF §17 "tvOS App Transport Security" | Small. **Committed.** Works today, so the risk is relying on an undocumented default |
+| E6 | Retro Arcade easter egg on tvOS / iPad. `arcade.js` is dependency-free canvas 2D and maps onto SpriteKit or SwiftUI Canvas; a Siri Remote D-pad is a better trigger than a keyboard | `TVOS-APP-PLAN.md` §5 | Medium. Post-v1 by choice |
+| E19 | Teach `release.sh` to bump `tv-app/` and `ipad-app/project.yml`, or decide deliberately that the app shells track their own version line. Today the script skips them, so the two App Store apps sit at 1.6.2 behind the platform at 1.7.2 | memory: version-bump-release-workflow | Small. Formerly W5, reclassified 2026-08-08: this is a change with a trigger, not something to observe. Trigger: when the apps catch up to the platform version |
+
+### The frame
+
+| ID | Item | Design record | Notes |
+|----|------|---------------|-------|
+| E7 | Single-file / prebuilt release image: a USB installer published as a GitHub Release asset, so an owner flashes one file instead of following the scripted install | HANDOFF §15; CLAUDE.md Phase 2 | Large. **Committed** Phase 2 milestone, and the biggest one for the revivability mission |
+| E8 | Wi-Fi onboarding: an `OpenObject-Setup` AP plus captive page, folding into the existing Network card | HANDOFF §11 | Large. **Committed** Phase 2 milestone |
+| E9 | Real restart / shutdown. Today "Shut down" halts the PC and the panel shows its own no-signal pattern; a true cold-off needs HDMI-CEC or a smart plug | HANDOFF §10 | Medium, hardware-dependent. **Committed** Phase 2 milestone |
+
+### The Mac app
+
+| ID | Item | Design record | Notes |
+|----|------|---------------|-------|
+| E11 | Host-list preface copy to clarify and de-jargon, aligning with the tvOS "OpenObject on your network" wording | memory: mac-app-ui-refinements-deferred | Small copy pass |
+| E12 | Auto Display: an "art on every display" option for a gallery wall, instead of art on the main screen and the rest black | HANDOFF §20 2026-08-06 Auto Display record | Medium. Explicitly not the default |
+| E13 | A native help surface in the app, or a Help button in the Settings pane that opens the control panel's Help. Today a Mac-only setting is explained on a different surface from where it lives | same | Medium. Trigger: when a second Mac-only setting appears |
+| E14 | Move the Settings window to tabs | same | Small. Trigger: at five or six settings, not before |
+
+### Docs and site
+
+| ID | Item | Design record | Notes |
+|----|------|---------------|-------|
+| E15 | Owner-facing docs for the two App Store apps: the Setup Guide has no Apple TV or iPad section, and the Help card should carry the short version | `TVOS-APP-PLAN.md` §14 Phase F; HANDOFF §16 lockstep rule | Medium, needs Matt's voice. **Committed**, and the §16 lockstep rule already requires it |
+| E16 | Post-approval site pass: iPad is still "coming soon" in three places on the home page (device chip, header status line, Display cell) and the Apple TV page still says iPad "follows" | `site/`; recipe in HANDOFF §15 | Small. **Committed**, once iOS is approved |
+
+### Seams (built as interfaces, never filled in)
+
+| ID | Item | Design record | Notes |
+|----|------|---------------|-------|
+| E17 | SMB pull as a source | HANDOFF §8; retired for Folder Collections in §17 | Optional seam, never built |
+| E18 | Buffered / least-recently-shown eviction mode for the Library mirror | HANDOFF §9 | Documented seam, off by default |
+
+### Checks and watch items
+
+Verify or observe, not build. No action needed unless a check comes back wrong or a
+symptom recurs.
+
+| ID | Item | Design record | Notes |
+|----|------|---------------|-------|
+| W3 | Frame-only: switching Display Source from a folder back to the Library once made the frame's `display.js` go fully black. Never reproduced, and the native Apple TV handled the same switch fine | memory: tvos-app-plan-execution (2026-07-30) | Repro path: Mac Chrome at `http://openobject.local/display` with DevTools open during the switch |
+
+## Closed: decided against, or not worth tracking
+
+Settled. Do not re-pitch without new information; if the answer changes, say what changed. Rows that were dropped rather than rejected are here for the same reason: so a later sweep of §20 and the memory files cannot quietly resurrect them as new items.
+
+| ID | Item | When |
+|----|------|------|
+| D1 | Library pagination. Keep one growing list; the Show All / In-rotation filter solved the clutter | 2026-06-25 |
+| D2 | A sort control on the Settings Connected Collections list. It is a fixed curated shelf, not a growing set | 2026-06-25 |
+| D3 | "Paste any URL" / a general live on-chain resolver | HANDOFF §17/§20 |
+| D4 | A real macOS `.saver` screen saver. It cannot host Chrome, and a `WKWebView` inside it is broken and would be a second, worse renderer | 2026-08-02 |
+| D5 | Opening the display at login. Easy to build; Matt does not want it | 2026-08-02 |
+| D6 | The Host pre-renders every Connected piece for the viewer apps | `TVOS-APP-PLAN.md` §2 |
+| D7 | Retro Arcade: the alternate marquee PNG (IP-risky) and the capture / dual-fighter mechanic (conflicts with never-die). Both built, both abandoned | memory: retro-arcade-attract-easter-egg |
+| D8 | `willReadFrequently` as the Golden Lining WebKit fix. Tried, did not work | memory: golden-lining-webkit-safari-broken |
+| D9 | Privacy policy wording for the Gallery being an internet Host rather than a LAN Host. Substantively still true (nothing collected); dropped until someone raises it | 2026-08-08 |
+| D10 | A power assertion holding the Mac awake while it serves a folder. The Setup Guide already tells owners to turn on "Prevent automatic sleeping when the display is off", which covers the case, so the code would only have deleted a line of documentation. The one gap it would have closed, a laptop serving on battery, is not a case Matt wants to support: holding a long-running connection awake to drain a battery is the wrong behavior to build. Design record stays at HANDOFF §17 | 2026-08-08 |
+
+| D11 | Watching for a recurrence of the frame's Bonjour / Wi-Fi drops. The `iwlwifi` power-save fix shipped and is reboot-confirmed (§20 2026-07-28); passive watching adds nothing, and a recurrence would simply be a new bug | 2026-08-08 |
+| D12 | Eyeballing inkField on the real frame at `framePixelDensity` 1. Accepted as shipped on the harness verification (§20 2026-07-29) | 2026-08-08 |
+| D13 | Capturing the Gatekeeper "downloaded from the Internet" prompt from a real download. The Setup Guide's wording stands unverified; worst case an owner meets one unexplained warning once | 2026-08-08 |
+
+## Unknowns to supply
+
+| ID | Item | Source |
+|----|------|--------|
+| U1 | The frame's RAM. The last genuinely unconfirmed hardware spec; everything else in §19 is bench-verified | HANDOFF §19 |

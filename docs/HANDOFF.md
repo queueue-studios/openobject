@@ -1,7 +1,7 @@
 # OpenObject: Build & Handoff Specification
 
 > **Document type:** Implementation spec for Claude Code.
-> **Status:** Running on real hardware. The web app (Phase 1) plus the Debian and Chromium-kiosk installer (Phase 2B) are built and verified on an actual XXL frame, with over-the-air self-update working. Folder Collections is built on every surface (Phase A local + Phase B frame, 2026-07-11, plus the Apple TV, which needed no folder-specific code; §17/§20). What's left is later **frame** milestones (single-file release image, Wi-Fi onboarding AP, and real restart/shutdown) plus **owner-facing docs for the two App Store apps** (`TVOS-APP-PLAN.md` Phase F: the Setup Guide has no Apple TV or iPad section, though both apps are submitted). See §17 for open enhancements and §20 for the decision log.
+> **Status:** Running on real hardware. The web app (Phase 1) plus the Debian and Chromium-kiosk installer (Phase 2B) are built and verified on an actual XXL frame, with over-the-air self-update working. Folder Collections is built on every surface (Phase A local + Phase B frame, 2026-07-11, plus the Apple TV, which needed no folder-specific code; §17/§20). **Everything still open lives in one place, `docs/ROADMAP.md`** (committed work, enhancements, a watch list, what was decided against, and the one unconfirmed hardware spec). §17 holds the design records behind those rows; §20 is the decision log.
 > **Local project root:** `~/Code/OpenObject`
 > **GitHub repo:** `queueue-studios/openobject`, **public** since 2026-06-14 (created private 2026-06-11). Claude drives all git operations on Matt's approval.
 > **Website:** https://openobject.io
@@ -526,7 +526,7 @@ Since 2026-06-19 there is also **`docs/MAC-DISPLAY-SETUP.md`**, a standalone **n
 
 **Folder Collections is documented below and is now built on every surface** (Phase A local, the Phase B frame, and the Apple TV, which needed no folder-specific code at all); the design record is kept in place, and the one thing still open in it is a Folder Collections Help section. Earlier seams once listed here have since shipped (Connected Collections, §8; SVG support, §6) or were dropped as out of scope; build notes for what shipped live in §20.
 
-**This section is the list of what is still open.** A shipped enhancement's design record moves to §20 rather than staying here with a DONE marker, so §17 can be read as a to-do list (Matt, 2026-08-08).
+**`docs/ROADMAP.md` is the index of open work, not this section.** §17 holds the **design records**: the reasoning, the measurements, and the open questions for each deferred idea. The roadmap holds one row per open item pointing back here. When something ships, its record moves to §20 and its roadmap row is deleted. Added 2026-08-08, after four separate lists (§17, the status line, `TVOS-APP-PLAN.md` phases, and scattered notes) had drifted out of agreement.
 
 ### Connected Collections on the viewer apps: the WebKit path reopened by measurement (noted 2026-08-05)
 

@@ -4,6 +4,12 @@ Orientation for any Claude (or human) working in this repo. The authoritative
 spec is **`docs/HANDOFF.md`** (engineering), mirrored for non-technical owners by
 **`docs/SETUP-GUIDE.md`**. Read HANDOFF before non-trivial work.
 
+**`docs/ROADMAP.md` is the single list of open work**, with a stable ID per item.
+Never assemble a to-do list by scanning the docs: read the roadmap, and if you find
+open work that is missing from it, add a row rather than answering from the scan.
+Design records stay in HANDOFF §17 and the plan docs; the roadmap only points at
+them. When something ships, delete its row and move its record to §20.
+
 ## What this is
 OpenObject is self-hosted replacement software for the **Infinite Objects XXL**
 26" square (1:1) digital art frame. It wipes the frame's **MeLE Quieter 3Q** mini
