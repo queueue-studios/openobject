@@ -334,8 +334,42 @@ screen is not a new design but the same one saying more:
 single caption line, exactly the idle screen's shape. Success is shown on the **frame**, because the
 phone loses contact the moment the frame leaves its own AP to join the home network.
 
-**The phone page follows the control panel**, not the display: it is a form, and it should feel like the
-panel the owner will use from then on.
+**The phone page mirrors the DISPLAY, not the control panel** (Matt, 2026-08-08, revising the earlier
+call). These rare setup screens are the product's own voice and should look like one another: black
+stage, the wordmark on the same 46vmin centred rule, and the same three colours. Only the **type** is
+re-scaled, because a phone is read at arm's length rather than across a room (22px header, 17px fields,
+16px message, 13px labels) and 3.0vmin would be under 12px there.
+
+**Two screens.** *Pick your network*: the wordmark, a **"Connect to Wi-Fi"** header, a **Network**
+dropdown of scanned networks, a **Password** field, a Connect button, and **"Enter a network name
+instead"** beneath it for a hidden network (the scanned list is the default because it is typo-proof).
+Labels are exactly **"Network"** and **"Password"**, not "SSID" or "Pass Phrase". *After Connect*: the
+same wordmark, then
+
+> Wi-Fi configuration in progress.
+> Wait for confirmation on the frame.
+>
+> If it doesn't connect, re-join **OpenObject-Setup** and try again.
+
+Sentence case, and **"frame" stays lowercase**, an ordinary noun here (only "Host" is a term, §11). The
+stock XXL's "In case of error, please re-select IO XXL WiFi" became a named network and no "please",
+since the network is the thing they have to find again.
+
+**The display language had no controls, so two elements are new**: fields are dark wells (`#0d0d0d`,
+hairline `#2e2e2e`, 10px radius) and the Connect button is solid `#f2f2f2` with black text, the palette
+inverted, deliberately the loudest thing on screen because it is the only action.
+
+**Keyboard behaviour to build in:** at 46vmin the wordmark takes the top third, and an on-screen keyboard
+covers roughly 340px, which would bury the Connect button. **The page scrolls** rather than shrinking the
+wordmark, so the screen still mirrors the display and the keyboard simply moves the view.
+
+**How this gets tested, to settle before building.** The owner's frame cannot be taken off Wi-Fi by
+turning off the house router, so setup mode has to be provoked: point the frame's saved connection at a
+network that does not exist, let it fail, and restore afterwards. Two things make that safe, and both
+already exist: the **armed-undo pattern** from the NetworkManager handoff (snapshot, a persistent timer
+that restores only while the frame is offline, §20 2026-08-08), and the fact that **the setup AP is
+itself a way back in**, since a frame serving `OpenObject-Setup` can be reached at 192.168.4.1 by
+joining it. A frame in setup mode is not lost, it is on a different network.
 
 The stock screens themselves are reference only, captured here as learnings, not committed (art and
 photos never enter the repo, §8). Build none of this in Phase 1.
