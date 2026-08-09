@@ -98,7 +98,6 @@ checklist: the tag from E19 says what changed, this says what to look at.
 | Device | What to check | Landed |
 |--------|---------------|--------|
 | Frame | **Wi-Fi setup mode (E8 stage 3), never run on real hardware.** Built and exercised only on a scratch Host with no `nmcli`, so the access point itself has never been raised. Needs the installer re-run (new systemd units + polkit rule, which a Software Update does not install), then provoking: point the frame at a network that does not exist and watch for the setup screen. Steps and the safety net are in HANDOFF §11 | `44edcf7`, 2026-08-09 |
-| Frame | The panel should now refresh itself when a display file changes, with no kiosk restart (E21). Verified on a scratch Host, not yet on real hardware. The first E8 screen is a real display-file change and is the natural proof: update the frame and watch the panel pick it up on its own | `b0c4b73`, 2026-08-08 |
 | Frame (fresh install) | The `install.sh` Wi-Fi handoff now delegates to `nm-handoff.sh` with the guard off. The retrofit path is device-proven, but the fresh-install path cannot be exercised without installing a new frame, which nobody can currently do | `36b6ffa`, 2026-08-08 |
 | Apple TV | The per-Host row icon in the picker now matches its label size. Confirm on the real Apple TV, since that is where the undersized icon was noticed; the simulator before/after only proves the change took effect | `8adbbbe`, 2026-08-08 |
 

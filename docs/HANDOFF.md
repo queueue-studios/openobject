@@ -864,6 +864,8 @@ Roadmap **E21**, retired with this entry. Found the hard way the same day: the i
 
 **Old Hosts are handled**: a missing `assets` field is treated as "nothing to do", so an app or display talking to an older Host behaves exactly as before.
 
+**Verified on the real frame 2026-08-09.** Matt took a Software Update carrying a display change and watched the panel refresh itself, with no kiosk restart. That was the first update to prove it end to end on hardware.
+
 **`OO_NO_MDNS=1` was added to make that test safe** (`player/src/discovery.js`). A stray mDNS responder on Matt's Mac is a known way to break `.local` resolution for everything on that machine, including reaching the real frame at `openobject.local`, so the scratch Host served normally while advertising nothing. Off by default; normal Hosts are unaffected. It is worth keeping for any future local test.
 
 **Not done:** the control panel has the same staleness in principle (an owner with the page open keeps old JS until they refresh). Left alone because a browser tab is refreshed by the person looking at it, whereas the frame's panel has nobody to refresh it.
