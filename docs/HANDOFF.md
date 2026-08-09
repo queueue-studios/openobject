@@ -867,7 +867,9 @@ Living record of decisions taken during the build (newest first). When any of th
 
 **Sizing, judged on the panel.** Four caption lines at the idle screen's own size carried far more weight than one line of it and competed with the wordmark. The screen now has two tiers: the primary line keeps the idle caption's exact size, so a state screen's main line always reads the same, and only supporting detail steps down (`a22b659`).
 
-**Still to confirm:** all five fixes above were made after or during the run, so the next pass is a clean confirmation, in particular the scanned list appearing without typing and the panel returning to art by itself.
+**Confirmed on a clean pass, same day.** Broke the Wi-Fi at 12:38; the setup screen appeared on time, the sizing read correctly, **the network list populated without typing**, and after picking the network and entering the password **the panel returned to art almost immediately, with no SSH and no manual flag removal**. `openobject.local` went back to serving the control panel. All five fixes hold.
+
+**One owner-facing detail worth documenting rather than fixing:** a phone can take a minute or two to show `OpenObject-Setup` in its Wi-Fi list. That is the phone's own scan cadence (iOS refreshes on its own schedule), not the frame, which is broadcasting immediately. Without a note in the Setup Guide an owner will reasonably assume it failed and give up a minute too early.
 
 ### 2026-08-08: the frame's panel no longer shows a stale front end after an update (E21)
 

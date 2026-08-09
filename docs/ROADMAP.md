@@ -47,7 +47,6 @@ Size is a rough sense of the job, not a promise.
 
 | ID | Item | Design record | Notes |
 |----|------|---------------|-------|
-| E8 | Wi-Fi onboarding: the `OpenObject-Setup` AP plus its phone page. **BUILT and PROVEN end to end on the real XXL 2026-08-09** (§20). Five bugs found on that run are fixed but not yet re-confirmed; retire this row after one clean pass | HANDOFF §11 (design + test procedure); §20 2026-08-08, 2026-08-09 | Large, essentially done. Remaining work is a confirmation run, not building |
 
 
 ### The display
@@ -97,7 +96,6 @@ checklist: the tag from E19 says what changed, this says what to look at.
 
 | Device | What to check | Landed |
 |--------|---------------|--------|
-| Frame | **Wi-Fi setup mode: confirm the five fixes from the first hardware run** (§20 2026-08-09). The feature itself is proven end to end; what is unconfirmed is the pre-AP scan (the list should populate without typing), the elapsed-time trigger (~5 minutes, not 25), the AP holding up while a phone is connected, the player clearing its own flag so the panel returns to art by itself, and the two-tier caption sizing | `2b05ed5`, 2026-08-09 |
 | Frame (fresh install) | The `install.sh` Wi-Fi handoff now delegates to `nm-handoff.sh` with the guard off. The retrofit path is device-proven, but the fresh-install path cannot be exercised without installing a new frame, which nobody can currently do | `36b6ffa`, 2026-08-08 |
 | Apple TV | The per-Host row icon in the picker now matches its label size. Confirm on the real Apple TV, since that is where the undersized icon was noticed; the simulator before/after only proves the change took effect | `8adbbbe`, 2026-08-08 |
 
