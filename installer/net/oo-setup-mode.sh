@@ -36,7 +36,16 @@ RETRY_EVERY="${OO_RETRY_EVERY:-300}"              # seconds of AP before standin
 RETRY_WINDOW="${OO_RETRY_WINDOW:-60}"             # seconds given to normal autoconnect on retry
 
 log() { logger -t openobject-setup-mode "$*" 2>/dev/null || true; }
+
+# The player (running as `openobject`) leaves setup mode by calling this script, which means it must
+# be able to REMOVE the flag file. Deleting a file depends on the permissions of its directory, not
+# the file, and this directory is created by a root-run timer. Without the group bit the player could
+# take the AP down and save the network but never clear the flag, leaving the panel stuck on the
+# setup screen until the next root-run check. Found on the real frame 2026-08-09. Best effort: the
+# chgrp/chmod only take when this runs as root, which is exactly when the directory is created.
 mkdir -p "$STATE_DIR" 2>/dev/null
+chgrp "${OO_USER:-openobject}" "$STATE_DIR" 2>/dev/null || true
+chmod 0775 "$STATE_DIR" 2>/dev/null || true
 
 wifi_dev() {
   nmcli -t -f DEVICE,TYPE device status 2>/dev/null | awk -F: '$2=="wifi"{print $1; exit}'
