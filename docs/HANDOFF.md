@@ -848,6 +848,27 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-08-09: Wi-Fi setup mode works on the real frame, and cost four bugs to get there
+
+**E8 stage 3, proven end to end on the real XXL.** The frame detected it was offline, raised its own network, showed the setup screen, served the page, accepted a network and password from a phone, saved them, left its access point, and rejoined the house Wi-Fi. Everything below was found by running it; none of it was visible from a scratch Host, and all four bugs were in the same blind spot.
+
+**The one-radio constraint bit twice more than expected.** It already shaped the retry cycle; it turns out it also governs two things I wrote as though it did not apply:
+
+- **A radio hosting an access point cannot scan.** The Network dropdown offered "No networks found" while the frame sat on a perfectly good AP of its own, because the scan runs at the only moment it cannot work. `oo-setup-mode.sh` now scans **just before** raising the AP and leaves the result in `/run/openobject/networks`; the player serves that while setup mode is on (`d7341c7`). Typed entry saved the test, but it was meant to be the fallback for hidden networks, not the only working path.
+- **The retry cycle would drop an owner mid-setup.** Standing down every 5 minutes is right for an unattended frame and wrong for one with somebody typing into the page. The check now defers while a client is associated with the AP (`8626076`).
+
+**Entering was measured in the wrong unit.** A nominal 5-minute wait took about 25 on the first run, and the second was no better. A counter of consecutive failed checks is only as good as the cadence driving it: a late check, a skipped one, or a single momentary "online" resets or starves it, invisibly. Replaced with elapsed time since the frame first saw itself offline, plus a log line each check showing progress, so the next diagnosis reads a journal instead of a wall (`9092714`). It also makes the five minutes we quote to owners true.
+
+**The player could not clear its own flag.** It runs as `openobject`; `/run/openobject` is created by a root-run timer, and removing a file depends on the permissions of its **directory**. So the player took the AP down and saved the network correctly, then left the panel showing the setup screen, because it could not delete the flag. Matt's Mac reaching `openobject.local` and seeing the setup form with the network list **populated** is what identified it: a populated list means the radio is no longer hosting, i.e. the join had already succeeded. Directory now group-owned by the service user, 0775 (`2b05ed5`).
+
+**And the polkit grant was never there.** Stage 3a's commit message claimed it; the edit that wrote it hit a failed assertion partway through and wrote nothing, and the follow-up fixed only the systemd units (`f76f313`). Caught before the test by checking the rule file rather than trusting the commit, which is the only reason the run got as far as it did.
+
+**What is now proven on hardware:** offline detection; AP mode on this Intel `iwlwifi` adapter (never previously established); the panel screen; the page served over the AP; **`openobject.local` resolving over the frame's own network**, so the friendlier address on the screen is real; typed entry; credentials saved as a separate `oo-<ssid>` profile leaving the original untouched (§11); and the rejoin.
+
+**Sizing, judged on the panel.** Four caption lines at the idle screen's own size carried far more weight than one line of it and competed with the wordmark. The screen now has two tiers: the primary line keeps the idle caption's exact size, so a state screen's main line always reads the same, and only supporting detail steps down (`a22b659`).
+
+**Still to confirm:** all five fixes above were made after or during the run, so the next pass is a clean confirmation, in particular the scanned list appearing without typing and the panel returning to art by itself.
+
 ### 2026-08-08: the frame's panel no longer shows a stale front end after an update (E21)
 
 Roadmap **E21**, retired with this entry. Found the hard way the same day: the idle caption was resized, Software Update reported success, `grep` proved the new file was on the frame, and the panel kept showing the old size until the kiosk was restarted by hand.
