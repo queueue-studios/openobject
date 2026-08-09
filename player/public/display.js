@@ -294,9 +294,9 @@ function enterSetup(state) {
   showIdle();                       // tear down playback + show the mark
   hint.innerHTML =
     '<p class="lead">Connect to Wi-Fi</p><div class="sep"></div>' +
-    `<p>On your phone, join the network <span class="host">${ssid}</span></p>` +
-    `<p>Password: <span class="host">${psk}</span></p><div class="sep"></div>` +
-    `<p>Then go to <span class="host">openobject.local</span> (or <span class="host">${addr}</span>) in your browser.</p>`;
+    `<p class="detail">On your phone, join the network <span class="host">${ssid}</span></p>` +
+    `<p class="detail">Password: <span class="host">${psk}</span></p><div class="sep"></div>` +
+    `<p class="detail">Then go to <span class="host">openobject.local</span> (or <span class="host">${addr}</span>) in your browser.</p>`;
 }
 function exitSetup() {
   setupShowing = false;
