@@ -792,6 +792,30 @@ The cache-lifecycle sub-questions once open here (eviction policy, manual contro
 
 **Documentation.** The Setup Guide (§16) gained a **Folder Collections** section for the Phase A (local) behavior when it shipped (2026-07-08), scoped to the "computer as the display" path; it grew the frame specifics with Phase B (2026-07-11): the **Mac-serving requirements** (the app running, and the Mac not fully asleep while serving: the stay-awake setting or the app assertion above). A dedicated in-app **Folder Collections Help section** surfacing those basic requires/settings was deferred on 2026-07-10 and then **shipped the next day, 2026-07-12**, as the device-aware Help card in the Settings tab (§20): on a frame it explains hosting the Mac, adding the folder on the Mac's control panel, selecting it in Rotation > Source, and what "Mac unreachable" means; on a Mac Host it explains defining a folder there. **Nothing is open here.** (The stale "deferred" wording was corrected 2026-08-08.)
 
+### Ambient letterbox background: colour taken from the piece instead of black (noted 2026-08-09)
+
+The design record for **E22**. Matt's idea, parked rather than committed: when a **Fit** piece letterboxes, optionally fill the bars with a blend of gradients derived from the piece's own dominant colours, the way a music or video app surrounds cover art with a wash of its palette, instead of leaving them black.
+
+**Where it would apply.** Only in Fit, and only where the piece and the panel disagree on aspect (§6). On the XXL's 1:1 panel that is *most* pieces, so it is a high-visibility change there, more so than on a widescreen Mac. **Fill** never letterboxes and is untouched. The idle, Sleep, and setup screens are not art and stay exactly as they are.
+
+**The tension, and why it must be opt-in and default off.** §6 and `CLAUDE.md` both say the bare black stage is deliberately *not* a frame, and that no decorative border ships, ever. This idea puts something the artist did not author directly against the edge of their composition, which is precisely the class of change that goes to Matt rather than being decided in code. So if it is ever built: an explicit setting, **default black**, and the black stage stays the thing the product is judged on.
+
+**Two implementations, and the cheap one is probably the right one.**
+
+1. **A blurred cover copy.** Draw the same image behind the fitted one, sized to cover, with a large blur and a brightness knock-down. No colour analysis at all, degrades gracefully on busy multi-colour art, and it is what the apps this idea comes from actually do. Cost is one extra decode of an image the browser already has cached, and CSS `filter: blur()` composites on the GPU.
+2. **An extracted palette.** Draw the piece into a small offscreen canvas (32x32 is plenty), read the pixels back once, cluster to two to four dominant colours, and build a radial or linear gradient from them. More control and more taste required: a wrong palette can look wrong, where a blur can only look soft. It also needs the sampler to discount near-black, near-white, and low-saturation pixels, or most art averages out to the same grey wash.
+
+Start with (1) and keep the backdrop **static per clip**. An animated or drifting gradient is a permanent GPU cost on a wall display that runs for months.
+
+**Mechanics, and what is already true.**
+
+- Uploaded and folder media is served same-origin by the Host, so a canvas readback is not tainted. A one-time 32x32 read is nothing like the per-frame full-canvas `filter(GRAY)` readback that corrupts on WebKit (§20, 2026-06-30); that bug is not a reason to avoid this.
+- **Video: sample a frame, do not run a second video.** Grab one frame (or a few, spaced) into a canvas and blur that still. A second decoding `<video>` behind the first is the obvious implementation and the wrong bet on the frame, whose graphics budget is already tight enough that only `imageSmoothingQuality: 'low'` stays smooth (§8).
+- **The backdrop belongs inside `.layer`,** not on the stage. `display.css` already crossfades layers on a 600ms opacity transition, so a backdrop that lives in the layer inherits the crossfade for free; a stage-level background would need its own animation and would flash between clips.
+- **Connected pieces are out of scope for a first pass.** `.layer.aspect` does letterbox an iframe (Golden Lining declares `2124 / 1698`), and the mirror is same-origin so a read is technically possible, but there is no single image to sample, only somebody's live canvas. Black stays under connected art.
+- **Open: scope of the setting.** Per display, like Sound (§12), so a Mac and the frame can differ, or one global choice. Undecided, and the wording is Matt's call; the shape is a Background control offering Black or something ambient.
+- **Acceptance has to be stated objectively**, not as "does it look right": a measured target for the backdrop's brightness and its contrast against the piece's edge, judged on the real panel. A backdrop that competes with the art is the failure mode, and it is a quiet one.
+
 ---
 
 ## 18. Appendix: original White Walls reset (for owners who want to keep it)

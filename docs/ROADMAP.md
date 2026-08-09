@@ -50,6 +50,12 @@ Size is a rough sense of the job, not a promise.
 | E8 | Wi-Fi onboarding: the `OpenObject-Setup` AP plus its phone page. **All three stages BUILT 2026-08-08/09**; what remains is the on-hardware test, tracked under pending device verification. Retire this row once the frame has actually raised the AP and rejoined a network through it | HANDOFF §11 (design + settled decisions); §20 2026-08-08 (stages 1-2) | Large, now built. Untested on the frame: expect bugs on the first real run |
 
 
+### The display
+
+| ID | Item | Design record | Notes |
+|----|------|---------------|-------|
+| E22 | Ambient letterbox background: an optional setting that fills a Fit piece's black bars with gradients drawn from the piece's own colours, instead of black. **Parked, not committed** (Matt, 2026-08-09) | HANDOFF §17 "Ambient letterbox background" | Medium. Opt-in, default black, since the bare black stage is a stated product rule. Most visible on the square frame, where nearly everything letterboxes |
+
 ### The Mac app
 
 | ID | Item | Design record | Notes |
