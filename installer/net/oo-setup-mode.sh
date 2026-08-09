@@ -26,6 +26,7 @@ STATE_DIR=/run/openobject
 FLAG="$STATE_DIR/setup-mode"          # present = the AP is up. /run clears on reboot, by design:
                                       # a rebooted frame re-decides from scratch within a minute.
 SINCE="$STATE_DIR/offline-since"      # unix time we FIRST saw the frame offline
+NETS="$STATE_DIR/networks"            # scan taken just BEFORE hosting (a radio in AP mode cannot scan)
 AP_CON=openobject-setup-ap
 AP_SSID="${OO_AP_SSID:-OpenObject-Setup}"
 AP_PSK="${OO_AP_PSK:-openobject}"
@@ -51,6 +52,13 @@ ap_up() { [ -e "$FLAG" ]; }
 
 start_ap() {
   dev=$(wifi_dev); [ -n "$dev" ] || { log "no wifi device; cannot start setup mode"; return 1; }
+  # Scan BEFORE hosting, and keep the result: a radio in AP mode cannot scan, so asking for the
+  # network list once the AP is up returns nothing. Found on the real frame 2026-08-09, where the
+  # setup page offered "No networks found" while sitting on a working access point. The list is
+  # written here and the player serves it from this file while setup mode is on.
+  nmcli -t -f SSID,SIGNAL,SECURITY device wifi list --rescan yes > "$NETS" 2>/dev/null \
+    && log "cached $(grep -c . "$NETS" 2>/dev/null || echo 0) scan results for the setup page" \
+    || log "pre-AP scan failed; the setup page will rely on typed entry"
   # Idempotent: recreate the profile each time so a changed SSID/password/address takes effect and a
   # half-written profile from a previous run cannot linger.
   nmcli connection delete "$AP_CON" >/dev/null 2>&1

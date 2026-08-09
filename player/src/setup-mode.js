@@ -31,11 +31,21 @@ function isOn() {
 
 // The networks to offer, best signal first. Deduped by name, because the same network shows up once
 // per band and per access point and the owner should see one entry, not five.
+// A radio hosting an access point CANNOT scan, so while setup mode is on there is nothing to ask:
+// oo-setup-mode.sh takes a scan just before it raises the AP and leaves it here. Falling back to a
+// live scan keeps this useful off the frame and before the AP exists.
+const NETS = process.env.OO_SETUP_NETS || '/run/openobject/networks';
+
 async function scan() {
-  const r = await run('nmcli', ['-t', '-f', 'SSID,SIGNAL,SECURITY', 'device', 'wifi', 'list', '--rescan', 'yes'], 25000);
-  if (!r.ok) return [];
+  let out = '';
+  try { if (isOn() && fs.existsSync(NETS)) out = fs.readFileSync(NETS, 'utf8'); } catch { /* fall through */ }
+  if (!out) {
+    const r = await run('nmcli', ['-t', '-f', 'SSID,SIGNAL,SECURITY', 'device', 'wifi', 'list', '--rescan', 'yes'], 25000);
+    if (!r.ok) return [];
+    out = r.stdout;
+  }
   const best = new Map();
-  for (const line of r.stdout.split('\n')) {
+  for (const line of out.split('\n')) {
     if (!line.trim()) continue;
     // nmcli -t escapes colons inside fields as '\:', so split on unescaped colons only.
     const parts = line.split(/(?<!\\):/).map((s) => s.replace(/\\:/g, ':'));
