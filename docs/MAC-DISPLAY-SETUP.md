@@ -67,6 +67,31 @@ While the art is showing, your Mac stays awake. Set Auto Display back to **Never
 
 Alongside your own uploads, OpenObject includes a small, hand-picked shelf of **Connected Collections** (in the control panel's Settings). These are not standard images or videos, but generative and interactive art that runs as live code (p5.js sketches, or interactive HTML), rendered right on your screen. They are selectively curated from the personal collection of OpenObject's developers, so they play out of the box. It is a curated shelf, not a general NFT reader.
 
+## Watch on an Apple TV, iPad, or iPhone (optional)
+
+Your Mac is a complete OpenObject setup on its own. These apps are extra screens for the art you
+already have; they are not required and they do not replace anything.
+
+The Mac (or a frame) is the **Host**: it holds your art and runs the control panel. The Apple TV and
+iPad apps are **displays**, playing from a Host already running on your network. So the Mac app needs
+to be open, on the same Wi-Fi, for them to find it.
+
+**Apple TV.** [Available on the App Store](https://apps.apple.com/app/id6797132025). Install it,
+open it, and pick your Mac from the list of Hosts it finds. Your art plays on the TV, following the
+same rotation, timing, and settings you already set from the control panel. There is nothing to
+configure on the TV itself.
+
+**iPad and iPhone.** Coming to the App Store. One app for both.
+
+**What plays on them.** Your uploaded images and video, and Folder Collections, all exactly as on
+your Mac. **Connected Collections do not play on the Apple TV**, because the pieces are small web
+programs and Apple TV has no way to run them. They keep playing on your Mac and on a frame.
+
+**No art is stored on these apps.** They read from the Host as they play, so they need it running.
+Turn the Mac off and the TV has nothing to show; turn it back on and the art returns.
+
+---
+
 ## Everyday use
 
 - Leave OpenObject and the display running; it keeps playing on its own.
