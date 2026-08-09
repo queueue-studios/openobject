@@ -16,6 +16,10 @@
 #
 # It is also why entering is slow (OFFLINE_BEFORE_AP checks, ~5 minutes) and leaving is quick: a
 # frame that can reach the network should never be sitting on its own AP.
+#
+# WITH ONE EXCEPTION, learned on the real frame: the retry is right for a frame nobody is attending
+# and wrong for one with an owner in front of it. If a phone is associated with the AP, standing down
+# would drop the very page they are typing into, so the retry is deferred while a client is on.
 set -u
 
 STATE_DIR=/run/openobject
@@ -74,6 +78,16 @@ stop_ap() {
   log "setup mode OFF"
 }
 
+# Is a phone (or laptop) actually associated with our access point right now? If so the owner is
+# mid-setup, and standing down would yank the network out from under the page they are filling in.
+# Found on the real frame 2026-08-09: the retry cycle is right for an unattended frame and wrong for
+# one with somebody standing in front of it.
+ap_has_client() {
+  dev=$(wifi_dev); [ -n "$dev" ] || return 1
+  n=$(iw dev "$dev" station dump 2>/dev/null | grep -c '^Station')
+  [ "${n:-0}" -gt 0 ]
+}
+
 # Stand down briefly and let NetworkManager try the networks it knows. Returns 0 if it got back on.
 retry_known_networks() {
   log "standing down from the AP to retry known networks"
@@ -96,6 +110,13 @@ case "${1:-check}" in
     if ap_up; then
       # In setup mode. Age the AP, and periodically give the home network another chance, so a
       # temporary outage does not leave the frame stranded on its own network.
+      if ap_has_client; then
+        # Someone is connected and presumably typing. Push the next retry out rather than dropping
+        # them: touching the flag restarts the age clock.
+        touch "$FLAG" 2>/dev/null
+        log "a client is on the setup network; holding the AP up"
+        exit 0
+      fi
       age=$(( $(date +%s) - $(stat -c %Y "$FLAG" 2>/dev/null || date +%s) ))
       if [ "$age" -ge "$RETRY_EVERY" ]; then
         retry_known_networks || start_ap
