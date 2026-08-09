@@ -14,7 +14,7 @@
 # a window: without it, a five-minute router reboot would strand the frame in setup mode until
 # someone walked over to it. A brief outage must heal itself.
 #
-# It is also why entering is slow (OFFLINE_BEFORE_AP checks, ~5 minutes) and leaving is quick: a
+# It is also why entering is slow (OFFLINE_FOR seconds, default 5 minutes) and leaving is quick: a
 # frame that can reach the network should never be sitting on its own AP.
 #
 # WITH ONE EXCEPTION, learned on the real frame: the retry is right for a frame nobody is attending
@@ -25,12 +25,12 @@ set -u
 STATE_DIR=/run/openobject
 FLAG="$STATE_DIR/setup-mode"          # present = the AP is up. /run clears on reboot, by design:
                                       # a rebooted frame re-decides from scratch within a minute.
-COUNT="$STATE_DIR/offline-count"
+SINCE="$STATE_DIR/offline-since"      # unix time we FIRST saw the frame offline
 AP_CON=openobject-setup-ap
 AP_SSID="${OO_AP_SSID:-OpenObject-Setup}"
 AP_PSK="${OO_AP_PSK:-openobject}"
 AP_ADDR="${OO_AP_ADDR:-192.168.4.1/24}"   # pinned; NM's shared mode would default to 10.42.0.1
-OFFLINE_BEFORE_AP="${OO_OFFLINE_BEFORE_AP:-10}"   # checks (timer runs every 30s) => ~5 minutes
+OFFLINE_FOR="${OO_OFFLINE_FOR:-300}"              # seconds offline before the AP goes up
 RETRY_EVERY="${OO_RETRY_EVERY:-300}"              # seconds of AP before standing down to retry
 RETRY_WINDOW="${OO_RETRY_WINDOW:-60}"             # seconds given to normal autoconnect on retry
 
@@ -97,7 +97,7 @@ retry_known_networks() {
   waited=0
   while [ "$waited" -lt "$RETRY_WINDOW" ]; do
     sleep 5; waited=$((waited + 5))
-    if online; then log "back on a known network; staying off the AP"; rm -f "$COUNT"; return 0; fi
+    if online; then log "back on a known network; staying off the AP"; rm -f "$SINCE"; return 0; fi
   done
   return 1
 }
@@ -124,13 +124,21 @@ case "${1:-check}" in
       exit 0
     fi
 
-    if online; then rm -f "$COUNT"; exit 0; fi
+    if online; then rm -f "$SINCE"; exit 0; fi
 
-    n=$(cat "$COUNT" 2>/dev/null || echo 0)
-    n=$((n + 1)); echo "$n" > "$COUNT"
-    [ "$n" -ge "$OFFLINE_BEFORE_AP" ] || exit 0
+    # Measured in ELAPSED TIME, not in consecutive checks. A counter is only as good as the cadence
+    # driving it: a check that runs late, gets skipped, or sees one momentary blip of "online" resets
+    # or starves it, and the wait stretches with no way to tell from outside. On the real frame a
+    # nominal 5-minute wait took about 25 (Matt, 2026-08-09). A timestamp cannot drift like that, and
+    # it makes the number we tell owners true.
+    now=$(date +%s)
+    since=$(cat "$SINCE" 2>/dev/null || echo '')
+    if [ -z "$since" ]; then echo "$now" > "$SINCE"; since=$now; fi
+    elapsed=$((now - since))
+    log "offline for ${elapsed}s of ${OFFLINE_FOR}s"
+    [ "$elapsed" -ge "$OFFLINE_FOR" ] || exit 0
 
-    log "offline for $n checks; entering setup mode"
+    log "offline ${elapsed}s; entering setup mode"
     start_ap
     ;;
   *) echo "usage: $0 {check|start|stop|status}" >&2; exit 2 ;;
