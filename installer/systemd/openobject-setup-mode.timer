@@ -1,0 +1,12 @@
+[Unit]
+# Runs the setup-mode check every 30s, alongside the Wi-Fi watchdog. Entering is deliberately slow
+# (~5 minutes offline, see the script) so a blip never puts the frame on its own network.
+Description=Periodic OpenObject Wi-Fi setup mode check
+
+[Timer]
+OnBootSec=90
+OnUnitActiveSec=30
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

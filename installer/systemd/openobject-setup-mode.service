@@ -1,0 +1,8 @@
+[Unit]
+# Decides whether the frame should be broadcasting its own Wi-Fi setup network (HANDOFF §11).
+Description=OpenObject Wi-Fi setup mode check
+After=NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/openobject/installer/net/oo-setup-mode.sh check

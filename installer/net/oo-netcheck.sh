@@ -60,6 +60,12 @@ online() {
   ping -c 1 -W 2 "$gw" >/dev/null 2>&1
 }
 
+# Setup mode owns the radio deliberately (HANDOFF §11): the frame is hosting its own Wi-Fi network so
+# the owner can hand it new credentials, which means there is no default route BY DESIGN. Without this
+# the watchdog would read that as a fault and start tearing the link down every 30s, fighting the very
+# mode the owner is standing in front of. oo-setup-mode.sh handles its own retries.
+[ -e /run/openobject/setup-mode ] && exit 0
+
 # Hysteresis: ignore a momentary blip, acting only if two checks ~5s apart both fail.
 online && exit 0
 sleep 5

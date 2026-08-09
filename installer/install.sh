@@ -13,7 +13,7 @@
 #   2. Install Node 22 from NodeSource (Debian's Node is too old for node:sqlite).
 #   3. Create the `openobject` service user + runtime dirs, and grant it reboot/poweroff (polkit).
 #   4. Point the checkout's git origin at GitHub (so self-update works) + npm install.
-#   5. Install + enable the two systemd units (player + kiosk) that replace supervisor.js.
+#   5. Install + enable the systemd units (player + kiosk, the Wi-Fi watchdog, setup mode).
 #   6. Set the hostname to `openobject` and start Avahi → reachable at openobject.local.
 #   7. Quiet the boot (no console spew / blanking / cursor on the panel).
 #   8. Disable Wi-Fi power-save (keeps the frame discoverable and connected; HANDOFF §3).
@@ -167,19 +167,27 @@ log "Installing player dependencies (npm ci)"
 ok "dependencies installed"
 
 # ── 5. systemd units ────────────────────────────────────────────────────────────────
-log "Installing systemd units (player + kiosk + Wi-Fi watchdog)"
+log "Installing systemd units (player + kiosk + Wi-Fi watchdog + setup mode)"
 chmod +x "$TARGET"/installer/kiosk/*.sh "$TARGET"/installer/net/*.sh
 install -m 0644 "$TARGET/installer/systemd/openobject-player.service"   /etc/systemd/system/
 install -m 0644 "$TARGET/installer/systemd/openobject-kiosk.service"    /etc/systemd/system/
 install -m 0644 "$TARGET/installer/systemd/openobject-netcheck.service" /etc/systemd/system/
 install -m 0644 "$TARGET/installer/systemd/openobject-netcheck.timer"   /etc/systemd/system/
+# Wi-Fi setup mode (HANDOFF §11): raises the frame's OWN network when it cannot reach a known one.
+install -m 0644 "$TARGET/installer/systemd/openobject-setup-mode.service" /etc/systemd/system/
+install -m 0644 "$TARGET/installer/systemd/openobject-setup-mode.timer"   /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable openobject-player.service openobject-kiosk.service
 # Wi-Fi watchdog: re-ups Wi-Fi only when the frame has already lost its network (the ifupdown
 # bring-up at boot does not retry; see installer/net/oo-netcheck.sh). Enable + start now so the
 # safety net is live immediately, without waiting for a reboot.
 systemctl enable --now openobject-netcheck.timer
-ok "units enabled (player + kiosk on boot; Wi-Fi watchdog timer running)"
+# Setup mode decides every 30s whether the frame should be hosting its own Wi-Fi network. Entering is
+# deliberately slow (~5 min offline) and it stands down periodically to retry, so a brief outage can
+# never strand the frame on its own AP.
+systemctl enable --now openobject-setup-mode.timer >/dev/null 2>&1 \
+  || warn "could not enable the setup-mode timer"
+ok "units enabled (player + kiosk on boot; Wi-Fi watchdog + setup-mode timers running)"
 
 # ── 6. Hostname + Avahi (openobject.local) ──────────────────────────────────────────
 log "Hostname + mDNS"
