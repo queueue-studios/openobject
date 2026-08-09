@@ -948,6 +948,9 @@ const withConnectedFlags = (item) => {
     // A GPU-heavy collection's pixel density for a FRAME display (display.js applies it only there); other
     // displays keep the bundle's own default. Lets the weak XXL GPU render inkField ~4x lighter (§8).
     framePixelDensity: c && c.framePixelDensity != null ? c.framePixelDensity : null,
+    // Reveal this piece on its first painted frame rather than on the iframe's load event, so a bundle
+    // that loads slowly holds the OUTGOING piece instead of showing a black stage (display.js).
+    awaitPaint: !!(c && c.awaitPaint),
   };
 };
 

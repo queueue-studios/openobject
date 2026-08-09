@@ -123,6 +123,35 @@ function pickNext() {
   return (pos + 1) % n; // sequence
 }
 
+// Reveal an `awaitPaint` bundle on its first painted frame instead of on the iframe's `load` event
+// (see the call site). The mirror is same-origin, so we can read the sketch's own state directly and no
+// bundle change is needed: the piece is ready once it has a canvas AND p5's global frameCount has passed
+// its first draw (>= 2, so a fully composited frame is on the canvas, not one that just started). A
+// non-p5 bundle exposes no frameCount, so a canvas alone is enough there. Anything unreadable resolves
+// immediately rather than holding the rotation, and a piece that never paints falls back to the cap, so
+// the worst case is the old behavior a few seconds later, never a stuck screen.
+const PAINT_WAIT_MS = 12000; // cap on holding the outgoing piece; the artwork's own 30s backstop still applies
+function waitForPaint(el, onReady) {
+  const done = once(onReady);
+  el.addEventListener('load', () => {
+    const t0 = Date.now();
+    const iv = setInterval(() => {
+      // A hidden page (a background tab on a computer, never the kiosk) suspends requestAnimationFrame,
+      // so the sketch cannot paint and frameCount would never advance: waiting would stall the rotation
+      // behind the cap on every change, and there is nothing on screen to protect anyway. Revert to the
+      // plain load-event behavior while hidden.
+      let ready = document.hidden;
+      try {
+        const w = el.contentWindow;
+        const painted = w && w.document.querySelector('canvas') &&
+          (typeof w.frameCount !== 'number' || w.frameCount >= 2);
+        ready = ready || !!painted;
+      } catch { ready = true; }         // can't inspect it: reveal rather than stall the rotation
+      if (ready || Date.now() - t0 > PAINT_WAIT_MS) { clearInterval(iv); done(); }
+    }, 50);
+  }, { once: true });
+}
+
 function render(layer, item, onReady) {
   layer.className = 'layer fit-' + (item.fit === 'fill' ? 'fill' : 'fit');
   let el;
@@ -134,7 +163,13 @@ function render(layer, item, onReady) {
     el = document.createElement('iframe');
     el.setAttribute('scrolling', 'no');
     el.setAttribute('sandbox', 'allow-scripts allow-same-origin'); // runs scripts; can't navigate/popup
-    el.addEventListener('load', onReady, { once: true });
+    // A bundle's `load` event fires when its FILES are in, which for a p5 sketch is before the artwork
+    // exists: p5 waits for that very event to construct the sketch, THEN runs preload() (its images) and
+    // setup(). Revealing on `load` therefore crossfades into an empty document and holds a black stage
+    // until the sketch paints: measured at ~1.7s on a Mac for Lost in Moffat County, and longer on the
+    // frame. An `awaitPaint` collection instead reveals on its first painted frame, so the OUTGOING piece
+    // stays up until the incoming one is genuinely ready and the stage never goes black (HANDOFF §7).
+    if (item.awaitPaint) waitForPaint(el, onReady); else el.addEventListener('load', onReady, { once: true });
     const params = [];
     // A shared-bundle collection carries its per-piece seed in the official URL: usually a ?query (folded
     // into params below), but for some (inkField) a #fragment the sketch reads from location.hash. Split the

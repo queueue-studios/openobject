@@ -181,6 +181,30 @@ const REGISTRY = [
     // Bloom's #startOverlay): a brief blank while the photo finishes loading replaces the stray text, keeping
     // the stage chrome-free (§6).
     hideSelectors: ['#p5_loading'],
+    // Hiding that loading screen leaves a BLACK stage while the sketch loads, and this piece is slow to
+    // load for a reason worth fixing rather than covering: p5's preload() blocks the first paint on all
+    // four images, and the two easter-egg GIFs are 2500^2 x 2 frames each (~100 MB of pixel buffers)
+    // that cost ~1.6s of decode on a Mac, measured, and much more on the frame. With Animate OFF (the
+    // default) they are decoded and then never drawn, and no cache helps: the decode repeats on every
+    // pass through the rotation. So load them only when the animate hook will actually use them, which
+    // cuts the wait roughly in half with Animate off and changes nothing with it on (they still preload,
+    // so the piece is still revealed already-animated, never as a still that pops into motion).
+    //
+    // Keyed on the variable names, not the URLs: htmlReplace runs BEFORE localizeAbsolute, so at this
+    // point both GIFs are still the artist's absolute Pinata URLs, and they are localized normally
+    // afterwards (the files still land in the bundle, ready for Animate on).
+    //
+    // The artist's own tap-to-animate (touchEnded) is guarded to match: with the GIFs unloaded a tap
+    // would otherwise draw undefined images. The frame has no pointer, so this only affects clicking the
+    // piece on a computer display, where with Animate off it now does nothing instead of animating.
+    htmlReplace: [
+      { find: /(dayEaster\s*=\s*loadImage\([^;]*;\s*nightEaster\s*=\s*loadImage\([^;]*;)/,
+        replace: "if (new URLSearchParams(location.search).get('ooanim') === '1') { $1 }" },
+      { find: 'easterEgg = !easterEgg;', replace: 'if (dayEaster && nightEaster) easterEgg = !easterEgg;' },
+    ],
+    // Reveal on the sketch's first painted frame, not on the iframe's load event (which for a p5 sketch
+    // fires before the artwork even starts): the outgoing piece holds the stage until the photo is up.
+    awaitPaint: true,
     // The photos are square (3840^2 / 2500^2) drawn object-fit: contain, so on the 1:1 stage they fill edge
     // to edge (no crop, no aspect).
     // Of the contract's live tokens, 3/4/5/6 carry an animation_url and render here; token 1 ("Desert Steel")

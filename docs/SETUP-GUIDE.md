@@ -189,7 +189,8 @@ concentric colored rings that fills the whole panel and drifts on its own. The s
 generative study of motion: a chain of colored orbs swings like a pendulum, tracing slow, ever-shifting arcs across the
 whole panel. And Jeremy Booth's *Lost in Moffat County* is a series of painterly Western scenes that shift from day to
 night on their own with your local time; switch on Animate for that piece (in Settings) to reveal a hand-drawn animated
-easter egg. And Chaz Wesley's *The Bloom* is a hand-drawn flower garden that blooms at sunset, with a little
+easter egg. If you added this piece before, remove it and add it again: the newer copy loads faster, so it comes up
+sooner when the rotation reaches it. And Chaz Wesley's *The Bloom* is a hand-drawn flower garden that blooms at sunset, with a little
 spaceship drifting through the sky above it. It's the one piece that comes with its own music, and the
 garden moves to it: the flowers and the sunset shift along with the song. A **Music** setting (in
 Settings) starts **on**; turn it off and the garden keeps drifting on its own, silently. If you added
