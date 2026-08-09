@@ -34,7 +34,7 @@ network.
 | **Mac** | ✓ | ✓ | ✓ | [Available for download](https://github.com/queueue-studios/openobject/releases/latest) |
 | **Infinite Objects XXL** frame | ✓ | ✓ | ✓ | [Available (advanced)](docs/SETUP-GUIDE.md) |
 | **Apple TV** | - | - | ✓ | [Available on the App Store](https://apps.apple.com/us/app/openobject/id6797132025) |
-| **iPad** | - | - | ✓ | Coming soon |
+| **iPad** | - | - | ✓ | [Available on the App Store](https://apps.apple.com/app/id6797132025) |
 
 Your **Mac** and the **frame** are self-contained: each holds your art, is controlled from a browser,
 and shows the art on its own. The **Apple TV** and **iPad** apps are displays that play from a Host
@@ -106,7 +106,7 @@ copy of your art and upload it to OpenObject to display it.
 
 ## One core, many surfaces
 
-The Mac app, an Infinite Objects XXL frame, and the Apple TV app today, with the iPad app coming to
+The Mac app, an Infinite Objects XXL frame, and the Apple TV, iPad and iPhone apps today, published to
 the App Store. Because the core is just a small local art player, it is not locked to any one device
 (technically minded owners can even run it on their own hardware).
 
