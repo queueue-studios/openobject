@@ -68,7 +68,7 @@ Size is a rough sense of the job, not a promise.
 
 | ID | Item | Design record | Notes |
 |----|------|---------------|-------|
-| E16 | Post-approval site pass: iPad is still "coming soon" in three places on the home page (device chip, header status line, Display cell) and the Apple TV page still says iPad "follows" | `site/`; recipe in HANDOFF §15 | Small. **Committed**, once iOS is approved |
+| E16 | **Copy is written and committed** (`77b6451`); what remains is publishing it. `openobject.io` is a gh-pages deploy, so the site still says the iPad app is coming until it is republished, which should happen only once Apple approves the submitted iOS build | `site/`; republish recipe in HANDOFF §15 and memory: openobject-io-landing-page | Small. One republish, no writing left. Do not publish early: it would claim a product state Apple has not granted |
 
 ### Seams (built as interfaces, never filled in)
 
