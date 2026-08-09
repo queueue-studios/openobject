@@ -990,7 +990,7 @@ app.post('/api/setup/connect', ah(async (req, res) => {
   const password = String((req.body && req.body.password) || '');
   if (!ssid) return res.status(400).json({ error: 'pick a network' });
   // Answer the phone FIRST. Applying takes the frame off its own access point, which drops this very
-  // connection mid-request (§11) — so the response must already be on the wire. The phone then says
+  // connection mid-request (§11), so the response must already be on the wire. The phone then says
   // to watch the frame, and the frame confirms on its own screen.
   res.json({ ok: true, applying: true });
   setTimeout(() => { setupMode.applyLater(ssid, password).catch(() => {}); }, 400);

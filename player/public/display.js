@@ -280,7 +280,7 @@ function showIdle() {
 
 // Wi-Fi setup mode (HANDOFF §11): the frame cannot reach a known network, so it is hosting its own
 // and the panel says how to reach it. Same screen as idle, saying more: the wordmark does not move.
-// It wins over Sleep on purpose — a frame nobody can reach needs the owner's eyes more than it needs
+// It wins over Sleep on purpose: a frame nobody can reach needs the owner's eyes more than it needs
 // to be dark, and the owner troubleshooting at 11pm should not find a blank panel.
 let setupShowing = false;
 function enterSetup(state) {
@@ -371,7 +371,7 @@ function apply(state) {
   if (arcadeOn) exitArcade();                  // just left the demo — fall through and resume the rotation
 
   if (state.setup) return enterSetup(state);   // Wi-Fi setup mode owns the panel (§11)
-  if (setupShowing) exitSetup();               // just reconnected — fall through and resume the rotation
+  if (setupShowing) exitSetup();               // just reconnected, fall through and resume the rotation
 
   if (state.asleep) return enterSleep();  // Sleep Hours / manual Blank (HANDOFF §13)
   if (sleeping) exitSleep();              // just woke — fall through and resume the rotation
