@@ -3,13 +3,13 @@
     <channel>
         <title>OpenObject</title>
         <item>
-            <title>1.7.2</title>
-            <pubDate>Thu, 06 Aug 2026 16:34:46 -0400</pubDate>
-            <sparkle:version>15</sparkle:version>
-            <sparkle:shortVersionString>1.7.2</sparkle:shortVersionString>
+            <title>1.8.0</title>
+            <pubDate>Sun, 09 Aug 2026 13:05:11 -0400</pubDate>
+            <sparkle:version>16</sparkle:version>
+            <sparkle:shortVersionString>1.8.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/queueue-studios/openobject/releases/download/v1.7.2/OpenObject-1.7.2.dmg" length="45591427" type="application/octet-stream" sparkle:edSignature="fjrO/BAN09e7CrDDZpQzx1xDdLXa9xecyng/D08aWC5x1iLQmwV+iA0CA8OZnAi4vjD/2zQ7JzzaXEU5347hCg=="/>
+            <enclosure url="https://github.com/queueue-studios/openobject/releases/download/v1.8.0/OpenObject-1.8.0.dmg" length="45600662" type="application/octet-stream" sparkle:edSignature="8WBLnJPFwbe4zAYzf6MhZuvWGt9r4kCpyZTQ2QC09KDGrmkcpb4iQy+ZTEHpYZlDWZ3ZL1v5g85/pcrGw9L2Ag=="/>
         </item>
     </channel>
 </rss>
