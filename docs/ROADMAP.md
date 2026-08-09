@@ -47,7 +47,7 @@ Size is a rough sense of the job, not a promise.
 
 | ID | Item | Design record | Notes |
 |----|------|---------------|-------|
-| E8 | Wi-Fi onboarding: an `OpenObject-Setup` AP plus captive page, folding into the existing Network card. **Stages 1-2 done 2026-08-08** (the frame's Wi-Fi is on NetworkManager, and `install.sh` no longer carries a handoff that could never succeed); **stage 3, setup mode itself, is what remains** | HANDOFF §11; §20 2026-08-08; the original XXL's own flow, which Matt captured in screenshots, is the reference | Large. Surfaces only when the frame cannot connect (Matt, 2026-08-08). No QR codes: the network name and password in plain text, as the original did. Old credentials are never deleted, so a returning network just works |
+| E8 | Wi-Fi onboarding: the `OpenObject-Setup` AP plus its phone page. **All three stages BUILT 2026-08-08/09**; what remains is the on-hardware test, tracked under pending device verification. Retire this row once the frame has actually raised the AP and rejoined a network through it | HANDOFF §11 (design + settled decisions); §20 2026-08-08 (stages 1-2) | Large, now built. Untested on the frame: expect bugs on the first real run |
 
 
 ### The Mac app
@@ -91,6 +91,7 @@ checklist: the tag from E19 says what changed, this says what to look at.
 
 | Device | What to check | Landed |
 |--------|---------------|--------|
+| Frame | **Wi-Fi setup mode (E8 stage 3), never run on real hardware.** Built and exercised only on a scratch Host with no `nmcli`, so the access point itself has never been raised. Needs the installer re-run (new systemd units + polkit rule, which a Software Update does not install), then provoking: point the frame at a network that does not exist and watch for the setup screen. Steps and the safety net are in HANDOFF §11 | `44edcf7`, 2026-08-09 |
 | Frame | The panel should now refresh itself when a display file changes, with no kiosk restart (E21). Verified on a scratch Host, not yet on real hardware. The first E8 screen is a real display-file change and is the natural proof: update the frame and watch the panel pick it up on its own | `b0c4b73`, 2026-08-08 |
 | Frame (fresh install) | The `install.sh` Wi-Fi handoff now delegates to `nm-handoff.sh` with the guard off. The retrofit path is device-proven, but the fresh-install path cannot be exercised without installing a new frame, which nobody can currently do | `36b6ffa`, 2026-08-08 |
 | Apple TV | The per-Host row icon in the picker now matches its label size. Confirm on the real Apple TV, since that is where the undersized icon was noticed; the simulator before/after only proves the change took effect | `8adbbbe`, 2026-08-08 |
