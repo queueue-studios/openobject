@@ -363,6 +363,33 @@ inverted, deliberately the loudest thing on screen because it is the only action
 covers roughly 340px, which would bury the Connect button. **The page scrolls** rather than shrinking the
 wordmark, so the screen still mirrors the display and the keyboard simply moves the view.
 
+**Provoking setup mode on a working frame (the test procedure, 2026-08-09).** Written out because
+the frame cannot be taken off Wi-Fi by turning off the house router, and because getting this wrong
+means an unreachable frame on a wall.
+
+1. **Software Update, then re-run the installer.** A Tier-1 update pulls code but does **not** install
+   systemd units or polkit rules, and setup mode ships both. So:
+   `sudo bash /opt/openobject/installer/install.sh`. It is idempotent and never touches
+   `/var/lib/openobject` (the library, uploads, settings).
+2. **Arm a safety net before breaking anything**, the same pattern the NetworkManager handoff used:
+   `sudo systemd-run --on-active=30min --unit=oo-test-restore nmcli connection modify openobject-wifi 802-11-wireless.ssid <REAL-SSID>`.
+   If the whole thing fails, the frame restores its own Wi-Fi in half an hour with nobody touching it.
+3. **Break it deliberately:** point the saved connection at a network that does not exist
+   (`sudo nmcli connection modify openobject-wifi 802-11-wireless.ssid NoSuchNetwork-OO`, then
+   `nmcli connection down openobject-wifi`). Contact with the frame is lost at this point, as intended.
+4. **Wait about five minutes.** That is `OFFLINE_BEFORE_AP` (10 checks at 30s) and it is deliberately
+   slow, so a blip never takes the art off the wall. The panel should swap from art to the setup screen.
+5. **Do the owner's flow from a phone:** join `OpenObject-Setup` / `openobject`, open `192.168.4.1`,
+   pick the real network, enter its password, Connect. The phone says to watch the frame.
+6. **Clean up:** stop `oo-test-restore.timer` and put the real SSID back on the `openobject-wifi`
+   profile, which is now redundant (the flow creates its own `oo-<ssid>` profile and never deletes
+   the old ones, §11).
+
+**Ways back in, in order of preference:** join `OpenObject-Setup` from a Mac and `ssh
+mattlhx@192.168.4.1` (a frame in setup mode is not lost, it is on a different network); the 30-minute
+safety timer; the console keyboard. Ethernet is **not** one, because the port is not reachable on a
+wall-mounted frame (Matt, 2026-08-08).
+
 **How this gets tested, to settle before building.** The owner's frame cannot be taken off Wi-Fi by
 turning off the house router, so setup mode has to be provoked: point the frame's saved connection at a
 network that does not exist, let it fail, and restore afterwards. Two things make that safe, and both
