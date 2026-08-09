@@ -126,11 +126,19 @@ polkit.addRule(function(action, subject) {
        action.id == "org.freedesktop.login1.power-off-multiple-sessions")) {
     return polkit.Result.YES;
   }
+  // Wi-Fi setup mode (HANDOFF section 11): the setup page scans for networks and saves the one the
+  // owner picks, which NetworkManager gates behind these two actions. Scoped to this user and to
+  // network settings only; nothing here grants power, packages, or arbitrary commands.
+  if (subject.user == "${OO_USER}" &&
+      (action.id == "org.freedesktop.NetworkManager.settings.modify.system" ||
+       action.id == "org.freedesktop.NetworkManager.network-control")) {
+    return polkit.Result.YES;
+  }
 });
 POLKIT
 chmod 0644 /etc/polkit-1/rules.d/49-openobject-power.rules
 systemctl try-restart polkit >/dev/null 2>&1 || systemctl try-restart polkitd >/dev/null 2>&1 || true
-ok "power controls granted to $OO_USER (Reboot / Shut down)"
+ok "power + Wi-Fi setup controls granted to $OO_USER"
 
 # ── 4. Seed the checkout + git origin + deps ────────────────────────────────────────
 log "OpenObject checkout at $TARGET"
