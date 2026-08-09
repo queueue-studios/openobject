@@ -317,6 +317,42 @@ the frame up about it.
 
 ---
 
+## If the frame needs a different Wi-Fi network
+
+You set the frame's Wi-Fi once, while installing it. If that network ever changes, because you
+replaced your router, changed its password, or moved the frame to a different building, the frame
+will ask you for the new details itself. You don't need a keyboard or a cable.
+
+**What you'll see.** After a few minutes of not finding its network, the frame stops showing art and
+puts up a **Connect to Wi-Fi** screen with a network name and a password on it.
+
+**What to do, from a phone:**
+
+1. In your phone's Wi-Fi settings, join the network shown on the frame: **OpenObject-Setup**, with
+   the password **openobject**. *(It can take a minute or two before your phone lists it. That's your
+   phone deciding when to look for new networks, not the frame. Give it a moment.)*
+2. Your phone may warn that this network has no internet. That's expected, and fine. Stay on it.
+3. Open **openobject.local** in your browser. (If that doesn't load, use **192.168.4.1** instead.)
+4. Choose your Wi-Fi network from the list, type its password, and tap **Connect**.
+5. Watch the frame. When it joins your network, it goes straight back to showing your art. That's
+   your confirmation. Your phone will drop off the frame's setup network at the same moment, so
+   you'll need to re-join your home Wi-Fi on the phone if it doesn't do it for you.
+
+**If your network isn't in the list** (some are set up not to broadcast their name), tap
+**Enter a network name instead** and type it exactly.
+
+**A few things worth knowing:**
+
+- The frame waits about **five minutes** before offering this, so a router rebooting or a brief
+  internet hiccup never interrupts your art.
+- While that screen is up, the frame steps away every few minutes to see whether your usual network
+  has come back. If it has, the frame simply returns to your art with nothing for you to do. (It
+  won't do that while your phone is connected to it, so it can't interrupt you mid-setup.)
+- The frame **remembers every network it has used**. If you take it back somewhere it has been
+  before, it reconnects by itself.
+
+---
+
 ## If something seems stuck
 
 - The frame restarts itself whenever it gets power, so a quick **power cycle at the outlet** (or a
@@ -327,7 +363,8 @@ the frame up about it.
 - If the frame ever **drops off Wi-Fi** (the art is still on screen but the control panel won't load
   from any device), it now keeps its Wi-Fi awake to prevent this, and if it still happens it
   **re-joins on its own in a minute or two**, so give it a moment before reaching for the power. A
-  power cycle still fixes it right away if you're in a hurry.
+  power cycle still fixes it right away if you're in a hurry. If it genuinely can't find your network
+  at all, it will offer you the setup screen described above.
 - **To dig deeper, you can open a terminal (advanced, hands-on).** Plug a keyboard into the frame
   and press **Ctrl + Alt + F2** for a text login (use the username and password you set during
   install); **Ctrl + Alt + F1** returns to the art. Some keyboards treat the top row as media keys,
