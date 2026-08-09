@@ -145,12 +145,25 @@ body {
    The wordmark's 46vmin is the one size that genuinely is shared across every surface. */
 .hint {
   margin: 0;
+  /* Exactly ONE caption line is reserved, so the group is the same height whatever the caption says
+     and the wordmark lands in an identical position on every state screen (HANDOFF §11). The idle
+     screen's single line already measures this, so it is a no-op there; Wi-Fi setup's extra lines
+     hang below into the black rather than dragging the mark upward (~120px on the panel). */
+  height: 4.2vmin;
   font: 400 3.0vmin/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
   letter-spacing: 0.015em;
   color: var(--hint);
+  /* The idle screen's single line is centred by the flex column; a multi-line caption (Wi-Fi setup)
+     is a full-width block and would left-align without this. */
+  text-align: center;
 }
 
 .hint .host { color: #8a8a8a; }
+.hint p { margin: 0; }
+.hint .sep { height: 3vmin; }        /* a blank line, not a new spacing value elsewhere */
+/* The one emphasised line on the Wi-Fi setup screen (§11): the wordmark's own colour at the size the
+   apps use for their state text. Emphasis by size and brightness only, no new weight or colour. */
+.hint .lead { color: var(--mark); font-size: 3.5vmin; line-height: 1.3; display: block; }
 
 /* Sleep Hours / manual Blank (HANDOFF §13): the same boot/idle mark, dimmed and text-free,
    with a slow pixel-shift drift (transform set in JS) so a static mark can't sit on the panel.

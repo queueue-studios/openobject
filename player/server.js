@@ -38,6 +38,7 @@ const collections = require('./src/collections');
 const folders = require('./src/folders');
 const seed = require('./src/seed');
 const identity = require('./src/identity');
+const setupMode = require('./src/setup-mode');   // Wi-Fi setup mode (HANDOFF §11)
 const discovery = require('./src/discovery');
 const instanceLock = require('./src/instance-lock');
 const remoteFolders = require('./src/remote-folders');
@@ -156,6 +157,14 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+
+// In setup mode the root page is the Wi-Fi form, not the control panel (§11): the owner typed
+// openobject.local (or 192.168.4.1) off the frame's setup screen and expects what that screen
+// promised. Must sit ahead of express.static, which would otherwise answer with index.html.
+app.get('/', (req, res, next) => {
+  if (!setupMode.isOn()) return next();
+  res.sendFile(path.join(PUBLIC_DIR, 'setup.html'));
+});
 
 // Static front-end, brand assets, and the uploaded art itself.
 app.use(express.static(PUBLIC_DIR));
@@ -281,7 +290,13 @@ const isAuthed = (req) => validToken(cookies(req)[SESSION_COOKIE]);
 // /api/identity stays open: it exposes only what the Bonjour TXT records already broadcast
 // unauthenticated (id, name, version, role), so a Host stays discoverable-by-name even behind a
 // password. It carries nothing a password protects.
-const AUTH_OPEN = new Set(['/api/display', '/api/identity', '/api/auth/status', '/api/auth/login', '/api/auth/logout']);
+// Wi-Fi setup (§11) is open for the same reason /api/display is: it only works at all when the frame
+// is UNREACHABLE, and the owner is standing in front of it reading the network name and password off
+// its own screen. Gating it behind the control-panel password would mean an owner who forgot that
+// password could never fix their Wi-Fi, which is the one situation this feature exists for. Physical
+// proximity plus the on-screen password is the gate, matching the project's opt-in-hardening default.
+const AUTH_OPEN = new Set(['/api/display', '/api/identity', '/api/auth/status', '/api/auth/login', '/api/auth/logout',
+                           '/api/setup/state', '/api/setup/networks', '/api/setup/connect']);
 function authGate(req, res, next) {
   if (!authRequired()) return next();
   if (!req.path.startsWith('/api/')) return next();
@@ -960,8 +975,33 @@ function displayAssetSignature() {
   return assetSig.value;
 }
 
+// ── Wi-Fi setup mode (HANDOFF §11) ──────────────────────────────────────────────────
+// Frame-only in practice: isOn() reads a flag file that only installer/net/oo-setup-mode.sh writes.
+app.get('/api/setup/state', (_req, res) => res.json({ on: setupMode.isOn() }));
+
+app.get('/api/setup/networks', ah(async (_req, res) => {
+  if (!setupMode.isOn()) return res.status(409).json({ error: 'not in setup mode' });
+  res.json({ networks: await setupMode.scan() });
+}));
+
+app.post('/api/setup/connect', ah(async (req, res) => {
+  if (!setupMode.isOn()) return res.status(409).json({ error: 'not in setup mode' });
+  const ssid = String((req.body && req.body.ssid) || '').trim();
+  const password = String((req.body && req.body.password) || '');
+  if (!ssid) return res.status(400).json({ error: 'pick a network' });
+  // Answer the phone FIRST. Applying takes the frame off its own access point, which drops this very
+  // connection mid-request (§11) — so the response must already be on the wire. The phone then says
+  // to watch the frame, and the frame confirms on its own screen.
+  res.json({ ok: true, applying: true });
+  setTimeout(() => { setupMode.applyLater(ssid, password).catch(() => {}); }, 400);
+}));
+
 app.get('/api/display', ah(async (_req, res) => {
   const settings = currentSettings();
+  // Wi-Fi setup mode owns the panel while it is on (§11): the display shows how to reach the frame
+  // rather than art, since there is nobody to see art on a frame nobody can reach.
+  const setupOn = setupMode.isOn();
+  const ap = setupOn ? setupMode.apInfo() : null;
 
   // Frame: a REMOTE Mac folder as the source (§17 Phase B). Fetch its manifest from the Mac and rewrite
   // each item's media URL to the frame's OWN cache route (/folder-media/<folderKey>/<file>), so the
@@ -992,6 +1032,8 @@ app.get('/api/display', ah(async (_req, res) => {
         muted: settings.muted, // web display Sound (§12); folder media is video-capable too
         source: 'folder',
         assets: displayAssetSignature(), // E21: front-end changed → the display reloads itself
+        setup: setupOn,   // Wi-Fi setup mode owns the panel (§11)
+        setupAp: ap,      // the network being broadcast, so the screen cannot advertise the wrong one
       });
     }
   }
@@ -1012,6 +1054,8 @@ app.get('/api/display', ah(async (_req, res) => {
       muted: settings.muted, // web display Sound (§12)
       source: 'folder',
       assets: displayAssetSignature(), // E21: front-end changed → the display reloads itself
+      setup: setupOn,   // Wi-Fi setup mode owns the panel (§11)
+      setupAp: ap,      // the network being broadcast, so the screen cannot advertise the wrong one
     });
   }
   const pinned = settings.pinnedId != null ? db.getLibraryItem(settings.pinnedId) : null;
@@ -1024,6 +1068,8 @@ app.get('/api/display', ah(async (_req, res) => {
     retroArcade: settings.retroArcade, // hidden self-playing demo: the display swaps to the canvas
     muted: settings.muted, // web display Sound: Off mutes uploaded video (§12)
     assets: displayAssetSignature(), // E21: front-end changed → the display reloads itself
+    setup: setupOn,   // Wi-Fi setup mode owns the panel (§11)
+    setupAp: ap,      // the network being broadcast, so the screen cannot advertise the wrong one
     role: identity.deviceRole(), // 'frame' | 'standalone': lets the Display pick a frame-safe render density
     source: 'library',
   });

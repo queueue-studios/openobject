@@ -1,0 +1,67 @@
+/* OpenObject Wi-Fi setup, the phone half (HANDOFF §11).
+   Mirrors the display's language rather than the control panel's: black stage, the wordmark on the
+   same 46vmin rule, the same three colours. Type is phone-scaled, because 3.0vmin would be under
+   12px here and this is read at arm's length. The two new elements the display language has no
+   answer for are the fields and the button, specified in §11. */
+:root {
+  --stage-bg: #000;
+  --mark: #f2f2f2;    /* the wordmark, and the one primary action */
+  --hint: #5b5b5b;    /* prose */
+  --host: #8a8a8a;    /* values the owner reads or types */
+  --line: #2e2e2e;    /* field hairline */
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--stage-bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: var(--hint);
+}
+/* Scrolls rather than shrinking the wordmark when the keyboard appears (§11): the screen still
+   mirrors the display, the keyboard just moves the view. */
+.wrap {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 22px calc(32px + env(safe-area-inset-bottom));
+}
+.mark {
+  width: 46vmin;
+  height: 46vmin;
+  background-color: var(--mark);
+  -webkit-mask: url(/assets/branding/openobject-logo.svg) center / contain no-repeat;
+          mask: url(/assets/branding/openobject-logo.svg) center / contain no-repeat;
+  margin-bottom: 26px;
+  flex: none;
+}
+.pane { width: 100%; max-width: 340px; text-align: center; }
+h1 { margin: 0 0 22px; font-size: 22px; font-weight: 600; color: var(--mark); letter-spacing: .01em; }
+p { margin: 0; font-size: 16px; line-height: 1.5; }
+p.quiet { margin-top: 22px; font-size: 15px; }
+.host { color: var(--host); }
+
+label { display: block; text-align: left; font-size: 13px; color: var(--hint); margin: 0 0 6px 2px; letter-spacing: .02em; }
+select, input {
+  width: 100%; height: 46px; padding: 0 12px; margin-bottom: 16px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: #0d0d0d; color: var(--mark); font-size: 17px;
+  -webkit-appearance: none; appearance: none;
+}
+select { background-image: linear-gradient(45deg, transparent 50%, var(--host) 50%), linear-gradient(135deg, var(--host) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 21px, calc(100% - 14px) 21px; background-size: 6px 6px; background-repeat: no-repeat; }
+/* The only action on the screen, so it is the loudest thing on it: the palette inverted. */
+button {
+  width: 100%; height: 48px; border: 0; border-radius: 10px;
+  background: var(--mark); color: #000; font-size: 17px; font-weight: 600; margin-top: 4px;
+}
+button[disabled] { opacity: .5; }
+button.link {
+  width: auto; height: auto; margin-top: 18px; padding: 6px;
+  background: none; color: var(--host); font-size: 15px; font-weight: 400;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.error { margin-top: 16px; font-size: 15px; color: var(--mark); }

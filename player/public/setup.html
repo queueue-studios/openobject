@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>OpenObject — Connect to Wi-Fi</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/branding/favicon-32.png">
+  <link rel="apple-touch-icon" href="/assets/branding/apple-touch-icon.png">
+  <link rel="stylesheet" href="/setup.css">
+</head>
+<body>
+  <!-- Mirrors the frame's own screens rather than the control panel (HANDOFF §11): same black, same
+       wordmark, same three colours. Only the type is re-scaled, because this is read at arm's length
+       rather than across a room. -->
+  <main class="wrap">
+    <div class="mark" role="img" aria-label="OpenObject"></div>
+
+    <section id="form" class="pane">
+      <h1>Connect to Wi-Fi</h1>
+
+      <label for="network">Network</label>
+      <select id="network"><option value="">Looking for networks…</option></select>
+      <input id="networkTyped" type="text" hidden autocapitalize="none" autocorrect="off" spellcheck="false"
+             placeholder="Network name">
+
+      <label for="password">Password</label>
+      <input id="password" type="password" autocapitalize="none" autocorrect="off" spellcheck="false">
+
+      <button id="connect" type="button">Connect</button>
+      <button id="toggleTyped" type="button" class="link">Enter a network name instead</button>
+      <p id="error" class="error" hidden></p>
+    </section>
+
+    <!-- After Connect. The frame leaves its own network to join yours, so this phone loses contact
+         with it: success can only be confirmed on the frame itself (§11). -->
+    <section id="applying" class="pane" hidden>
+      <p>Wi-Fi configuration in progress.<br>Wait for confirmation on the frame.</p>
+      <p class="quiet">If it doesn't connect, re-join <span class="host" id="apName">OpenObject-Setup</span>
+        and try again.</p>
+    </section>
+  </main>
+  <script src="/setup.js"></script>
+</body>
+</html>

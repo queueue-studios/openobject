@@ -33,18 +33,24 @@ const arcadeCanvas = document.getElementById('arcade'); // hidden self-playing d
 // name (openobject.local on the frame); (2) a LAN address (so it is reachable from a phone or another
 // computer, the useful case on a Mac, where there is no mDNS name); otherwise (3) leave whatever host
 // the page was opened at. See §6.
-const hintHost = document.querySelector('.hint .host');
-if (hintHost) {
+// Re-queried rather than captured once, because Wi-Fi setup mode (§11) replaces the caption's
+// contents and would otherwise leave this holding a node that is no longer on the page.
+const hint = document.querySelector('.hint');
+function setHintHost() {
+  const hintHost = document.querySelector('.hint .host');
+  if (!hintHost) return;
   hintHost.textContent = location.host;
   if (location.hostname === 'localhost' || location.hostname.startsWith('127.')) {
     fetch('/api/system').then((r) => r.json()).then((s) => {
-      if (!s) return;
-      if (s.mdns) { hintHost.textContent = s.mdns; return; }
+      const el = document.querySelector('.hint .host');
+      if (!s || !el) return;
+      if (s.mdns) { el.textContent = s.mdns; return; }
       const lan = s.addresses && s.addresses[0];
-      if (lan) hintHost.textContent = lan + (location.port ? ':' + location.port : '');
+      if (lan) el.textContent = lan + (location.port ? ':' + location.port : '');
     }).catch(() => {});
   }
 }
+setHintHost();
 
 let items = [];
 let durationMs = 8000;
@@ -272,6 +278,32 @@ function showIdle() {
   idle.classList.remove('hidden');
 }
 
+// Wi-Fi setup mode (HANDOFF §11): the frame cannot reach a known network, so it is hosting its own
+// and the panel says how to reach it. Same screen as idle, saying more: the wordmark does not move.
+// It wins over Sleep on purpose — a frame nobody can reach needs the owner's eyes more than it needs
+// to be dark, and the owner troubleshooting at 11pm should not find a blank panel.
+let setupShowing = false;
+function enterSetup(state) {
+  const ap = state.setupAp || {};
+  const ssid = ap.ssid || 'OpenObject-Setup';
+  const psk = ap.password || 'openobject';
+  const addr = ap.address || '192.168.4.1';
+  if (setupShowing) return;
+  setupShowing = true;
+  if (sleeping) exitSleep();
+  showIdle();                       // tear down playback + show the mark
+  hint.innerHTML =
+    '<p class="lead">Connect to Wi-Fi</p><div class="sep"></div>' +
+    `<p>On your phone, join the network <span class="host">${ssid}</span></p>` +
+    `<p>Password: <span class="host">${psk}</span></p><div class="sep"></div>` +
+    `<p>Then go to <span class="host">openobject.local</span> (or <span class="host">${addr}</span>) in your browser.</p>`;
+}
+function exitSetup() {
+  setupShowing = false;
+  hint.innerHTML = 'add art at <span class="host"></span>';
+  setHintHost();                    // put the reachable address back in the caption
+}
+
 // Sleep Hours / manual Blank (HANDOFF §13): stop playback and show the boot/idle mark,
 // dimmed and text-free, drifting a few pixels on a slow cycle so it can't sit on the panel.
 function enterSleep() {
@@ -337,6 +369,9 @@ function apply(state) {
 
   if (state.retroArcade) return enterArcade(); // hidden self-playing demo (easter egg) owns the stage
   if (arcadeOn) exitArcade();                  // just left the demo — fall through and resume the rotation
+
+  if (state.setup) return enterSetup(state);   // Wi-Fi setup mode owns the panel (§11)
+  if (setupShowing) exitSetup();               // just reconnected — fall through and resume the rotation
 
   if (state.asleep) return enterSleep();  // Sleep Hours / manual Blank (HANDOFF §13)
   if (sleeping) exitSleep();              // just woke — fall through and resume the rotation
