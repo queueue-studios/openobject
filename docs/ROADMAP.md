@@ -68,7 +68,6 @@ Size is a rough sense of the job, not a promise.
 
 | ID | Item | Design record | Notes |
 |----|------|---------------|-------|
-| E15 | Owner-facing docs for the two App Store apps: the Setup Guide has no Apple TV or iPad section, and the Help card should carry the short version | `TVOS-APP-PLAN.md` §14 Phase F; HANDOFF §16 lockstep rule | Medium, needs Matt's voice. **Committed**, and the §16 lockstep rule already requires it |
 | E16 | Post-approval site pass: iPad is still "coming soon" in three places on the home page (device chip, header status line, Display cell) and the Apple TV page still says iPad "follows" | `site/`; recipe in HANDOFF §15 | Small. **Committed**, once iOS is approved |
 
 ### Seams (built as interfaces, never filled in)

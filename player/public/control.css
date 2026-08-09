@@ -761,3 +761,6 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .set-group[hidden] { display: none; }
 /* Match the Source dropdown's height to the Order segmented control it sits beside. */
 #sourceSelect { height: 35px; padding: 0 10px; box-sizing: border-box; }
+
+/* A second topic inside the Help card needs air above it; the first sits under the card head. */
+.help-title-spaced { margin-top: 22px; }
