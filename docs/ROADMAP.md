@@ -59,7 +59,6 @@ Size is a rough sense of the job, not a promise.
 
 | ID | Item | Design record | Notes |
 |----|------|---------------|-------|
-| E11 | Host-list preface copy to clarify and de-jargon, aligning with the tvOS "OpenObject on your network" wording | memory: mac-app-ui-refinements-deferred | Small copy pass |
 | E12 | Auto Display: an "art on every display" option for a gallery wall, instead of art on the main screen and the rest black | HANDOFF §20 2026-08-06 Auto Display record | Medium. Explicitly not the default |
 | E13 | A native help surface in the app, or a Help button in the Settings pane that opens the control panel's Help. Today a Mac-only setting is explained on a different surface from where it lives | same | Medium. Trigger: when a second Mac-only setting appears |
 | E14 | Move the Settings window to tabs | same | Small. Trigger: at five or six settings, not before |

@@ -66,7 +66,7 @@ struct ContentView: View {
     @ViewBuilder private var hostStatusView: some View {
         switch engine.status {
         case .idle, .starting:
-            Label("Starting the host…", systemImage: "hourglass")
+            Label("Starting the Host…", systemImage: "hourglass")
                 .foregroundStyle(.secondary)
         case .running(let name):
             VStack(spacing: 4) {
@@ -210,7 +210,7 @@ struct ContentView: View {
 
     @ViewBuilder private var hostsView: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("OpenObject hosts on your network")
+            Text("OpenObject Hosts on your network")
                 .font(.subheadline.weight(.semibold))
             if discovery.hosts.isEmpty {
                 Text("Searching…")

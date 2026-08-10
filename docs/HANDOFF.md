@@ -143,6 +143,31 @@ This is the procedure to convert a stock XXL to OpenObject. It is performed once
 
 The display, control panel, and display-page are all **web-based and served by the player itself**. Files arrive through the **pluggable source layer**, land in the **local library**, and are rendered by **Chromium in kiosk mode**.
 
+### Role vocabulary: Host, Display, Control
+
+Named during the Mac app work (`MAC-APP-PLAN.md` §A1) and now the product's shared
+language on every surface: the tvOS and iPad pickers ("Choose a Host"), the control
+panel, and openobject.io, which gives **Host** its own role card on the homepage and
+bolds it on first use in the Privacy Policy.
+
+**It is deliberately not de-jargoned** (Matt, 2026-08-10). A term the website defines
+for the reader is a vocabulary the product has committed to, and dropping it would mean
+re-wording both viewer apps. Where the word is missing or miscased, the fix is to bring
+the outlier in line, not to retire the term.
+
+Three senses share the word, and only the first is capitalized:
+
+| Sense | Form | Example |
+|-------|------|---------|
+| **The role.** The device holding the Library and serving it to every display | `Host` | "Choose a Host", "this Host has to be running" |
+| **The verb.** To run a Host on a machine | `host` | "Host OpenObject on this Mac", "two can host your art" |
+| **The networking sense.** An HTTP host, i.e. the authority part of a URL | avoid | say **address** instead |
+
+The third is the one that bites. Once `Host` is a proper noun, a phrase like "the host
+the display was opened at" reads as the role when it actually means the URL. Say
+**address**. (Unrelated technical uses of the word, such as a macOS screen-saver host
+process, stay lowercase and are not affected.)
+
 ---
 
 ## 6. Display / render layer
@@ -409,7 +434,7 @@ photos never enter the repo, §8). Build none of this in Phase 1.
 |---|---|---|
 | Audio | **Each display owns its own mute, a master gate. Uploaded video and scored connected pieces both honor the display's Sound setting (default On).** | The web display's **Sound** control lives in the control panel (Rotation tab), default **On** (audio plays), and is a master gate over the whole screen: **On** lets an uploaded video play its sound and a scored connected piece its music; **Off silences everything**. Off mutes uploaded video at the element (`display.js`), and a live flip folds into the video already on screen (`syncMute`), so it reaches even a pinned video (the case tvOS-plan §10 expects). Off also silences a scored connected piece by forcing its audio control to the silent value (today *The Bloom*'s `music` to `off`), reusing the existing `?oo_music` iframe param, so it works with bundles mirrored before this and needs no bundle change; the piece then renders its own ambient/silent form. Because that value lives in the iframe URL, a live Sound flip re-renders the connected piece (a crossfade-reload, like an Animate/Fit change) through its `sig` (`gatedControls` in `display.js`); a connected piece with no audio control is unaffected and does not reload. A collection's own audio control (*The Bloom*'s **Music**, default **On**, because its soundtrack also drives what it renders, §8) is the **finer choice underneath**, applying only when Sound is On: the collection control says whether a piece is scored at all, the display control says whether this screen makes noise, and the display wins. Because Chrome refuses unmuted autoplay unless launched with `--autoplay-policy=no-user-gesture-required` (both kiosks pass it; a plain browser opened at `/display` does not), the video render attempts unmuted playback and, on a rejected `play()`, retries muted, so art never stops (at worst silent on that one path). Revised 2026-07-24 (was "uploaded video: muted", 2026-07-20). The earlier "muted, always" rule dates from when the speakerless XXL frame was the only display; the Mac (and a coming Apple TV) is the primary display now, so a scored piece can be heard. **On the XXL frame's own kiosk the output is inert**, verified on the real device 2026-07-20: an `HDA-Intel` card is present, but every playback substream stays `closed`, so Chromium opens no output there (a connected piece already takes its ambient fallback); the same frame's Sound setting still governs a Mac rendering that frame's `/display`. |
 | Control-panel access | **Open on LAN**, optional password (built 2026-06-16) | Off by default (no login friction). When set in Settings it gates the control panel + every mutating API; the kiosk display stays open. HMAC-signed httpOnly cookie session, scrypt-hashed password, no new dependency. |
-| Idle / empty screen | **Branded card**, not black | Shows OpenObject mark + an "add art at …" line whose address is the host the display was opened at, falling back to the advertised name on a loopback host (openobject.local on the frame, localhost:3000 when a Mac is the display), so it is never a false instruction. Takes a **logo asset** (Matt-supplied) so the mark drops in without redesign. |
+| Idle / empty screen | **Branded card**, not black | Shows OpenObject mark + an "add art at …" line whose address is the one the display was opened at, falling back to the advertised name on a loopback address (openobject.local on the frame, localhost:3000 when a Mac is the display), so it is never a false instruction. Takes a **logo asset** (Matt-supplied) so the mark drops in without redesign. |
 | Display name / mDNS | `openobject.local` | IP fallback shown on setup page. |
 | Fit/Fill default | **Fit** (original aspect ratio); settable | Applies to new clips; per-clip override always available. |
 | Display duration | **Settable global** (seconds / minutes / hours) | One equal-time duration for **every** piece; no per-clip override. |
@@ -747,7 +772,7 @@ Let the **iPad/iPhone** app genuinely **hold** its art, so a device that has bee
 
 **Goal.** Let an owner show a whole folder of files as the display, without the tedium of uploading them one by one. A folder of, say, 500 short clips becomes a single selectable source.
 
-**Built (Phase A, local) 2026-07-08 (§20).** Ships for the "Mac as the display" path: define folders in Settings, pick the live source in Rotation, art served in place from the folder. The UI notes below are as-built; the data model, the either/or model, and the Phase B seam are unchanged from the design. The one notable build change from the sketch was the folder picker (the host's **native OS file dialog**, not an in-browser browser); the planned Library-tab "a folder is on screen" note was built and then removed as redundant.
+**Built (Phase A, local) 2026-07-08 (§20).** Ships for the "Mac as the display" path: define folders in Settings, pick the live source in Rotation, art served in place from the folder. The UI notes below are as-built; the data model, the either/or model, and the Phase B seam are unchanged from the design. The one notable build change from the sketch was the folder picker (the Host's **native OS file dialog**, not an in-browser browser); the planned Library-tab "a folder is on screen" note was built and then removed as redundant.
 
 **Built (Phase B, frame) 2026-07-11 (§20).** The frame now shows a Mac's shared folder over the LAN, verified end to end on the real XXL: Bonjour discovery, the ephemeral cache, offline resilience, and recovery all work. The design below is as-built, with these changes from the 2026-07-10 sketch. **(a) Order follows the Rotation tab, not the folder.** A folder now plays in the Rotation Sequence/Shuffle, exactly as it already borrowed the global duration, so the per-folder Order control is gone and the Rotation Order toggle governs a folder too; each display point applies its own order to the same folder. **(b) The frame auto-discovers.** It keeps polling for shared folders, so a just-shared folder appears in the Source dropdown on its own (no refresh), with a brief "Looking for your Mac…" while it searches. **(c) A too-old Mac is flagged, not mistaken for absent.** A frame that finds a Mac running an OpenObject older than it supports shows "A newer version of OpenObject is available for your Mac. Please update the app." (a general version check against a minimum-Mac-version constant, deliberately not the frame's own version, which rides main ahead of every release). **(d) An unreachable folder stays named.** It keeps its place in the Source, greyed with its name, showing "Mac unreachable. Make sure it is awake and the OpenObject app is open," while the frame plays on from cache. A separate app-wide fix landed alongside: Shuffle now completes a full pass before repeating (the display had been re-shuffling on every poll).
 
@@ -774,7 +799,7 @@ Let the **iPad/iPhone** app genuinely **hold** its art, so a device that has bee
 
 **UI: setup in Settings, activation in Rotation.**
 
-- **Settings** has a **Folder Collections** card built as a **twin of the Connected Collections card** (§8, §12): a collapsible card with a folder count, an **Add folder** button, and one row per saved folder carrying its Name and Artist (click the name to edit both in place, mirroring the Library card), Fit, a **Remove**, and its **piece count that doubles as an "open in Finder" link** (the folder's path is not shown). **Add folder** opens the host's **native file dialog** (a web page cannot hand the server a path, and the directory-upload control would copy every file): on macOS the server pops the standard "choose folder" chooser (which navigates the whole Mac, not a sandbox root, and opens on the machine running the player, so a request from another device instead gets a brief "add folders from the computer running OpenObject" note), with a sandboxed in-browser browser as the non-macOS fallback. The card's count self-refreshes every ~10 s. **Everything about a folder is edited here and nowhere else.**
+- **Settings** has a **Folder Collections** card built as a **twin of the Connected Collections card** (§8, §12): a collapsible card with a folder count, an **Add folder** button, and one row per saved folder carrying its Name and Artist (click the name to edit both in place, mirroring the Library card), Fit, a **Remove**, and its **piece count that doubles as an "open in Finder" link** (the folder's path is not shown). **Add folder** opens the Host's **native file dialog** (a web page cannot hand the server a path, and the directory-upload control would copy every file): on macOS the server pops the standard "choose folder" chooser (which navigates the whole Mac, not a sandbox root, and opens on the machine running the player, so a request from another device instead gets a brief "add folders from the computer running OpenObject" note), with a sandboxed in-browser browser as the non-macOS fallback. The card's count self-refreshes every ~10 s. **Everything about a folder is edited here and nowhere else.**
 - The **Rotation** tab has a **Source** dropdown under the interval box: **Library** (default), a divider, then the saved folders **sorted by name**, each with its `· N pieces`. Selecting one makes it live at once. In **Library** mode the tab is unchanged (the curated rotation list and its order control). In **folder** mode the per-piece list is **hidden entirely** and replaced by a **read-only single-row summary**: the folder name (on the Mac a link to its setup in Settings, underlined on hover like other panel links; on the frame plain text, since it is managed on the Mac), artist, a **FOLDER pill** (akin to the CONNECTED pill), a **FILL pill** when the folder is Fill (Fit is the unmarked default, mirroring a Library piece), and the piece `count` as small text on the right. The global interval stays editable (it governs any source). **Nothing about a folder is editable from Rotation; the only action is selecting it.**
 - The header (Sleep, Open display) stays clean; **Rotation is the single place that shows the live source** (a planned Library-tab note was built then removed as redundant). Switching back to **Library** brings the hidden rotation pieces straight back, untouched.
 
@@ -847,6 +872,39 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-08-10: `Host` is kept as the role noun, and the Mac app brought in line (E11 retired)
+
+E11 had stood as "clarify and de-jargon the host-list preface", on the reading that `Host`
+was internal vocabulary leaking into the Mac app's UI. **Matt reversed the direction:** the
+term is the best name for the role, so the fix is to correct where it is *not* used.
+
+**The survey backed that up, and is why this is recorded rather than just done.** `Host` is
+not jargon by any usable test: openobject.io gives it its own role card on the homepage
+("Host: holds your library and serves it to every display"), the Privacy Policy bolds it on
+first use with a gloss, the support page quotes the app's own "Looking for Hosts on your
+network…", and the tvOS and iPad pickers are built on it ("Choose a Host"). A term the
+website defines for the reader is a vocabulary the product has committed to. De-jargoning
+would have meant re-wording both viewer apps and three site pages to remove a word the
+product had already taught.
+
+**The real defect was casing, not vocabulary.** Across the whole codebase exactly two
+user-facing strings were wrong, both in `ContentView.swift`, and both in the Mac app: the
+host-list header was the only string in the product using lowercase "hosts" as a common
+noun, and `hostStatusView` read "Starting the host…" in one branch of a switch whose other
+branch read "Host running". Two states of one label, cased differently. Now "Starting the
+Host…" and "OpenObject Hosts on your network", the latter matching the tvOS string exactly.
+
+**The rule this produced** is in §5 ("Role vocabulary"), because the sweep turned up two
+lowercase senses that are correct and must not be swept up: the **verb** ("Host OpenObject
+on this Mac", the site's "two can host your art"), and the **networking** sense, an HTTP
+host. The second is the one that bites: once `Host` is a proper noun, "the host the display
+was opened at" reads as the role when it means the URL, so those now say **address**.
+
+**Docs swept in the same change:** five spots in this file, three role-sense misses
+(`the host's native file dialog` ×2, `not from the host itself`) and two networking-sense
+rewords. Both setup guides were already clean. **Setup Guide unchanged**, and deliberately:
+this changes no behavior, and neither guide quotes the two strings. (Matt, 2026-08-10.)
 
 ### 2026-08-09: the black flash before Lost in Moffat County was two separate faults
 
@@ -1202,7 +1260,7 @@ Locked the Phase B design for **Folder Collections** (the frame, and as a forwar
 
 ### 2026-07-08: Folder Collections Phase A (local) built and verified (§17)
 
-Shipped the local half of Folder Collections (§17): an either/or **Display Source** so an owner can show a whole local folder as the rotation without uploading each file. **Backend** (`player/src/folders.js` new; `db.js`, `server.js`): a `folder_collections` table plus a `display_source` setting; a non-recursive scan (compliant files only, §6 allowlist) cached and invalidated by an OS **file-watch**, so added/removed files fold in live; `/api/folders` CRUD, a **native macOS folder picker** (`/api/folders/pick` via `osascript "choose folder"`, which navigates the whole Mac and is not sandboxed, with the in-browser browser as a non-macOS fallback and a `remote:true` reply that shows a note when the request is not from the host itself), a reveal-in-Finder route, and a path-safe `/folder-media/:id/:file` serve (single segment, compliant, inside the folder; `res.sendFile(root)` backstop). `/api/display` branches on `display_source` and returns the folder's files in the existing item shape (display.js just honors an `item.src`); Fit and Order are per-folder overrides, duration stays global, Pin is inactive in folder mode. **UI** (`control.html/js/css`): a **Folder Collections** card in Settings (a Connected-Collections twin: Add folder, inline Name/Artist edit like the Library card, Fit/Order, Remove, and the piece count as an open-in-Finder link with the path hidden, count self-refreshing every ~10 s); a **Source** dropdown in Rotation (Library, a divider, folders sorted by name, each `· N pieces`) that hides the Library pieces and shows a single-row summary with a **FOLDER** pill when a folder is live. **Verified** end to end in the preview: create/activate, switch-back non-destructive, live add/remove, path-traversal and sandbox-escape blocked (404/400), and art rendering on `/display`. Nothing is copied in Phase A; the frame (Phase B, a storage-capped cache) is the committed next step. **Files:** `player/src/folders.js` (new), `db.js`, `server.js`, `public/control.{html,js,css}`, `public/display.js`; docs §17 and the Setup Guide. (Matt, 2026-07-08.)
+Shipped the local half of Folder Collections (§17): an either/or **Display Source** so an owner can show a whole local folder as the rotation without uploading each file. **Backend** (`player/src/folders.js` new; `db.js`, `server.js`): a `folder_collections` table plus a `display_source` setting; a non-recursive scan (compliant files only, §6 allowlist) cached and invalidated by an OS **file-watch**, so added/removed files fold in live; `/api/folders` CRUD, a **native macOS folder picker** (`/api/folders/pick` via `osascript "choose folder"`, which navigates the whole Mac and is not sandboxed, with the in-browser browser as a non-macOS fallback and a `remote:true` reply that shows a note when the request is not from the Host itself), a reveal-in-Finder route, and a path-safe `/folder-media/:id/:file` serve (single segment, compliant, inside the folder; `res.sendFile(root)` backstop). `/api/display` branches on `display_source` and returns the folder's files in the existing item shape (display.js just honors an `item.src`); Fit and Order are per-folder overrides, duration stays global, Pin is inactive in folder mode. **UI** (`control.html/js/css`): a **Folder Collections** card in Settings (a Connected-Collections twin: Add folder, inline Name/Artist edit like the Library card, Fit/Order, Remove, and the piece count as an open-in-Finder link with the path hidden, count self-refreshing every ~10 s); a **Source** dropdown in Rotation (Library, a divider, folders sorted by name, each `· N pieces`) that hides the Library pieces and shows a single-row summary with a **FOLDER** pill when a folder is live. **Verified** end to end in the preview: create/activate, switch-back non-destructive, live add/remove, path-traversal and sandbox-escape blocked (404/400), and art rendering on `/display`. Nothing is copied in Phase A; the frame (Phase B, a storage-capped cache) is the committed next step. **Files:** `player/src/folders.js` (new), `db.js`, `server.js`, `public/control.{html,js,css}`, `public/display.js`; docs §17 and the Setup Guide. (Matt, 2026-07-08.)
 
 ### 2026-07-08: Folder Collections designed (play a whole folder as the display source; §17)
 
@@ -1539,7 +1597,7 @@ Added the sixth supported Connected Collection (§8): Cinzia y Gabriel's *"Pendu
 OpenObject's **primary on-ramp is now running on a Mac with no frame** (the Mac is the display, full screen in Chrome `--kiosk`); reviving an XXL frame becomes the advanced path. Most people who would want OpenObject do not own an XXL, so the Mac path is the realistic broad door, while the next-stranded-owner mission stays the heart. (Matt, 2026-06-19.)
 - **New guide.** Added **`docs/MAC-DISPLAY-SETUP.md`** ("No Frame? Use Your Mac as the Display"), a from-scratch runbook (install Node, download from GitHub, `npm install` / `npm start`, add art, Chrome kiosk at `localhost:3000/display`), validated by a clean-Mac dry-run.
 - **README rewritten** to lead with the local art-player capability and a frame-or-not fork (no-frame Mac path first, linking the guide; frame revival second), plus a no-frame pointer under the hardware table and a no-warranty note split so the Mac path is not described as wiping anything.
-- **Address-aware hints.** The idle splash and the control panel's reach card no longer hardcode `openobject.local` (false when the Mac is the display). The idle hint shows the host the display was opened at, falling back to the server's advertised name on a loopback host (the frame's kiosk opens `localhost`). The reach card advertises `openobject.local` only where it resolves, detected as `process.platform === 'linux'` (the frame is Debian; a Mac is darwin). Idle is a display change, so the frame picks it up on a power-cycle.
+- **Address-aware hints.** The idle splash and the control panel's reach card no longer hardcode `openobject.local` (false when the Mac is the display). The idle hint shows the address the display was opened at, falling back to the server's advertised name on a loopback address (the frame's kiosk opens `localhost`). The reach card advertises `openobject.local` only where it resolves, detected as `process.platform === 'linux'` (the frame is Debian; a Mac is darwin). Idle is a display change, so the frame picks it up on a power-cycle.
 - **Locked terminology.** Fork on frame-or-not, never on "Mac" (a Mac is used in both setups): "the frame" = the Infinite Objects hardware; "your Mac as the display" = the no-frame path; "the control panel" = the shared management page.
 - **Reset appendix neutralized.** Renamed `appendix-whitewalls-reset.md` to `appendix-original-reset.md`, retitled "Resetting the original software", no cause or culprit named (White Walls kept only as the on-screen menu label).
 - **Still pending:** the openobject.io landing page (`site/index.html`) repositioning to match (last step; does not touch the frame).
