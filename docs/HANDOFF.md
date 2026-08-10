@@ -911,8 +911,19 @@ that race. So for as long as art is showing, which is indefinitely, **the Mac do
 full-screen media app (Keynote presenting, a video player) makes the same trade. Disclosure is the
 answer, and the Help window leads its Auto Display bullets with it. Two things bound the exposure: the
 feature is opt-in with **Never** as the default, and manual lock (Control-Command-Q) still works.
-**Not yet measured**, so it is tracked as `ROADMAP.md` W6 rather than asserted. The warning is written
-either way, because the conservative statement is the safe one.
+**Measured and confirmed the same day, so this is observed behavior and not an inference.** With "Turn
+display off when inactive" temporarily at 2 minutes and the password requirement at **Immediately**,
+Matt left the Mac untouched for five minutes: the art appeared, and the first keypress went straight to
+the desktop with no login window. `pmset -g log` carries the mechanism next to the outcome, one
+`PreventUserIdleDisplaySleep "OpenObject is showing art"` assertion held for **4m40s**, straight through
+a threshold that would otherwise have blanked and locked the screen.
+
+**If this is ever re-run, clear the baseline first.** The first attempt would have produced a false
+confirmation: `pmset -g` showed `displaysleep 10 (display sleep prevented by zoom.us)`, so the Mac
+could not have locked whatever OpenObject did. Check `pmset -g assertions | grep -i
+PreventUserIdleDisplaySleep` reads 0 before starting. Note also that a five-minute wait only proves
+anything if it exceeds the display-off timer, which is why that timer is dropped to 2 minutes for the
+test rather than left at its usual 10.
 
 **Copy decisions worth keeping.** "Works like a screen saver" **leads** and is not merely denied: a
 first draft opened with the Setup Guide's sentence and cut the simile immediately following it,
@@ -1196,7 +1207,7 @@ Mirroring the whole list, long end included, follows Matt's stated principle: so
 
 **Help requirements (when this ships).** ~~The in-app Help card (§20, 2026-07-12)~~ must explain: that Auto Display must be set shorter than "Turn display off when inactive" or the screen blanks first (the display-off footgun above); ~~that the macOS lock screen covers the art if the Mac locks while idle;~~ and that Auto Display does not appear in the System Settings screen saver list, because it is not one. It should **not** tell owners to disable their system screen saver; the device test above shows that is unnecessary.
 
-**This requirement was missed at ship time and is now met elsewhere, with one line of it retracted (2026-08-10, E13).** The surface is **not** the control panel's Help card but the Mac app's own **Help window**, since Auto Display is a Mac-only feature and Mac users look in the Help menu. And the **lock-screen line above is struck as wrong**: it assumed the Mac still locks while art is showing. It does not. With the screen saver suppressed and an `.idleDisplaySleepDisabled` assertion held, neither of macOS's lock triggers ever fires, so **auto-lock is suppressed for the whole session** and the Help window warns about that instead. Tracked for measurement as `ROADMAP.md` W6.
+**This requirement was missed at ship time and is now met elsewhere, with one line of it retracted (2026-08-10, E13).** The surface is **not** the control panel's Help card but the Mac app's own **Help window**, since Auto Display is a Mac-only feature and Mac users look in the Help menu. And the **lock-screen line above is struck as wrong**: it assumed the Mac still locks while art is showing. It does not. With the screen saver suppressed and an `.idleDisplaySleepDisabled` assertion held, neither of macOS's lock triggers ever fires, so **auto-lock is suppressed for the whole session** and the Help window warns about that instead. **Confirmed by measurement on 2026-08-10**, outcome and assertion trace both; see the 2026-08-10 entry.
 
 ### 2026-08-06: Chrome is launched through LaunchServices, so macOS stops blaming us for Chrome's housekeeping
 
