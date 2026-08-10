@@ -1,7 +1,7 @@
 # OpenObject: Build & Handoff Specification
 
 > **Document type:** Implementation spec for Claude Code.
-> **Status:** Running on real hardware. The web app (Phase 1) plus the Debian and Chromium-kiosk installer (Phase 2B) are built and verified on an actual XXL frame, with over-the-air self-update working. Folder Collections is built on every surface (Phase A local + Phase B frame, 2026-07-11, plus the Apple TV, which needed no folder-specific code; §17/§20). **Everything still open lives in one place, `docs/ROADMAP.md`** (committed work, enhancements, a watch list, what was decided against, and the one unconfirmed hardware spec). §17 holds the design records behind those rows; §20 is the decision log.
+> **Status:** Running on real hardware. The web app (Phase 1) plus the Debian and Chromium-kiosk installer (Phase 2B) are built and verified on an actual XXL frame, with over-the-air self-update working. Folder Collections is built on every surface (Phase A local + Phase B frame, 2026-07-11, plus the Apple TV, which needed no folder-specific code; §17/§20). **Everything still open lives in one place, `docs/ROADMAP.md`**, organized by state: Committed, Blocked, Deferred, Candidate, Checks, and what was decided against. §17 holds the design records behind those rows; §20 is the decision log.
 > **Local project root:** `~/Code/OpenObject`
 > **GitHub repo:** `queueue-studios/openobject`, **public** since 2026-06-14 (created private 2026-06-11). Claude drives all git operations on Matt's approval.
 > **Website:** https://openobject.io

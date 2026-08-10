@@ -1,94 +1,92 @@
 # OpenObject roadmap: the one list of open work
 
-**Everything not yet done is one list, below.** Committed-but-undone work and optional
-ideas sit together on purpose, so the list can be reviewed and dispositioned in one pass.
-Where a row is already-committed work rather than a maybe, its note says so.
+**Organized by state, not by area**, because the everyday question is "what is committed
+and available to start next?" and the old area grouping buried the answer among things
+that were blocked, parked, or never intended. Area is a column now, so that view survives.
 
-If work is open, it has a row here. If it is not here, it is either shipped or was decided
-against, and the decision is in `HANDOFF.md` §20.
+**The states, in the order they matter:**
+
+| State | Means |
+|-------|-------|
+| **Committed** | Decided, no blockers. This is the queue. Start here. |
+| **Blocked** | Intended, but something outside our control prevents starting. Every row says what. |
+| **Deferred** | Worth doing, deliberately not now. Every row says what would resume it. |
+| **Candidate** | A valid idea we have not decided to do. |
+| **Checks** | Verify or observe, not build. |
+| **Closed** | Considered and decided against, or dropped. Not a to-do. |
+
+**Candidate vs Deferred** is the pair that blurs, so: Candidate means *we have not decided
+whether to do it*; Deferred means *we decided it is worth doing, just not yet*.
+
+**There is no Done section.** When a row ships, delete it and move the design record into
+`HANDOFF.md` §20; the ID retires with it. §20 is the record of what is done, and a second
+copy here would drift, which is the exact failure this file was created to fix.
 
 **This file holds no reasoning.** Every row points at the design record that does. That
 split is deliberate: duplicated reasoning is what let four separate lists drift apart
 (§17, the HANDOFF status line, `TVOS-APP-PLAN.md` phases, and scattered notes), so a row
 here is one line plus a pointer, and it is cheap to keep honest.
 
-**IDs are stable and never reused.** Talk about work by its ID. When a row ships, delete
-the row and move its design record into §20; the ID retires with it. IDs were assigned
-once, at creation on 2026-08-08.
-
-**A `W` prefix means verify or observe, not build.** Those rows live in the same list, in
-their own group, because a separate watch list is just a second list someone has to
-remember to check. They are dispositioned the same way as everything else, and the bar for
-keeping one is high: "wait and hope nothing happens" is not a row, it is a closed item.
-
-The list after the main one is deliberately **not** a to-do: it records what was *decided
-against*, so settled questions are not re-pitched. (An *unknowns* section held the frame's
-RAM until it was confirmed on 2026-08-08; it is gone because nothing is unknown.)
-
-Last swept: 2026-08-08.
-
----
-
-## Enhancements: the one list to disposition
+**IDs are stable and never reused.** Talk about work by its ID. A row that changes state
+keeps its ID, unless it moves into Closed, where it is renumbered `D…` and its old ID
+retires (as `W5` did on becoming `E19`).
 
 Size is a rough sense of the job, not a promise.
 
-### The apps (iPad, iPhone, Apple TV)
+Last swept: 2026-08-10.
 
-| ID | Item | Design record | Notes |
-|----|------|---------------|-------|
-| E1 | Connected Collections on the iPad/iPhone app via `WKWebView`, plus the skip mechanism and the "Chrome Only" pill | HANDOFF §17 "Connected Collections on the viewer apps" | Large. **Gated:** do not open `ipad-app` until the submitted iOS build is approved. Two checks first: inkField untested, iPhone untested |
-| E2 | Golden Lining as a pre-rendered looping video, a per-piece WebKit fallback | HANDOFF §17 "Golden Lining as a pre-rendered video" | Provisionally retired. Closes for good when E1's two checks pass |
-| E3 | Offline / portable playback: the **iPad** holds its own art and keeps playing with no network. **Wanted, to pursue later** (Matt, 2026-08-08). iPad only, permanently: the Apple TV variant is closed by tvOS storage limits (D14) | HANDOFF §17 "Offline / portable playback"; `TVOS-APP-PLAN.md` §9 | Medium. Needs a persistent store, a "Download for offline" choice, the manifest persisted, and an offline launch path |
-| E6 | Retro Arcade easter egg on tvOS / iPad. `arcade.js` is dependency-free canvas 2D and maps onto SpriteKit or SwiftUI Canvas; a Siri Remote D-pad is a better trigger than a keyboard | `TVOS-APP-PLAN.md` §5 | Medium. Post-v1 by choice |
-| E19 | Release tooling for the App Store apps: teach `release.sh` to bump `tv-app/` and `ipad-app/project.yml` (or decide deliberately that the shells track their own version line), **and tag each App Store submission** (e.g. `tvos-1.6.2-submitted`) | memory: version-bump-release-workflow | Small. Formerly W5, reclassified 2026-08-08. Today the shells sit at 1.6.2 behind the platform at 1.7.2, and **no tag marks a submitted build**, so "what changed since the binary in review" needs someone to remember which commit did the bump (`a2dc043`) rather than being a one-line query |
+---
 
-### The frame
+## Committed
 
-| ID | Item | Design record | Notes |
-|----|------|---------------|-------|
+Decided, unblocked, ready to start.
 
+| ID | Area | Item | Design record | Notes |
+|----|------|------|---------------|-------|
+| E3 | Apps (iPad) | Offline / portable playback: the **iPad** holds its own art and keeps playing with no network. **Committed 2026-08-10** (Matt). iPad only, permanently: the Apple TV variant is closed by tvOS storage limits (D14) | HANDOFF §17 "Offline / portable playback"; `TVOS-APP-PLAN.md` §9 | Medium. Needs a persistent store, a "Download for offline" choice, the manifest persisted, and an offline launch path |
+| E19 | Tooling | Release tooling for the App Store apps: teach `release.sh` to bump `tv-app/` and `ipad-app/project.yml` (or decide deliberately that the shells track their own version line), **and tag each App Store submission** (e.g. `tvos-1.6.2-submitted`) | memory: version-bump-release-workflow | Small. Formerly W5, reclassified 2026-08-08. The shells sit at 1.6.2 behind the platform at 1.8.0, and **no tag marks a submitted build**, so "what changed since the binary in review" needs someone to remember which commit did the bump (`a2dc043`) rather than being a one-line query. Worth doing **before** the next release, or the drift widens again |
 
-### The display
+## Blocked
 
-| ID | Item | Design record | Notes |
-|----|------|---------------|-------|
-| E22 | Ambient letterbox background: an optional setting that fills a Fit piece's black bars with gradients drawn from the piece's own colours, instead of black. **Parked, not committed** (Matt, 2026-08-09) | HANDOFF §17 "Ambient letterbox background" | Medium. Opt-in, default black, since the bare black stage is a stated product rule. Most visible on the square frame, where nearly everything letterboxes |
+Intended work that cannot start yet. The blocker is external; when it clears, the row moves
+to Committed.
 
-### The Mac app
+| ID | Area | Item | Blocked by | Design record |
+|----|------|------|------------|---------------|
+| E1 | Apps (iPad) | Connected Collections on the iPad/iPhone app via `WKWebView`, plus the skip mechanism and the "Chrome Only" pill | **Apple approving the submitted iOS build.** Do not open `ipad-app` until then. Two checks also come first: inkField untested, iPhone untested | HANDOFF §17 "Connected Collections on the viewer apps". Large |
+| E16 | Docs and site | Publish the site copy that says the iPad and iPhone app is available. **The writing is done and committed** (`77b6451`); `openobject.io` is a gh-pages deploy, so the live site still says "coming soon" until it is republished | **Apple approving the submitted iOS build.** Publishing early would claim a product state Apple has not granted | `site/`; republish recipe in HANDOFF §15 and memory: openobject-io-landing-page. Small, one republish, no writing left |
 
-| ID | Item | Design record | Notes |
-|----|------|---------------|-------|
-| E14 | Move the Settings window to tabs | same | Small. Trigger: at five or six settings, not before |
+## Deferred
 
-### Docs and site
+Worth doing, deliberately not now.
 
-| ID | Item | Design record | Notes |
-|----|------|---------------|-------|
-| E16 | **Copy is written and committed** (`77b6451`); what remains is publishing it. `openobject.io` is a gh-pages deploy, so the site still says the iPad app is coming until it is republished, which should happen only once Apple approves the submitted iOS build | `site/`; republish recipe in HANDOFF §15 and memory: openobject-io-landing-page | Small. One republish, no writing left. Do not publish early: it would claim a product state Apple has not granted |
+| ID | Area | Item | Resumes when | Design record |
+|----|------|------|--------------|---------------|
+| E14 | Mac app | Move the Settings window to tabs | Settings reaches **five or six rows**. It has two (Dock icon, Auto Display), and tabs would cost a click and look emptier than the single pane (Matt, 2026-08-02) | HANDOFF §20 2026-08-06 Auto Display record. Small |
+| E6 | Apps (tvOS, iPad) | Retro Arcade easter egg on tvOS / iPad. `arcade.js` is dependency-free canvas 2D and maps onto SpriteKit or SwiftUI Canvas; a Siri Remote D-pad is a better trigger than a keyboard | Whenever wanted. Post-v1 by choice, no external condition | `TVOS-APP-PLAN.md` §5. Medium |
+| E2 | Apps (iPad) | Golden Lining as a pre-rendered looping video, a per-piece WebKit fallback | Nothing: this one **closes** rather than resumes, as soon as E1's two checks pass. Provisionally retired already, since the piece rendered correctly on a real iPad | HANDOFF §17 "Golden Lining as a pre-rendered video" |
 
-### Seams (built as interfaces, never filled in)
+## Candidate
 
-| ID | Item | Design record | Notes |
-|----|------|---------------|-------|
-| E17 | SMB pull as a source | HANDOFF §8; retired for Folder Collections in §17 | Optional seam, never built |
-| E18 | Buffered / least-recently-shown eviction mode for the Library mirror | HANDOFF §9 | Documented seam, off by default |
+Valid ideas, not decided.
 
-### Checks and watch items
+| ID | Area | Item | Design record |
+|----|------|------|---------------|
+| E22 | Display | Ambient letterbox background: an optional setting that fills a Fit piece's black bars with gradients drawn from the piece's own colours, instead of black. **Parked, not committed** (Matt, 2026-08-09) | HANDOFF §17 "Ambient letterbox background". Medium. Opt-in, default black, since the bare black stage is a stated product rule. Most visible on the square frame, where nearly everything letterboxes |
 
-Verify or observe, not build. No action needed unless a check comes back wrong or a
-symptom recurs.
+## Checks
 
-| ID | Item | Design record | Notes |
-|----|------|---------------|-------|
-| W3 | Frame-only: switching Display Source from a folder back to the Library once made the frame's `display.js` go fully black. Never reproduced, and the native Apple TV handled the same switch fine | memory: tvos-app-plan-execution (2026-07-30) | Repro path: Mac Chrome at `http://openobject.local/display` with DevTools open during the switch |
+Verify or observe, not build. No action unless a check comes back wrong or a symptom recurs.
 
-## Pending device verification
+| ID | Area | Item | Notes |
+|----|------|------|-------|
+| W3 | Frame | Switching Display Source from a folder back to the Library once made the frame's `display.js` go fully black. Never reproduced, and the native Apple TV handled the same switch fine | Repro path: Mac Chrome at `http://openobject.local/display` with DevTools open during the switch. memory: tvos-app-plan-execution (2026-07-30) |
 
-Changes that are built and simulator-verified but have not been seen on the real hardware they
-affect. **A row is added in the same commit as the change**, so it cannot be forgotten later, and
-cleared when the check is done (or when the build carrying it ships). This is the pre-submission
-checklist: the tag from E19 says what changed, this says what to look at.
+### Pending device verification
+
+Built and verified as far as it can be here, but not seen on the real hardware it affects.
+**A row is added in the same commit as the change**, so it cannot be forgotten, and cleared
+when the check is done or when the build carrying it ships.
 
 | Device | What to check | Landed |
 |--------|---------------|--------|
@@ -97,7 +95,9 @@ checklist: the tag from E19 says what changed, this says what to look at.
 
 ## Closed: decided against, or not worth tracking
 
-Settled. Do not re-pitch without new information; if the answer changes, say what changed. Rows that were dropped rather than rejected are here for the same reason: so a later sweep of §20 and the memory files cannot quietly resurrect them as new items.
+Settled. Do not re-pitch without new information; if the answer changes, say what changed.
+Rows that were dropped rather than rejected are here for the same reason: so a later sweep
+of §20 and the memory files cannot quietly resurrect them as new items.
 
 | ID | Item | When |
 |----|------|------|
@@ -111,15 +111,12 @@ Settled. Do not re-pitch without new information; if the answer changes, say wha
 | D8 | `willReadFrequently` as the Golden Lining WebKit fix. Tried, did not work | memory: golden-lining-webkit-safari-broken |
 | D9 | Privacy policy wording for the Gallery being an internet Host rather than a LAN Host. Substantively still true (nothing collected); dropped until someone raises it | 2026-08-08 |
 | D10 | A power assertion holding the Mac awake while it serves a folder. The Setup Guide already tells owners to turn on "Prevent automatic sleeping when the display is off", which covers the case, so the code would only have deleted a line of documentation. The one gap it would have closed, a laptop serving on battery, is not a case Matt wants to support: holding a long-running connection awake to drain a battery is the wrong behavior to build. Design record stays at HANDOFF §17 | 2026-08-08 |
-
 | D11 | Watching for a recurrence of the frame's Bonjour / Wi-Fi drops. The `iwlwifi` power-save fix shipped and is reboot-confirmed (§20 2026-07-28); passive watching adds nothing, and a recurrence would simply be a new bug | 2026-08-08 |
 | D12 | Eyeballing inkField on the real frame at `framePixelDensity` 1. Accepted as shipped on the harness verification (§20 2026-07-29) | 2026-08-08 |
 | D13 | Capturing the Gatekeeper "downloaded from the Internet" prompt from a real download. The Setup Guide's wording stands unverified; worst case an owner meets one unexplained warning once | 2026-08-08 |
-
 | D14 | Offline / portable playback on **Apple TV**. tvOS guarantees an app 500 KB of persistent storage and may delete cached media exactly when the device is unplugged and the app is not running, so "load at home, carry it, plug in with no network" cannot be made durable there. Closed by the platform, not by preference; the iPad version stays alive as E3. Do not re-open on parity grounds | 2026-08-08 |
-
 | D15 | Real restart / shutdown, i.e. making the panel go genuinely dark instead of showing its own no-signal test pattern. Both routes need hardware Matt does not want: a smart plug, or HDMI-CEC, which PC HDMI outputs (Intel integrated graphics included) generally do not wire up, so it would mean a USB CEC dongle. Unplugging is an acceptable power-off for a wall-mounted frame, and Matt is happy with how Shut down behaves. Sleep already covers the everyday "screen dark, art stopped" case with no test pattern | 2026-08-08 |
-
 | D16 | Single-file / prebuilt release image (the USB installer as a Release asset). Closed off the roadmap 2026-08-08: validating it needs a second XXL to wipe, Matt considers his frame done and untouchable, and he does not expect ever to have another, so the row could never become actionable. Shipping it unvalidated is worse than not shipping it, since the automated part is the destructive part and the manual path is proven on real hardware. **The doable parts were split out first and live on as E20.** The full design record stays at HANDOFF §17 "Prebuilt release image", intact for a stranded owner who ever wants to pick it up | 2026-08-08 |
-
 | D17 | Syncing multiple screens so they show the **same** piece at the same moment, as part of E12. Decided against 2026-08-10 (Matt): each screen runs its own rotation. The price is the reason. The rotation is entirely client-side (`setTimeout(advance, durationMs)`, a local `pos`, a client-side shuffle bag; `/api/display` returns a list with no cursor), so syncing means making the server authoritative about what is showing now. That collides head-on with a deliberate design point: the next advance is armed from the piece's **reveal**, not from `advance()`, because a Connected piece can take seconds to paint and timing from `advance()` would rob it of visible duration. A server clock reintroduces exactly that bug. Worst of all it is a change to `player/`, shared with the frame, so a Mac-only feature would be rewriting the frame's proven playback loop. **If it is ever re-pitched**, the one fact that could reopen it is Apple mirroring identical screen-saver content across displays rather than running each screen independently, which is unverified | 2026-08-10 |
+| D18 | SMB pull as a source. **Formerly E17**, moved out of the open list 2026-08-10: it is a documented seam, not work anyone intends to do, and it was making the queue harder to read. Explored properly and dropped, because guest SMB is a fading, off-by-default macOS setting and a stored login is a trust cost for a small proprietary app; Folder Collections solved the same need over app-HTTP with no credential. Design record stays at HANDOFF §8, retired for Folder Collections in §17 | 2026-08-10 |
+| D19 | Buffered / least-recently-shown eviction mode for the Library mirror. **Formerly E18**, moved out for the same reason as D18. A documented seam for a hypothetical next owner whose library exceeds their disk (a 300 GB 4K archive); the default full local mirror is what everyone actually runs, and this has never been built or needed. Not to be confused with the frame's Folder Collections cache, which is a shipped, separate, ephemeral session buffer. Design record stays at HANDOFF §9 | 2026-08-10 |
