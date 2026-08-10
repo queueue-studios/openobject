@@ -873,6 +873,50 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-08-10: Auto Display covers every screen (E12 shipped, device-verified)
+
+Built and verified the same day the design was reversed; the design and its four decisions are in the
+2026-08-06 Auto Display entry below, under "Reversed 2026-08-10". Mac-app only, no `player/` change,
+so the frame's playback loop is untouched. `DisplayController` now holds an array of kiosks with a
+profile and a computed position per screen; `AutoDisplay` puts art on every screen and keeps the
+blackout windows solely as the fallback for a screen whose kiosk fails to launch.
+
+**Both traps predicted by the design were real, and both were pre-verified on hardware before any code
+was written.** A throwaway `open -na "Google Chrome" --kiosk --user-data-dir=… --window-position=…`
+against Matt's Studio Display plus a Sidecar iPad proved the per-profile singleton workaround and the
+coordinate conversion in one command, landing the window at exactly the second screen's origin and
+size. Worth repeating as a technique: the risky half of this feature was answered before the refactor,
+not after.
+
+**Two faults found during the build that the design did not anticipate.**
+
+`stop()` must return *before* touching `state` when nothing is running. `@Published` fires on every
+assignment, equal or not, and Auto Display's subscriber treats any non-`.running` value as "the kiosk
+went away" — so an unconditional `state = .stopped` makes `show()`'s own opening `stop()` call tear
+down the session it is starting. It fails silently and looks exactly like the feature never working.
+The original single-kiosk code was accidentally immune, because its `guard let app = kiosk` returned
+early; the array rewrite removed that accident and the guard has to be restored deliberately.
+
+**The screen-change observer is gated on the screen layout actually changing.**
+`didChangeScreenParametersNotification` is not only about displays coming and going: it also fires on
+visible-frame changes such as a Dock resize. Whether entering full-screen posts one was not
+established, and an ungated observer would end the session the instant the art appeared. Comparing
+`NSScreen` frames against those captured at trigger limits it to real connects and disconnects, and
+absorbs the repeat firings one configuration change produces.
+
+**Verified on Matt's Mac (2026-08-10):** art on both the Studio Display and a Sidecar iPad, a
+different piece on each, both dropping away together on input. **Performance was good with inkField**,
+which answers the one open cost question for two screens: two live sketches rendering at once did not
+stutter. Not exercised: the disconnect-ends-session path, and mirror dedupe (written defensively so it
+is correct either way macOS reports a mirror set, rather than tested for).
+
+**Sidecar note, for anyone testing this way.** An iPad shows the Sidecar sidebar and Touch Bar over
+the art unless both are turned off in System Settings > Displays; they are drawn by iPadOS, are
+invisible to `screencapture` of the Mac's framebuffer, and nothing in OpenObject can suppress them. A
+wired monitor has neither. **Setup Guide updated** in the same change (§16): `MAC-DISPLAY-SETUP.md`
+said the art plays on the main screen and the others go black, which is now wrong, and gained a line
+about a screen change stopping the art.
+
 ### 2026-08-10: `Host` is kept as the role noun, and the Mac app brought in line (E11 retired)
 
 E11 had stood as "clarify and de-jargon the host-list preface", on the reading that `Host`

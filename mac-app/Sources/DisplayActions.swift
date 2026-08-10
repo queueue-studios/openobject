@@ -25,11 +25,11 @@ final class DisplayActions: ObservableObject {
     }
 
     // Open the active Host's /display in a full-screen Chrome kiosk. Auto Display passes
-    // `pinToPrimaryScreen` so the art lands on the one screen it has not blacked out (HANDOFF §17).
-    func openDisplay(pinToPrimaryScreen: Bool = false) {
+    // `onEveryScreen` so the art covers every attached display, the way a screen saver does (E12).
+    func openDisplay(onEveryScreen: Bool = false) {
         let display = self.display
         resolveActiveBase { base in
-            display.show(url: base.appendingPathComponent("display"), pinToPrimaryScreen: pinToPrimaryScreen)
+            display.show(url: base.appendingPathComponent("display"), onEveryScreen: onEveryScreen)
         }
     }
 

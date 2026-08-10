@@ -54,12 +54,13 @@ OpenObject can put your art on screen by itself after a stretch of no typing or 
 
 In the **OpenObject** app menu choose **Settings** (or press Command-comma), and set **Auto Display** to how long your Mac should sit idle first. It is **Never** by default, so nothing changes until you pick a time.
 
-Once it is on: step away, and after your chosen time the art fills the screen exactly as if you had clicked Open Display. Touch the keyboard or trackpad and your desktop comes straight back, with everything where you left it. If you have more than one screen, the art plays on your main one and the others go black.
+Once it is on: step away, and after your chosen time the art fills the screen exactly as if you had clicked Open Display. Touch the keyboard or trackpad and your desktop comes straight back, with everything where you left it. If you have more than one screen, the art plays on **all** of them, with a different piece on each, the way a screen saver does.
 
-Two things worth knowing:
+A few things worth knowing:
 
 - **Pick a time shorter than your screen's own sleep setting.** Your Mac turns its display off after a while on its own (System Settings > Lock Screen, "Turn display off when inactive"). If Auto Display is set to wait longer than that, your screen goes dark before the art ever starts. OpenObject warns you in Settings if the time you picked has this problem.
 - **Your Mac's screen saver does not need changing.** OpenObject's art stays up regardless of it.
+- **Plugging a screen in or out stops the art.** That is deliberate, since it means you are back at your Mac. Leave it alone again and the art returns after your chosen time.
 
 While the art is showing, your Mac stays awake. Set Auto Display back to **Never** and it goes back to sleeping and blanking exactly as it always did.
 

@@ -87,6 +87,11 @@ final class AutoDisplayController: ObservableObject {
     private var triggeredAt = Date.distantPast
     /// Where the pointer was before it was parked, so it can be put back on the way out.
     private var pointerHome: CGPoint?
+    /// The screen layout at the moment art went up, so a screen coming or going can be told apart from
+    /// a parameter change that merely moved a visible frame around.
+    private var screenSignature: [CGRect] = []
+
+    private static func screenSignature() -> [CGRect] { NSScreen.screens.map(\.frame) }
 
     /// If the kiosk has not reached `.running` this long after triggering, give up and undo. Without
     /// this, a Viewer-mode Mac whose remembered Host is not currently on the network would black out its
@@ -111,6 +116,37 @@ final class AutoDisplayController: ObservableObject {
             .sink { [weak self] state in
                 guard let self, self.isShowing, state != .running else { return }
                 Task { @MainActor in self.finish(stopDisplay: false) }
+            }
+            .store(in: &cancellables)
+
+        // A screen whose kiosk failed to launch gets a black cover instead, so it cannot sit showing the
+        // owner's desktop while they are away. This is the only remaining job of the blackout windows.
+        display.$uncoveredScreens
+            .sink { [weak self] screens in
+                guard let self, self.isShowing else { return }
+                Task { @MainActor in self.showBlackout(on: screens) }
+            }
+            .store(in: &cancellables)
+
+        // A SCREEN CONFIGURATION CHANGE ENDS THE SESSION (E12). Plugging or unplugging a display is a
+        // human at the machine, the same signal as a keypress, and Auto Display already exits on that.
+        // The alternative, reconciling kiosks against the new screen list, has to cope with this
+        // notification firing several times through one config change and with tracking which kiosk
+        // belongs to which screen. Ending is both simpler and safer: without it, unplugging a screen
+        // leaves macOS to migrate that screen's full-screen kiosk onto the primary and stack it on the
+        // art already there. The idle timer keeps ticking, so the art returns on its own.
+        // Gated on the screen layout ACTUALLY changing. This notification is not only about displays
+        // coming and going: it also fires for visible-frame changes such as the Dock resizing or the
+        // menu bar hiding, and an ungated observer would risk ending the session the instant the kiosk
+        // went full-screen. Comparing frames against the layout captured at trigger keeps it to real
+        // connects and disconnects, and incidentally absorbs the repeat firings a single configuration
+        // change produces.
+        NotificationCenter.default
+            .publisher(for: NSApplication.didChangeScreenParametersNotification)
+            .sink { [weak self] _ in
+                guard let self, self.isShowing,
+                      Self.screenSignature() != self.screenSignature else { return }
+                Task { @MainActor in self.finish(stopDisplay: true) }
             }
             .store(in: &cancellables)
     }
@@ -163,8 +199,8 @@ final class AutoDisplayController: ObservableObject {
         isShowing = true
         triggerIdle = idleAtTrigger
         triggeredAt = Date()
-        showBlackout()
-        actions.openDisplay(pinToPrimaryScreen: true)
+        screenSignature = Self.screenSignature()
+        actions.openDisplay(onEveryScreen: true)
         schedule(showingPoll)
         parkPointer()
     }
@@ -208,17 +244,20 @@ final class AutoDisplayController: ObservableObject {
         schedule(waitingPoll)
     }
 
-    // MARK: - Secondary screens
+    // MARK: - Uncovered screens
 
-    // Cover every attached screen, art on the main one, the rest black (HANDOFF §17). A real screen
-    // saver fills every screen, so covering only the main display would leave the others glowing with
-    // the owner's work while they are away. But art on every screen is wrong too: the rotation is
-    // client-side, so N kiosks would drift out of step within minutes and each would cost a full video
-    // decode. Black secondaries satisfy the convention for free.
-    private func showBlackout() {
+    // Art now goes on EVERY screen (E12), so blackout is no longer the normal secondary-screen state —
+    // it is the fallback for a screen whose kiosk could not launch. A real screen saver fills every
+    // display, so a screen left showing the owner's work while they are away is the one outcome to
+    // avoid; black is a worse result than art and a much better one than their desktop.
+    //
+    // The superseded reasoning, kept because it is the argument that changed: this used to black out
+    // every secondary on the grounds that N kiosks would drift out of step. They do, and in Shuffle
+    // they never even agree on the first piece, because the bag is client-side. That is now the
+    // intended behavior, since a macOS photo saver likewise shows a different photo per screen.
+    private func showBlackout(on screens: [NSScreen]) {
         hideBlackout()
-        guard let primary = NSScreen.screens.first else { return }
-        for screen in NSScreen.screens where screen != primary {
+        for screen in screens {
             let w = NSWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
             w.backgroundColor = .black
             w.isOpaque = true

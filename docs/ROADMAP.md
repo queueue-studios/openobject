@@ -59,7 +59,6 @@ Size is a rough sense of the job, not a promise.
 
 | ID | Item | Design record | Notes |
 |----|------|---------------|-------|
-| E12 | Auto Display shows art on **every** attached screen, as the default, replacing today's art-on-the-main-screen-and-the-rest-black. **Reversed 2026-08-10** (Matt), and fully designed: no new setting, each screen runs its own rotation, no sync (D17), audio not special-cased, and a screen configuration change ends the session | HANDOFF §20 2026-08-06 Auto Display record, "Reversed 2026-08-10" | Medium, and **Mac-app-only**, so the frame is untouched. Ready to build: the design record carries the four decisions and the three implementation traps (Chrome's per-profile singleton, the AppKit-to-Chrome coordinate flip, `showBlackout()` demoted to a fallback) |
 | E13 | A native help surface in the app, or a Help button in the Settings pane that opens the control panel's Help. Today a Mac-only setting is explained on a different surface from where it lives | same | Medium. Trigger: when a second Mac-only setting appears |
 | E14 | Move the Settings window to tabs | same | Small. Trigger: at five or six settings, not before |
 
