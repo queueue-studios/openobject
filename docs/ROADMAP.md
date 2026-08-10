@@ -59,7 +59,6 @@ Size is a rough sense of the job, not a promise.
 
 | ID | Item | Design record | Notes |
 |----|------|---------------|-------|
-| E13 | A native help surface in the app, or a Help button in the Settings pane that opens the control panel's Help. Today a Mac-only setting is explained on a different surface from where it lives | same | Medium. Trigger: when a second Mac-only setting appears |
 | E14 | Move the Settings window to tabs | same | Small. Trigger: at five or six settings, not before |
 
 ### Docs and site
@@ -83,6 +82,7 @@ symptom recurs.
 | ID | Item | Design record | Notes |
 |----|------|---------------|-------|
 | W3 | Frame-only: switching Display Source from a folder back to the Library once made the frame's `display.js` go fully black. Never reproduced, and the native Apple TV handled the same switch fine | memory: tvos-app-plan-execution (2026-07-30) | Repro path: Mac Chrome at `http://openobject.local/display` with DevTools open during the switch |
+| W6 | Confirm that Auto Display suppresses auto-lock, which is asserted in the Mac app's Help window and the Setup Guide on reasoning rather than measurement. Test: System Settings > Lock Screen > "Require password after screen saver begins or display is turned off" set to **Immediately**, Auto Display set to **After 1 minute**, leave the Mac alone about five minutes, then touch the trackpad. Desktop means it never locked and the warning is right; a login window means it locked and the warning must be withdrawn | HANDOFF §20 2026-08-10 "A native Help window" | Verify only. The warning ships either way, because the conservative statement is the safe one |
 
 ## Pending device verification
 

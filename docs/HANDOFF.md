@@ -873,6 +873,63 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-08-10: A native Help window, and Auto Display suppresses auto-lock (E13 shipped)
+
+E13 had stood as a structural note: Auto Display's setting lives in the app's native Settings window
+while its explanation would live in the web control panel's Help card, and the row offered either a
+Help button bridging the two or a native help surface. Two findings settled it.
+
+**A recorded Help requirement had been missed.** The 2026-08-06 Auto Display entry lists three things
+the control panel's Help card "must explain" when the feature shipped. It shipped that day and the
+card was never touched: `control.html` had no mention of Auto Display, screen savers, or inactivity.
+So E13 was not only a design question, it was a live content gap.
+
+**Matt chose the native surface, on convention** (2026-08-10): "Mac app users are used to going to
+Help in the top left application menu. For any function that is Mac only, I think it belongs in the
+Mac app help." That reverses the cheaper plan of extending the control panel's card, and it makes the
+change **smaller**, not larger: sorting content by that rule leaves nothing needing to move out of the
+control panel, so `player/` is untouched and the frame unaffected, exactly like E12.
+
+**Not an Apple Help Book.** A `.help` bundle means HTML authored separately plus an `hiutil` index
+step in the build, opening in Help Viewer, a dated app beside the rest of this one. A SwiftUI window
+matches the app, adds no build step, and is far easier to keep in step with the Setup Guide; the trade
+is losing Help-menu search, worth little across three topics. Nothing was registered before this (no
+`CFBundleHelpBookFolder` / `CFBundleHelpBookName`), so the default Help menu item had nothing behind it.
+
+**Only what surprises or strands someone gets a topic** (Matt). Not "is it Mac-only?": the Dock icon
+picker and Open / Stop / Return to Display are visible controls that do what their labels say, and
+documenting them would add words without adding understanding. Three topics: Auto Display, Chrome,
+Hosting and Viewing. Same call already recorded for the onboarding card, whose subtext was dropped as
+redundant (2026-07-02).
+
+**AUTO DISPLAY SUPPRESSES AUTO-LOCK. This is the most important line in the entry.** Matt raised it
+and the reasoning is his: a Mac with the screen saver off still locks when its **display turns off**;
+Auto Display holds an `.idleDisplaySleepDisabled` assertion so the display never turns off; and our own
+guidance to set Auto Display **shorter** than the display-off timer is what guarantees the art wins
+that race. So for as long as art is showing, which is indefinitely, **the Mac does not auto-lock**.
+**There is no technical fix**: the assertion is what stops the screen blanking mid-piece, and every
+full-screen media app (Keynote presenting, a video player) makes the same trade. Disclosure is the
+answer, and the Help window leads its Auto Display bullets with it. Two things bound the exposure: the
+feature is opt-in with **Never** as the default, and manual lock (Control-Command-Q) still works.
+**Not yet measured**, so it is tracked as `ROADMAP.md` W6 rather than asserted. The warning is written
+either way, because the conservative statement is the safe one.
+
+**Copy decisions worth keeping.** "Works like a screen saver" **leads** and is not merely denied: a
+first draft opened with the Setup Guide's sentence and cut the simile immediately following it,
+leaving the screen saver idea to appear only as a negation three bullets down. That simile is a decided
+point (2026-08-06) and already leads on the Settings caption, the Setup Guide, and openobject.io. Also
+corrected before shipping: the Chrome topic read closely enough to Auto Display to be taken as that
+feature's requirement, when Chrome is required for **every** display however it starts; and "this Mac
+can be either or both" became "either", since `AppMode` is `.host` **or** `.viewer`, one persisted choice.
+
+**Layout note.** A `Window` scene ignores its content's `idealWidth`; without `.defaultSize` it opened
+about 900pt wide, roughly 130 characters to a line. Body text is 13pt, which is **exactly** what
+Apple's own Help Book uses (`html{font-size:13px}`, body at `1rem`), so the readability problem was
+measure, not size. Worth remembering before anyone enlarges the type.
+
+**Setup Guide updated** in the same change (§16): its Auto Display section gained the same auto-lock
+warning, since that behavior shipped on 2026-08-06 and was never documented. (Matt, 2026-08-10.)
+
 ### 2026-08-10: Auto Display covers every screen (E12 shipped, device-verified)
 
 Built and verified the same day the design was reversed; the design and its four decisions are in the
@@ -1119,7 +1176,7 @@ Mirroring the whole list, long end included, follows Matt's stated principle: so
 
 **The caption under the control (Matt, 2026-08-06).** "Works like a screen saver, displaying your art full screen when your Mac has been inactive for a while. Press any key or move the pointer to return." Always visible, not only on the warning path, because the conditional warning teaches nothing to an owner whose interval happens to be fine. It stays on the right side of the convention-over-instruction rule because a caption under a settings row is what System Settings itself does almost everywhere; it is the house style, not added hint text. **"Works like a screen saver" is deliberate**: it is the fastest mental model available, used as a simile while the feature keeps its own name (this is not a screen saver, and it does not appear in the System Settings screen saver list, §17). "Inactive" rather than "idle" matches Apple's wording in the very settings this sits beside ("Turn display off when inactive"), and the warning text points at them by that name.
 
-**Where the rest of the explanation goes.** The multi-display behavior, the Mac staying awake while art shows, and the fact that the system screen saver is irrelevant all belong in the Help card (§20, 2026-07-12), not in the Settings pane. **Structural wrinkle to settle when a second Mac-only setting appears:** Help lives in the web control panel while this setting lives in the app's native Settings window, so the explanation sits on a different surface from the thing it explains. Accepted for now rather than starting a native help surface for one feature; the alternatives are a Help button in the pane that opens the control panel's Help, or a native help surface in the app.
+**Where the rest of the explanation goes.** The multi-display behavior, the Mac staying awake while art shows, and the fact that the system screen saver is irrelevant all belong in the Help card (§20, 2026-07-12), not in the Settings pane. **Structural wrinkle to settle when a second Mac-only setting appears:** Help lives in the web control panel while this setting lives in the app's native Settings window, so the explanation sits on a different surface from the thing it explains. Accepted for now rather than starting a native help surface for one feature; the alternatives are a Help button in the pane that opens the control panel's Help, or a native help surface in the app. **Settled 2026-08-10 (E13): the native surface won, on the grounds that Mac users look in the Help menu.** Anything Mac-only is explained in the app's own Help window; the control panel keeps what belongs to it. See the 2026-08-10 entry.
 
 **No tabs in Settings.** This is the app's second setting, and the note at `mac-app/Sources/OpenObjectApp.swift:59` anticipated moving the Settings window to tabs at that point. Deliberately not doing so: two settings do not justify a tabbed window, which would feel emptier and cost more clicks than the single pane. Keep one pane with two labeled rows (Dock icon, Auto Display) and revisit tabs at five or six settings. (Matt, 2026-08-02.)
 
@@ -1137,7 +1194,9 @@ Mirroring the whole list, long end included, follows Matt's stated principle: so
 
 **Remaining known limitation.** The art cannot cover the macOS lock screen, since this is an app window rather than a system screen saver. Matt's Mac has "Require password after screen saver begins or display is turned off" set to After 5 minutes, so in practice there is a grace period before the lock screen takes over.
 
-**Help requirements (when this ships).** The in-app Help card (§20, 2026-07-12) must explain: that Auto Display must be set shorter than "Turn display off when inactive" or the screen blanks first (the display-off footgun above); that the macOS lock screen covers the art if the Mac locks while idle; and that Auto Display does not appear in the System Settings screen saver list, because it is not one. It should **not** tell owners to disable their system screen saver; the device test above shows that is unnecessary.
+**Help requirements (when this ships).** ~~The in-app Help card (§20, 2026-07-12)~~ must explain: that Auto Display must be set shorter than "Turn display off when inactive" or the screen blanks first (the display-off footgun above); ~~that the macOS lock screen covers the art if the Mac locks while idle;~~ and that Auto Display does not appear in the System Settings screen saver list, because it is not one. It should **not** tell owners to disable their system screen saver; the device test above shows that is unnecessary.
+
+**This requirement was missed at ship time and is now met elsewhere, with one line of it retracted (2026-08-10, E13).** The surface is **not** the control panel's Help card but the Mac app's own **Help window**, since Auto Display is a Mac-only feature and Mac users look in the Help menu. And the **lock-screen line above is struck as wrong**: it assumed the Mac still locks while art is showing. It does not. With the screen saver suppressed and an `.idleDisplaySleepDisabled` assertion held, neither of macOS's lock triggers ever fires, so **auto-lock is suppressed for the whole session** and the Help window warns about that instead. Tracked for measurement as `ROADMAP.md` W6.
 
 ### 2026-08-06: Chrome is launched through LaunchServices, so macOS stops blaming us for Chrome's housekeeping
 

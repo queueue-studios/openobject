@@ -58,6 +58,7 @@ Once it is on: step away, and after your chosen time the art fills the screen ex
 
 A few things worth knowing:
 
+- **Important: your Mac will not lock on its own while the art is showing.** Your Mac locks once its display turns off, and the art keeps the display on. If you want your Mac locked while you are away, press Control-Command-Q before you go, or leave Auto Display set to **Never**.
 - **Pick a time shorter than your screen's own sleep setting.** Your Mac turns its display off after a while on its own (System Settings > Lock Screen, "Turn display off when inactive"). If Auto Display is set to wait longer than that, your screen goes dark before the art ever starts. OpenObject warns you in Settings if the time you picked has this problem.
 - **Your Mac's screen saver does not need changing.** OpenObject's art stays up regardless of it.
 - **Plugging a screen in or out stops the art.** That is deliberate, since it means you are back at your Mac. Leave it alone again and the art returns after your chosen time.

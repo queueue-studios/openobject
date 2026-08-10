@@ -33,6 +33,8 @@ struct OpenObjectApp: App {
         // reachable copy there.)
         .commands {
             DisplayCommands(display: appDelegate.display, actions: appDelegate.actions)
+            // Help where Mac users look for it: the standard Help menu (E13).
+            HelpCommands()
             // Sparkle's "Check for Updates…" in the standard spot, just under "About OpenObject".
             CommandGroup(after: .appInfo) {
                 // Present but grayed out in Debug (where the updater is off), matching the stable-menu
@@ -56,6 +58,15 @@ struct OpenObjectApp: App {
         Settings {
             AppIconSettings()
         }
+
+        // Help (Help menu, Cmd-?). A single window rather than a WindowGroup, so asking for help
+        // twice raises the one that is already open instead of stacking copies.
+        Window("OpenObject Help", id: helpWindowID) {
+            HelpView()
+        }
+        // The scene decides the opening size: a Window ignores its content's idealWidth, and without
+        // this it opens far too wide to read comfortably.
+        .defaultSize(width: 480, height: 640)
     }
 }
 
