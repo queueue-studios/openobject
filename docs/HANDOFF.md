@@ -365,7 +365,7 @@ stage, the wordmark on the same 46vmin centred rule, and the same three colours.
 re-scaled, because a phone is read at arm's length rather than across a room (22px header, 17px fields,
 16px message, 13px labels) and 3.0vmin would be under 12px there.
 
-**Two screens.** *Pick your network*: the wordmark, a **"Connect to Wi-Fi"** header, a **Network**
+**Two screens** (three once "set up later" was added below). *Pick your network*: the wordmark, a **"Connect to Wi-Fi"** header, a **Network**
 dropdown of scanned networks, a **Password** field, a Connect button, and **"Enter a network name
 instead"** beneath it for a hidden network (the scanned list is the default because it is typo-proof).
 Labels are exactly **"Network"** and **"Password"**, not "SSID" or "Pass Phrase". *After Connect*: the
@@ -379,6 +379,45 @@ same wordmark, then
 Sentence case, and **"frame" stays lowercase**, an ordinary noun here (only "Host" is a term, §11). The
 stock XXL's "In case of error, please re-select IO XXL WiFi" became a named network and no "please",
 since the network is the thing they have to find again.
+
+### "Show art now, set up later" (Matt, 2026-08-11)
+
+**The problem.** Setup mode took the panel unconditionally, and art needs no network at all: the
+player serves from the frame itself. So a frame full of local art went to an instruction card five
+minutes after a router died and stayed there indefinitely, which inverts the product. Matt's framing:
+if the Wi-Fi is gone there is a bigger problem in the house, but that is a reason for the frame to
+say so once, not a reason to stop being a frame.
+
+**The way out is on the phone page, not the panel**, because the panel has no input device: no touch,
+no keyboard, no remote. So the third pane of the setup page carries a link, **"Show art now, set up
+later"** (no terminal period, matching its sibling "Enter a network name instead"), and tapping it
+hands the panel back to the rotation.
+
+**Setup mode keeps running.** This changes *who owns the panel*, nothing else: the AP stays up, the
+page stays served at the same address, the retry cycle keeps trying the home network. That is what
+makes the promise on the confirmation pane true, the owner can rejoin `OpenObject-Setup` an hour or a
+day later, return to the same page, and finish, with **no reboot** and no art interrupted. Confirming
+pane copy: *"Art is back on the frame." / "To finish setting up later, join OpenObject-Setup and
+return here."* Said at the moment they leave, because that is the only moment they are looking, and
+without it "later" becomes "no idea how I got to that page".
+
+**The flag is a separate file** (`/run/openobject/setup-later`, beside the existing `setup-mode`) and
+this is load-bearing: `oo-setup-mode.sh` deletes and recreates the `setup-mode` flag on **every**
+retry cycle, so a deferral stored in or cleared alongside it would put the instruction screen back
+over the art within five minutes. `/api/display` therefore asks `ownsPanel()` (`isOn() && !isDeferred()`),
+while `/`, the page, and the AP keep asking `isOn()`.
+
+**Three things clear it**, each for a reason: the frame **getting back on a network** (the script, the
+same moment it clears `offline-since`, since the whole condition is over); a **connect attempt** from
+the page (someone is attending the frame again, so a wrong password must show on the panel rather
+than hide behind art); and a **reboot**, because `/run` empties on boot. The reboot case is the safety
+net, a frame quietly playing art with no network says its piece again the next time it gets power,
+and the owner can wave it off again as many times as they like. No counter, no escalation.
+
+**The cost, accepted.** A deferred frame looks perfectly healthy, so nothing on the wall explains why
+a Mac folder or a Connected Collection is not appearing. The alternative (some persistent marker on
+the art) would put chrome on the stage, which §6 does not allow, so the Setup Guide carries the
+warning instead.
 
 **The display language had no controls, so two elements are new**: fields are dark wells (`#0d0d0d`,
 hairline `#2e2e2e`, 10px radius) and the Connect button is solid `#f2f2f2` with black text, the palette
@@ -872,6 +911,35 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-08-11: "Show art now, set up later" (setup mode no longer outranks the art)
+
+Setup mode (§11) took the panel unconditionally and held it for as long as the frame was off Wi-Fi.
+Since the player serves art from the frame itself, that meant a frame full of local art traded it for
+an instruction card five minutes after a router died, indefinitely. Matt caught it as a regression
+against the frame's own promise: art keeps playing with no network.
+
+**Shipped:** a third pane on the phone setup page with **"Show art now, set up later"**, which hands
+the panel back to the rotation while leaving setup mode itself entirely alone (AP up, page served,
+retry cycle running), so setup can be finished later from the same address with no reboot. Full
+design, copy, the separate-flag reasoning, and the three ways it clears are in **§11**.
+
+- **Files.** `player/src/setup-mode.js` (`isDeferred`/`ownsPanel`/`defer`/`resume`, and the `LATER`
+  path), `player/server.js` (`POST /api/setup/later`, auth-open like its siblings; `/api/setup/state`
+  now also returns `deferred` and the AP's real name; `/api/setup/connect` clears the deferral;
+  `/api/display` asks `ownsPanel()` instead of `isOn()`), `player/public/setup.{html,js,css}`, and
+  `installer/net/oo-setup-mode.sh` (clears the flag once genuinely back on a network). `display.js`
+  needed **no change**: the server simply stops sending `setup: true` and the existing `exitSetup()`
+  path resumes the rotation.
+- **A latent bug fixed in passing:** the phone page hard-coded `OpenObject-Setup` in its retry copy,
+  which a custom `OO_AP_SSID` would have made a lie. It now fills the real name from
+  `/api/setup/state`, with the markup default as the fallback.
+- **Tier-1 update is enough** (no new systemd units, no polkit): the timer runs the script from
+  `/opt/openobject/installer/net/`, which self-update pulls.
+- **Verified on macOS** against the real code paths, with the flag files pointed at a scratch
+  directory: the panel showed the Wi-Fi instructions, the tap put art back within one poll while
+  `/api/setup/state` still reported `on: true`, and a connect attempt took the panel back. The frame
+  itself still wants a pass, alongside the rest of the §11 test procedure.
 
 ### 2026-08-10: A native Help window, and Auto Display suppresses auto-lock (E13 shipped)
 

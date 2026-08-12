@@ -14,6 +14,12 @@ const path = require('path');
 // Overridable so the page and the screen can be exercised on a dev machine, where /run and nmcli do
 // not exist. The frame never sets it, so the real path is the only one that matters in production.
 const FLAG = process.env.OO_SETUP_FLAG || '/run/openobject/setup-mode';
+// "Show art now, set up later": the owner has seen the instructions and chosen art over them (§11).
+// A SEPARATE file from FLAG on purpose. Setup mode keeps running, the AP keeps broadcasting, the page
+// stays reachable; the only thing this changes is who owns the panel. It must also outlive FLAG,
+// which oo-setup-mode.sh deletes and recreates on every retry cycle: were this the same file, or
+// cleared alongside it, the instruction screen would come back five minutes after being dismissed.
+const LATER = process.env.OO_SETUP_LATER || '/run/openobject/setup-later';
 const SCRIPT = path.join(__dirname, '..', '..', 'installer', 'net', 'oo-setup-mode.sh');
 
 // Every nmcli call is bounded: a hung network tool must never wedge a control-panel request.
@@ -27,6 +33,31 @@ function run(cmd, args, timeout = 20000) {
 
 function isOn() {
   try { return fs.existsSync(FLAG); } catch { return false; }
+}
+
+// Has the owner said "later"? Only ever true while setup mode itself is on.
+function isDeferred() {
+  try { return fs.existsSync(LATER); } catch { return false; }
+}
+
+// Who owns the panel: setup mode is on AND the owner has not waved it off. This is the only question
+// /api/display asks; the page and the AP are governed by isOn() and stay live either way, which is
+// what makes "join OpenObject-Setup again tomorrow and finish" work with no reboot.
+function ownsPanel() { return isOn() && !isDeferred(); }
+
+// Written by the player (as `openobject`), which can create files here because the timer that makes
+// the directory gives it to our group. Returns false rather than throwing if it cannot, so the page
+// can say so instead of claiming the art is back when the screen is about to stay put.
+function defer() {
+  try { fs.writeFileSync(LATER, ''); return true; } catch { return false; }
+}
+
+// Undo it. Called when the owner engages with setup again (a connect attempt), so a wrong password
+// puts the instructions back on the panel for the person standing in front of it. The frame clears
+// it too, on its own, the moment it is back on a network (oo-setup-mode.sh), and /run empties on
+// reboot, so a power-cycled frame always speaks up again.
+function resume() {
+  try { fs.rmSync(LATER, { force: true }); } catch { /* nothing to undo */ }
 }
 
 // The networks to offer, best signal first. Deduped by name, because the same network shows up once
@@ -104,4 +135,4 @@ function apInfo() {
   };
 }
 
-module.exports = { isOn, scan, applyLater, apInfo, FLAG };
+module.exports = { isOn, isDeferred, ownsPanel, defer, resume, scan, applyLater, apInfo, FLAG, LATER };

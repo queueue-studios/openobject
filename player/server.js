@@ -296,7 +296,7 @@ const isAuthed = (req) => validToken(cookies(req)[SESSION_COOKIE]);
 // password could never fix their Wi-Fi, which is the one situation this feature exists for. Physical
 // proximity plus the on-screen password is the gate, matching the project's opt-in-hardening default.
 const AUTH_OPEN = new Set(['/api/display', '/api/identity', '/api/auth/status', '/api/auth/login', '/api/auth/logout',
-                           '/api/setup/state', '/api/setup/networks', '/api/setup/connect']);
+                           '/api/setup/state', '/api/setup/networks', '/api/setup/connect', '/api/setup/later']);
 function authGate(req, res, next) {
   if (!authRequired()) return next();
   if (!req.path.startsWith('/api/')) return next();
@@ -980,15 +980,37 @@ function displayAssetSignature() {
 
 // ── Wi-Fi setup mode (HANDOFF §11) ──────────────────────────────────────────────────
 // Frame-only in practice: isOn() reads a flag file that only installer/net/oo-setup-mode.sh writes.
-app.get('/api/setup/state', (_req, res) => res.json({ on: setupMode.isOn() }));
+// `ap` so the page can name the network the frame is ACTUALLY broadcasting, rather than repeating a
+// default that a changed OO_AP_SSID would make a lie. Name and address only: whoever is reading this
+// page already joined the network, so its password would be along for no reason.
+app.get('/api/setup/state', (_req, res) => {
+  const ap = setupMode.isOn() ? setupMode.apInfo() : null;
+  res.json({
+    on: setupMode.isOn(),
+    deferred: setupMode.isDeferred(),
+    ap: ap ? { ssid: ap.ssid, address: ap.address } : null,
+  });
+});
 
 app.get('/api/setup/networks', ah(async (_req, res) => {
   if (!setupMode.isOn()) return res.status(409).json({ error: 'not in setup mode' });
   res.json({ networks: await setupMode.scan() });
 }));
 
+// "Show art now, set up later" (§11): hand the panel back to the art and leave everything else alone.
+// The AP stays up, this page stays reachable, the retry cycle keeps running: the owner can rejoin
+// OpenObject-Setup an hour or a day later and finish, with no reboot and no art interrupted.
+app.post('/api/setup/later', (_req, res) => {
+  if (!setupMode.isOn()) return res.status(409).json({ error: 'not in setup mode' });
+  if (!setupMode.defer()) return res.status(500).json({ error: 'could not do that' });
+  res.json({ ok: true });
+});
+
 app.post('/api/setup/connect', ah(async (req, res) => {
   if (!setupMode.isOn()) return res.status(409).json({ error: 'not in setup mode' });
+  // Someone is attending the frame again, so the instruction screen takes the panel back: if this
+  // attempt fails, the person standing there should see the frame say so rather than show art.
+  setupMode.resume();
   const ssid = String((req.body && req.body.ssid) || '').trim();
   const password = String((req.body && req.body.password) || '');
   if (!ssid) return res.status(400).json({ error: 'pick a network' });
@@ -1002,8 +1024,10 @@ app.post('/api/setup/connect', ah(async (req, res) => {
 app.get('/api/display', ah(async (_req, res) => {
   const settings = currentSettings();
   // Wi-Fi setup mode owns the panel while it is on (§11): the display shows how to reach the frame
-  // rather than art, since there is nobody to see art on a frame nobody can reach.
-  const setupOn = setupMode.isOn();
+  // rather than art, since there is nobody to see art on a frame nobody can reach. Unless the owner
+  // has already read it and said "later", which is the one thing that gives the panel back while the
+  // frame is still stranded: art needs no network, and a told owner should not keep being told.
+  const setupOn = setupMode.ownsPanel();
   const ap = setupOn ? setupMode.apInfo() : null;
 
   // Frame: a REMOTE Mac folder as the source (§17 Phase B). Fetch its manifest from the Mac and rewrite

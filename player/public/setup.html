@@ -29,14 +29,26 @@
       <button id="connect" type="button">Connect</button>
       <button id="toggleTyped" type="button" class="link">Enter a network name instead</button>
       <p id="error" class="error" hidden></p>
+      <!-- The way out (§11). Art needs no network, so a frame that has said its piece should be able
+           to go back to being a frame. Set apart from the link above it, which is about how to enter
+           a network rather than about leaving. -->
+      <button id="later" type="button" class="link leave">Show art now, set up later</button>
     </section>
 
     <!-- After Connect. The frame leaves its own network to join yours, so this phone loses contact
          with it: success can only be confirmed on the frame itself (§11). -->
     <section id="applying" class="pane" hidden>
       <p>Wi-Fi configuration in progress.<br>Wait for confirmation on the frame.</p>
-      <p class="quiet">If it doesn't connect, re-join <span class="host" id="apName">OpenObject-Setup</span>
+      <p class="quiet">If it doesn't connect, re-join <span class="host ap-name">OpenObject-Setup</span>
         and try again.</p>
+    </section>
+
+    <!-- After "Show art now, set up later". The moment they leave is the moment to say how to come
+         back, or "I'll do it tomorrow" becomes "I have no idea how I got to this page" (§11). -->
+    <section id="later-done" class="pane" hidden>
+      <p>Art is back on the frame.</p>
+      <p class="quiet">To finish setting up later, join <span class="host ap-name">OpenObject-Setup</span>
+        and return here.</p>
     </section>
   </main>
   <script src="/setup.js"></script>

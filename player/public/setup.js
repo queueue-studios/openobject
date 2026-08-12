@@ -2,7 +2,7 @@
 // own network, so every request here goes to the frame at 192.168.4.1 (or openobject.local).
 const $ = (id) => document.getElementById(id);
 const select = $('network'), typed = $('networkTyped'), password = $('password');
-const connectBtn = $('connect'), toggleBtn = $('toggleTyped'), errorEl = $('error');
+const connectBtn = $('connect'), toggleBtn = $('toggleTyped'), errorEl = $('error'), laterBtn = $('later');
 
 let typing = false;   // typed entry is the fallback for a hidden network (§11)
 
@@ -24,6 +24,15 @@ async function loadNetworks() {
   } catch {
     select.innerHTML = '<option value="">Could not scan</option>';
   }
+}
+
+// Name the network the frame is actually broadcasting. The markup carries the default so the page
+// still reads correctly if this never answers; this only corrects a frame running a custom name.
+async function loadApName() {
+  try {
+    const { ap } = await (await fetch('/api/setup/state')).json();
+    if (ap && ap.ssid) document.querySelectorAll('.ap-name').forEach((el) => { el.textContent = ap.ssid; });
+  } catch { /* the markup default stands */ }
 }
 
 function chosenSsid() {
@@ -61,4 +70,21 @@ connectBtn.addEventListener('click', async () => {
   $('applying').hidden = false;
 });
 
+// "Show art now, set up later" (§11). Unlike Connect, this does NOT cost us the connection: the frame
+// stays on its own network, so a failure here is a real failure and is worth showing.
+laterBtn.addEventListener('click', async () => {
+  laterBtn.disabled = true;
+  showError('');
+  try {
+    const r = await fetch('/api/setup/later', { method: 'POST' });
+    if (!r.ok) throw new Error('rejected');
+  } catch {
+    laterBtn.disabled = false;
+    return showError('The frame could not do that. Try again.');
+  }
+  $('form').hidden = true;
+  $('later-done').hidden = false;
+});
+
 loadNetworks();
+loadApName();

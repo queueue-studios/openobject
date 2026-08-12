@@ -350,6 +350,22 @@ puts up a **Connect to Wi-Fi** screen with a network name and a password on it.
 **If your network isn't in the list** (some are set up not to broadcast their name), tap
 **Enter a network name instead** and type it exactly.
 
+**If you'd rather not deal with it right now**, tap **Show art now, set up later** at the bottom of
+that page. Your art comes back on the frame immediately. The frame keeps offering its
+**OpenObject-Setup** network the whole time, so you can pick this up whenever you like: join that
+network again from your phone, return to the same page, and finish. Nothing you skipped is lost, and
+the art never has to stop for it.
+
+Two things to know about doing it later. The frame goes back to looking completely normal, so there
+is nothing on the wall reminding you it isn't on your Wi-Fi (your art plays from the frame itself,
+which is why it doesn't need one). And if the frame is unplugged and plugged back in, it puts the
+**Connect to Wi-Fi** screen up again, on the assumption that a fresh start is a good moment to
+mention it. Tap **Show art now, set up later** again if you're still not ready.
+
+While you're waiting to get to it, anything that needs the network is unavailable: the control panel
+won't load from your phone or computer, a folder shared from your Mac won't play, and Connected
+Collections can't fetch. Art already on the frame plays exactly as usual.
+
 **A few things worth knowing:**
 
 - The frame waits about **five minutes** before offering this, so a router rebooting or a brief

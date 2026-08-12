@@ -64,4 +64,7 @@ button.link {
   background: none; color: var(--host); font-size: 15px; font-weight: 400;
   text-decoration: underline; text-underline-offset: 3px;
 }
+/* Leaving the screen is a different kind of choice from the link above it, so it sits apart rather
+   than reading as the second item in a list of two. Space only: no new colour, no new size. */
+button.link.leave { display: block; margin: 34px auto 0; }
 .error { margin-top: 16px; font-size: 15px; color: var(--mark); }

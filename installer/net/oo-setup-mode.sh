@@ -20,12 +20,22 @@
 # WITH ONE EXCEPTION, learned on the real frame: the retry is right for a frame nobody is attending
 # and wrong for one with an owner in front of it. If a phone is associated with the AP, standing down
 # would drop the very page they are typing into, so the retry is deferred while a client is on.
+#
+# NONE OF THIS DECIDES WHAT IS ON THE PANEL. The owner can answer the instruction screen with "show
+# art now, set up later" (§11), which leaves everything here running and only hands the panel back to
+# the art; the player writes $LATER and /api/display reads it. This script's one job in that story is
+# to clear the file when the frame is genuinely back on a network.
 set -u
 
 STATE_DIR=/run/openobject
 FLAG="$STATE_DIR/setup-mode"          # present = the AP is up. /run clears on reboot, by design:
                                       # a rebooted frame re-decides from scratch within a minute.
 SINCE="$STATE_DIR/offline-since"      # unix time we FIRST saw the frame offline
+LATER="$STATE_DIR/setup-later"        # present = the owner chose "show art now, set up later" (§11).
+                                      # Written by the player, cleared here the moment we are back on
+                                      # a network. Deliberately NOT cleared by stop_ap: the retry
+                                      # cycle drops and re-raises the AP every few minutes, and that
+                                      # must not put the instruction screen back over the art.
 NETS="$STATE_DIR/networks"            # scan taken just BEFORE hosting (a radio in AP mode cannot scan)
 AP_CON=openobject-setup-ap
 AP_SSID="${OO_AP_SSID:-OpenObject-Setup}"
@@ -114,7 +124,7 @@ retry_known_networks() {
   waited=0
   while [ "$waited" -lt "$RETRY_WINDOW" ]; do
     sleep 5; waited=$((waited + 5))
-    if online; then log "back on a known network; staying off the AP"; rm -f "$SINCE"; return 0; fi
+    if online; then log "back on a known network; staying off the AP"; rm -f "$SINCE" "$LATER"; return 0; fi
   done
   return 1
 }
@@ -141,7 +151,7 @@ case "${1:-check}" in
       exit 0
     fi
 
-    if online; then rm -f "$SINCE"; exit 0; fi
+    if online; then rm -f "$SINCE" "$LATER"; exit 0; fi
 
     # Measured in ELAPSED TIME, not in consecutive checks. A counter is only as good as the cadence
     # driving it: a check that runs late, gets skipped, or sees one momentary blip of "online" resets
