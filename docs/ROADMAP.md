@@ -65,6 +65,7 @@ Worth doing, deliberately not now.
 | E14 | Mac app | Move the Settings window to tabs | Settings reaches **five or six rows**. It has two (Dock icon, Auto Display), and tabs would cost a click and look emptier than the single pane (Matt, 2026-08-02) | HANDOFF §20 2026-08-06 Auto Display record. Small |
 | E6 | Apps (tvOS, iPad) | Retro Arcade easter egg on tvOS / iPad. `arcade.js` is dependency-free canvas 2D and maps onto SpriteKit or SwiftUI Canvas; a Siri Remote D-pad is a better trigger than a keyboard | Whenever wanted. Post-v1 by choice, no external condition | `TVOS-APP-PLAN.md` §5. Medium |
 | E2 | Apps (iPad) | Golden Lining as a pre-rendered looping video, a per-piece WebKit fallback | Nothing: this one **closes** rather than resumes, as soon as E1's two checks pass. Provisionally retired already, since the piece rendered correctly on a real iPad | HANDOFF §17 "Golden Lining as a pre-rendered video" |
+| E23 | Apps (tvOS, iPad) | Host picker empty state: restore the "waiting, not failed" copy and stop suppressing it when the Gallery row shows, rename toward **OpenObject Demo Gallery**, and disable Connect on an empty address field | The iOS 1.6.2 rejection resolves. Ships in the **next release** if the reply clears it, or immediately if App Review rejects a second time and the UI is the proven blocker (Matt, 2026-08-08) | HANDOFF §17 "Host picker empty state". Small. Both apps: tvOS has the same defects and drew a luckier reviewer |
 
 ## Candidate
 

@@ -700,6 +700,44 @@ Since 2026-06-19 there is also **`docs/MAC-DISPLAY-SETUP.md`**, a standalone **n
 
 **`docs/ROADMAP.md` is the index of open work, not this section.** §17 holds the **design records**: the reasoning, the measurements, and the open questions for each deferred idea. The roadmap holds one row per open item pointing back here. When something ships, its record moves to §20 and its roadmap row is deleted. Added 2026-08-08, after four separate lists (§17, the status line, `TVOS-APP-PLAN.md` phases, and scattered notes) had drifted out of agreement.
 
+### Host picker empty state: what the App Review rejection exposed (noted 2026-08-08)
+
+The iOS 1.6.2 submission was rejected under **Guideline 2.1(a), Information Needed**: the reviewer
+never found the OpenObject Gallery demo. Their screenshot showed the empty state, plus a **red error**
+under the address field, and Apple named the blocker as "Host's address". The reconstruction is that
+they read the address field as a required login and tapped **Connect on an empty field**, which is
+exactly what produces that red text (`Host.manualEntry` returns nil for empty input). Matt replied to
+App Review rather than editing the submission, so the app is unchanged; these are the defects the
+rejection surfaced, and they apply to **both `ipad-app` and `tv-app`**, whose pickers share this
+design. tvOS shipped with the same defects and simply drew a luckier reviewer.
+
+**1. The shipped copy drifted from the design.** `TVOS-APP-PLAN.md` §13 specifies that the no-Hosts
+state must read as *waiting, not failed*: "OpenObject Hosts on your network will appear here." What
+ships is the bare negative **"No Hosts found on your network."** Worse, the reassuring follow-up
+("Once an OpenObject Host is running on your network, it will appear here automatically") sits in the
+`else` branch of `emptyState`, so it is **suppressed exactly when the Gallery row is showing** — the
+case a new owner, or a reviewer, actually hits. What they see instead is a failure statement, an
+unexplained button, and a prompt asking for an address, which reads as the required action. Restore
+the forward-looking wording and stop hiding the explanation when the Gallery is offered.
+
+**2. The Gallery row does not say what it is.** Once the negative line goes, the row has to explain
+itself. Rename toward **"OpenObject Demo Gallery"**, and consider a small "Try it now" header above
+it. "Demo" is the word a reviewer scans for, and it reads better for a first-time owner too. Matt
+weighed this name earlier and chose the shorter one; the rejection is the evidence that changed it.
+
+**3. Connect on an empty address field shows a red error.** Fix by convention, not by labelling:
+disable Connect while the field is empty, rather than adding hint text. Consistent with the standing
+rule that behavior should match expectation instead of being explained.
+
+**Also recorded, because it will recur:** on a rejection, **reply, do not edit the submission**. App
+Store Connect surfaces a "Reply to App Review" action (the Resolution Center is folded into the app
+page now). Replying resumes the review with the same reviewer and the same build; editing metadata can
+flip the version back to "Prepare for Submission" and cost the place in the queue. Update the App
+Review Notes field only after the rejection resolves, since that field serves the *next* reviewer. The
+reply that works opens by stating **no account or password exists** (their template assumes
+credentials), then gives **numbered imperative steps**, then defuses whatever they cited as the
+blocker. The original notes failed by being prose-heavy with the one required action buried mid-block.
+
 ### Connected Collections on the viewer apps: the WebKit path reopened by measurement (noted 2026-08-05)
 
 `docs/TVOS-APP-PLAN.md` §2 rules that **neither** viewer app renders Connected art. The Apple TV half of that ruling is permanent (tvOS ships no web engine and none can be added). The **iPad and iPhone half was never measured**, and it has now been falsified as a blanket rule.
