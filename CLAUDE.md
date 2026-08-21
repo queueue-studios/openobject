@@ -48,6 +48,15 @@ builder-only convenience.
   explicit confirm first.
 - Commits carry the standard `Co-Authored-By: Claude` trailer.
 
+## Portfolio board
+
+When this project's release state changes (submitted, in review, approved, rejected, or
+live), update the Queue Studios LLC Development board by following
+`~/Code/Portfolio Board Standard v1.md`. That file defines what counts as a trigger and
+what doesn't, which rows this repo owns, and where the authoritative version numbers live.
+
+Propose the change and wait for Matt's OK before writing to the board.
+
 ## Confirmed v1 decisions
 - **Content model: Library + select** (§7). Uploads add to a persistent **Library**;
   the user curates a **Rotation** (an ordered subset) and may **Pin** one clip to
