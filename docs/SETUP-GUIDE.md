@@ -316,12 +316,12 @@ If the frame ever says it has **local changes** and can't update automatically, 
 so nothing of yours gets overwritten. Your art keeps playing either way, and you can ask whoever set
 the frame up about it.
 
-**Watch on an Apple TV or iPad (optional).** Your frame is a **Host**: it holds your art and runs the
-control panel. The **Apple TV** app ([on the App Store](https://apps.apple.com/app/id6797132025)) is a
-display that plays from a Host on the same network, so it can show the frame's rotation on your TV as
-well. Install it, open it, and pick your frame from the list it finds. An **iPad and iPhone** app is
-coming. Connected Collections don't play on the Apple TV (Apple TV can't run them), but they keep
-playing on the frame. See [the app section in the Mac guide](MAC-DISPLAY-SETUP.md#watch-on-an-apple-tv-ipad-or-iphone-optional)
+**Watch on an Apple TV, iPad, or iPhone (optional).** Your frame is a **Host**: it holds your art and
+runs the control panel. The **Apple TV, iPad and iPhone** app ([on the App
+Store](https://apps.apple.com/app/id6797132025), one app for all three) is a display that plays from a
+Host on the same network, so it can show the frame's rotation on your TV or your iPad as well. Install
+it, open it, and pick your frame from the list it finds. Connected Collections don't play on these
+apps (the apps can't run them), but they keep playing on the frame. See [the app section in the Mac guide](MAC-DISPLAY-SETUP.md#watch-on-an-apple-tv-ipad-or-iphone-optional)
 for the details, which are the same whichever Host you use.
 
 ---

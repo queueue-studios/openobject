@@ -33,7 +33,7 @@ retires (as `W5` did on becoming `E19`).
 
 Size is a rough sense of the job, not a promise.
 
-Last swept: 2026-08-10.
+Last swept: 2026-09-01.
 
 ---
 
@@ -45,6 +45,7 @@ Decided, unblocked, ready to start.
 |----|------|------|---------------|-------|
 | E3 | Apps (iPad) | Offline / portable playback: the **iPad** holds its own art and keeps playing with no network. **Committed 2026-08-10** (Matt). iPad only, permanently: the Apple TV variant is closed by tvOS storage limits (D14) | HANDOFF §17 "Offline / portable playback"; `TVOS-APP-PLAN.md` §9 | Medium. Needs a persistent store, a "Download for offline" choice, the manifest persisted, and an offline launch path |
 | E19 | Tooling | Release tooling for the App Store apps: teach `release.sh` to bump `tv-app/` and `ipad-app/project.yml` (or decide deliberately that the shells track their own version line), **and tag each App Store submission** (e.g. `tvos-1.6.2-submitted`) | memory: version-bump-release-workflow | Small. Formerly W5, reclassified 2026-08-08. The shells sit at 1.6.2 behind the platform at 1.8.0, and **no tag marks a submitted build**, so "what changed since the binary in review" needs someone to remember which commit did the bump (`a2dc043`) rather than being a one-line query. Worth doing **before** the next release, or the drift widens again |
+| E23 | Apps (tvOS, iPad) | Host picker empty state: restore the "waiting, not failed" copy and stop suppressing it when the Gallery row shows, rename toward **OpenObject Demo Gallery**, and disable Connect on an empty address field. **Unblocked 2026-09-01**: both apps are live at 1.6.2, so the fixes ship in the next app build | HANDOFF §17 "Host picker empty state" | Small. Both apps: tvOS has the same defects and drew a luckier reviewer |
 
 ## Blocked
 
@@ -54,7 +55,6 @@ to Committed.
 | ID | Area | Item | Blocked by | Design record |
 |----|------|------|------------|---------------|
 | E1 | Apps (iPad) | Connected Collections on the iPad/iPhone app via `WKWebView`, plus the skip mechanism and the "Chrome Only" pill | **Apple approving the submitted iOS build.** Do not open `ipad-app` until then. Two checks also come first: inkField untested, iPhone untested | HANDOFF §17 "Connected Collections on the viewer apps". Large |
-| E16 | Docs and site | Publish the site copy that says the iPad and iPhone app is available. **The writing is done and committed** (`77b6451`); `openobject.io` is a gh-pages deploy, so the live site still says "coming soon" until it is republished | **Apple approving the submitted iOS build.** Publishing early would claim a product state Apple has not granted | `site/`; republish recipe in HANDOFF §15 and memory: openobject-io-landing-page. Small, one republish, no writing left |
 
 ## Deferred
 
@@ -65,7 +65,6 @@ Worth doing, deliberately not now.
 | E14 | Mac app | Move the Settings window to tabs | Settings reaches **five or six rows**. It has two (Dock icon, Auto Display), and tabs would cost a click and look emptier than the single pane (Matt, 2026-08-02) | HANDOFF §20 2026-08-06 Auto Display record. Small |
 | E6 | Apps (tvOS, iPad) | Retro Arcade easter egg on tvOS / iPad. `arcade.js` is dependency-free canvas 2D and maps onto SpriteKit or SwiftUI Canvas; a Siri Remote D-pad is a better trigger than a keyboard | Whenever wanted. Post-v1 by choice, no external condition | `TVOS-APP-PLAN.md` §5. Medium |
 | E2 | Apps (iPad) | Golden Lining as a pre-rendered looping video, a per-piece WebKit fallback | Nothing: this one **closes** rather than resumes, as soon as E1's two checks pass. Provisionally retired already, since the piece rendered correctly on a real iPad | HANDOFF §17 "Golden Lining as a pre-rendered video" |
-| E23 | Apps (tvOS, iPad) | Host picker empty state: restore the "waiting, not failed" copy and stop suppressing it when the Gallery row shows, rename toward **OpenObject Demo Gallery**, and disable Connect on an empty address field | The iOS 1.6.2 rejection resolves. Ships in the **next release** if the reply clears it, or immediately if App Review rejects a second time and the UI is the proven blocker (Matt, 2026-08-08) | HANDOFF §17 "Host picker empty state". Small. Both apps: tvOS has the same defects and drew a luckier reviewer |
 
 ## Candidate
 

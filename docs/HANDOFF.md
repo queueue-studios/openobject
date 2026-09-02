@@ -729,14 +729,36 @@ weighed this name earlier and chose the shorter one; the rejection is the eviden
 disable Connect while the field is empty, rather than adding hint text. Consistent with the standing
 rule that behavior should match expectation instead of being explained.
 
-**Also recorded, because it will recur:** on a rejection, **reply, do not edit the submission**. App
-Store Connect surfaces a "Reply to App Review" action (the Resolution Center is folded into the app
-page now). Replying resumes the review with the same reviewer and the same build; editing metadata can
-flip the version back to "Prepare for Submission" and cost the place in the queue. Update the App
-Review Notes field only after the rejection resolves, since that field serves the *next* reviewer. The
-reply that works opens by stating **no account or password exists** (their template assumes
-credentials), then gives **numbered imperative steps**, then defuses whatever they cited as the
-blocker. The original notes failed by being prose-heavy with the one required action buried mid-block.
+**How to actually clear a rejection (corrected 2026-08-15, after the first version of this note cost
+seven days).** The initial advice here was "reply, do not edit the submission". That is wrong for App
+Store Connect's current submission flow, and following it meant a week of waiting on a reply that was
+never going to come. The real mechanics:
+
+- A rejection parks the submission at status **"Unresolved Issues"**. Nobody is looking at it; it is
+  waiting on you, and there is no Apple response time to wait out.
+- **"Reply to App Review" is correspondence only.** Apple's wording is that you may correspond
+  "*until you resubmit to App Review*": the reply is a message thread, and it does not restart the
+  review clock.
+- **"Resubmit to App Review" stays greyed out until you edit (or remove) the rejected item.** App
+  Store Connect will not resubmit an unchanged one. Editing **App Review Information → Notes** is both
+  the natural edit and the correct one, since that field is what the next reviewer reads.
+- An information or metadata rejection **resubmits the same build**: no archive, no upload. Apple:
+  "If your app was rejected for a metadata issue, you can resubmit the same build after resolving the
+  issue."
+
+So the sequence is **edit the Notes, then Resubmit to App Review**, optionally replying as well for
+context. The "don't touch a submission in play" rule still stands, but it applies only to one actually
+in the queue; a parked rejection is the opposite case, where editing is the required action. The
+diagnostic is the status: *Unresolved Issues* means it is on you, *Waiting for Review* or *In Review*
+means it is genuinely queued. **Appealing is the wrong instrument** here: an appeal disputes a
+decision believed to be incorrect, not a case of waiting to be read.
+
+**The reply and the notes that work** open by stating **no account or password exists** (Apple's
+template assumes credentials, so answer that first), then give **numbered imperative steps** to reach
+the demo, then defuse whatever was cited as the blocker. Keep the zero-chrome exit as a parenthetical
+*after* the steps: the art stage has no visible way out, so a reviewer could otherwise file a second
+2.1 for being unable to navigate, but it must not dilute the steps that get them in. The original
+notes failed by being prose-heavy with the one required action buried mid-block.
 
 ### Connected Collections on the viewer apps: the WebKit path reopened by measurement (noted 2026-08-05)
 
@@ -949,6 +971,36 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-09-01: the site says the iPad and iPhone app is available (E16 shipped)
+
+Both App Store apps are live (tvOS and iOS, 1.6.2, one record, Apple ID 6797132025), which cleared
+E16's blocker. The writing had been done and committed on 2026-08-09 (`77b6451`) and held back only
+because `openobject.io` is a gh-pages deploy, so publishing early would have claimed a product state
+Apple had not granted.
+
+**Published, and a sweep found four claims the staged commit had missed.** `77b6451` covered the home
+page (status line, Display cell, iPad chip) and two lines on the Apple TV page. Still stale:
+
+- **`site/apple-tv/index.html`** ended its "Getting it" callout with "iPad follows."
+- Its **`og:title` and `twitter:title`** still read "OpenObject for Apple TV" while the page title
+  already said "Apple TV & iPad", so every share card lagged the page.
+- **"What you need"** listed only the tvOS requirement, leaving an iPad reader with none.
+- The **SVG / WebM note** named only Apple TV. `CapabilityFilter` (`display-core`) is shared and has
+  no per-platform branch, so both formats are skipped on the iPad app too. The Support page had this
+  right; this page did not.
+
+**Both owner guides also still said the app was coming**, which §16 does not allow: `SETUP-GUIDE.md`
+("An **iPad and iPhone** app is coming") and `MAC-DISPLAY-SETUP.md` ("Coming to the App Store"). Both
+additionally named only Apple TV as unable to run Connected Collections, equally true of the iPad app
+while E1 is unbuilt.
+
+- **Verified** against a local static server before publishing: the rendered Apple TV page carries no
+  "iPad follows", its three titles agree, the home page's four device chips all read "Available", and
+  the console is clean.
+- **`site/appcast.xml` was byte-identical to the live gh-pages copy** (1.8.0, build 16) before the
+  republish, so the Sparkle feed carried through untouched. That is the check this process has got
+  wrong before (§15), so it is done first now, not last.
 
 ### 2026-08-11: "Show art now, set up later" (setup mode no longer outranks the art)
 

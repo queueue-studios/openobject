@@ -83,11 +83,14 @@ open it, and pick your Mac from the list of Hosts it finds. Your art plays on th
 same rotation, timing, and settings you already set from the control panel. There is nothing to
 configure on the TV itself.
 
-**iPad and iPhone.** Coming to the App Store. One app for both.
+**iPad and iPhone.** [Available on the App Store](https://apps.apple.com/app/id6797132025), the
+same app as the Apple TV one. Install it, open it, and pick your Mac the same way. The art plays full
+screen, following the rotation and settings you set from the control panel.
 
 **What plays on them.** Your uploaded images and video, and Folder Collections, all exactly as on
-your Mac. **Connected Collections do not play on the Apple TV**, because the pieces are small web
-programs and Apple TV has no way to run them. They keep playing on your Mac and on a frame.
+your Mac. **Connected Collections do not play on these apps**, because the pieces are small web
+programs and neither Apple TV nor iPad has a way to run them. They keep playing on your Mac and on
+a frame.
 
 **No art is stored on these apps.** They read from the Host as they play, so they need it running.
 Turn the Mac off and the TV has nothing to show; turn it back on and the art returns.
