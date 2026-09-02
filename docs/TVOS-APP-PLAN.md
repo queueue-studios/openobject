@@ -82,7 +82,7 @@ is a better answer than any native reimplementation.
 > iPad, in landscape**, found **even Golden Lining renders perfectly**: the first survey
 > had been run in Mac Safari, and the corruption is canvas-size dependent, so it does not
 > appear at iPad scale. The iPad conclusion here therefore does not hold at all, and the
-> path is reopened with no known exception (inkField and the iPhone still unchecked). See
+> path is reopened with no known exception (the iPhone still unchecked; inkField cleared 2026-09-01). See
 > HANDOFF §17, "Connected Collections on the viewer apps". **The Apple TV reasoning above
 > is unaffected and still stands**: tvOS has no web engine at all, so none of this applies
 > to it.
