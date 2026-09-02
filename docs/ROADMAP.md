@@ -46,15 +46,16 @@ Decided, unblocked, ready to start.
 | E3 | Apps (iPad) | Offline / portable playback: the **iPad** holds its own art and keeps playing with no network. **Committed 2026-08-10** (Matt). iPad only, permanently: the Apple TV variant is closed by tvOS storage limits (D14) | HANDOFF §17 "Offline / portable playback"; `TVOS-APP-PLAN.md` §9 | Medium. Needs a persistent store, a "Download for offline" choice, the manifest persisted, and an offline launch path |
 | E19 | Tooling | Release tooling for the App Store apps: teach `release.sh` to bump `tv-app/` and `ipad-app/project.yml` (or decide deliberately that the shells track their own version line), **and tag each App Store submission** (e.g. `tvos-1.6.2-submitted`) | memory: version-bump-release-workflow | Small. Formerly W5, reclassified 2026-08-08. The shells sit at 1.6.2 behind the platform at 1.8.0, and **no tag marks a submitted build**, so "what changed since the binary in review" needs someone to remember which commit did the bump (`a2dc043`) rather than being a one-line query. Worth doing **before** the next release, or the drift widens again |
 | E23 | Apps (tvOS, iPad) | Host picker empty state: restore the "waiting, not failed" copy and stop suppressing it when the Gallery row shows, rename toward **OpenObject Demo Gallery**, and disable Connect on an empty address field. **Unblocked 2026-09-01**: both apps are live at 1.6.2, so the fixes ship in the next app build | HANDOFF §17 "Host picker empty state" | Small. Both apps: tvOS has the same defects and drew a luckier reviewer |
+| E1 | Apps (iPad) | Connected Collections on the iPad/iPhone app via `WKWebView`, plus the skip mechanism and the "Chrome Only" pill. **Unblocked 2026-09-01**: the iOS build is approved and live, so the external wall is gone | HANDOFF §17 "Connected Collections on the viewer apps" | **Large**, and deliberately not queued ahead of the 1.9.0 release. Two checks open it: inkField on a real iPad, and the app on a real iPhone |
 
 ## Blocked
 
 Intended work that cannot start yet. The blocker is external; when it clears, the row moves
 to Committed.
 
-| ID | Area | Item | Blocked by | Design record |
-|----|------|------|------------|---------------|
-| E1 | Apps (iPad) | Connected Collections on the iPad/iPhone app via `WKWebView`, plus the skip mechanism and the "Chrome Only" pill | **Apple approving the submitted iOS build.** Do not open `ipad-app` until then. Two checks also come first: inkField untested, iPhone untested | HANDOFF §17 "Connected Collections on the viewer apps". Large |
+**Nothing is blocked right now** (2026-09-01). The last two external blockers, E16 and E1, both
+cleared when Apple approved the iOS build. Keep the section: it is where a row goes when something
+outside our control stops it, and it should stay visibly empty rather than be deleted.
 
 ## Deferred
 
