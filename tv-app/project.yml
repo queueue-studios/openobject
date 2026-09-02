@@ -33,11 +33,13 @@ settings:
     ARCHS: arm64
     ONLY_ACTIVE_ARCH: "NO"
     SWIFT_VERSION: "5.0"         # the UI layer; DisplayCore builds in its own Swift 6 mode
-    # The App Store apps run their own version line while they catch up to the platform (player/mac-app/
-    # frame are ahead, at 1.7.2); release.sh does NOT bump these, so they are set by hand and tvOS + iOS
-    # are always moved TOGETHER so the pair ships matched. 1.6.2 = the tvOS discovery + remembered-Host
-    # fixes. Bump CURRENT_PROJECT_VERSION on every upload: App Store Connect rejects a build number it
-    # has already seen, even when the marketing version changed.
+    # ONE version line across the whole platform (Matt, 2026-09-01): the App Store shells no longer run
+    # their own line. `mac-app/scripts/release.sh` now bumps this file, ipad-app's, player/package.json
+    # and mac-app's together, and regenerates the committed .xcodeproj, so do NOT set it by hand: that
+    # is exactly how these drifted to 1.6.2 while the platform sat at 1.8.0.
+    # CURRENT_PROJECT_VERSION stays a PER-PLATFORM counter (it need not match iOS's) and release.sh
+    # increments it every run: App Store Connect rejects a build number it has already seen for this
+    # platform, even when the marketing version changed.
     MARKETING_VERSION: "1.6.2"
     CURRENT_PROJECT_VERSION: "2"
     # Signed for on-device testing (Phase C6) with the Queueue Studios LLC team (J87JRCN9RM). Automatic

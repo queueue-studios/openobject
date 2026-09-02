@@ -557,16 +557,25 @@ OpenObject/
 └─ ...
 ```
 
-### Cutting a release (Mac app + engine)
+### Cutting a release (all four surfaces)
 
-Versions are milestone-based (§20), and a release publishes to two lanes at once: frames self-update by `git pull` of `main`, and the Mac app updates via Sparkle (a signed `.dmg` + an appcast). Matt runs the signed build; the outward publish is Claude-driven from chat so it stays gated.
+Versions are milestone-based (§20) and, since 2026-09-01, **one version line covers the whole platform**: the engine/frame, the Mac app, and both App Store shells carry the same number. `mac-app/scripts/release.sh` bumps all four and regenerates the two committed app `.xcodeproj` files, so nothing is set by hand. That is deliberate history: the shells used to be bumped manually and had drifted to 1.6.2 while the platform sat at 1.8.0.
 
-1. **Matt:** `mac-app/scripts/release.sh <version>` (needs his keychain: the LLC Developer ID, notary profile `openobject-llc`, Sparkle EdDSA key). It prints the **changelog since the last tag** (review it, and write the notes from it), bumps the shared version, builds/signs/notarizes the app + dmg, generates the EdDSA-signed appcast, and syncs `site/appcast.xml`. Safe to re-run.
-2. **Claude (gated):** commit the version bump **including `site/appcast.xml`**, tag `v<version>`, push `main` + the tag.
+Matt runs the signed build (it needs his keychain); the outward publish is Claude-driven from chat so it stays gated.
+
+1. **Matt:** `mac-app/scripts/release.sh <version>` (needs his keychain: the LLC Developer ID, notary profile `openobject-llc`, Sparkle EdDSA key). It prints the **changelog since the last tag** (review it, and write the notes from it), bumps **all four** version files, regenerates the committed `.xcodeproj` for both apps, builds/signs/notarizes the app + dmg, generates the EdDSA-signed appcast, and syncs `site/appcast.xml`. Safe to re-run.
+2. **Claude (gated):** commit the version bump, tag `v<version>`, push `main` + the tag. The commit must carry **all of it**: `player/package.json` + lockfile, `mac-app/project.yml`, **`tv-app/project.yml`, `ipad-app/project.yml`, the regenerated `.xcodeproj` for each**, and **`site/appcast.xml`**. A missed app file is the drift returning.
 3. **Claude (gated):** create the GitHub Release as `queueue-dev` with `OpenObject-<version>.dmg` (asset name must match so the appcast enclosure resolves) + notes.
 4. **Claude (gated):** publish the generated `appcast.xml` to gh-pages via the Contents API (touch only that file so the CNAME and landing page survive). Verify the dmg URL returns 200 and `openobject.io/appcast.xml` serves the new `shortVersionString`.
+5. **The frame** needs nothing: it tracks `main`, so it offers `<version>` on its next **Software Update** in the control panel. It must be powered on to take it.
+6. **App Store, only when submitting** (this is the slow lane, and it is optional: a Mac-only cut can stop at step 4). Archive and upload **tvOS** and **iOS** from Xcode, then tag each submission, `tvos-<version>-submitted` and `ios-<version>-submitted`, so "what changed since the binary in review" is a one-line `git log` rather than someone remembering which commit did the bump.
 
-The build always comes from `HEAD`, so committed code is never missed; the real risks are a stale `site/appcast.xml` and incomplete notes, which step 1 (changelog + site sync) now guards against.
+The build always comes from `HEAD`, so committed code is never missed; the real risks are a stale `site/appcast.xml` and incomplete notes, which step 1 (changelog + site sync) guards against.
+
+**The four lanes move at different speeds, and that is normal.** The frame updates the moment `main` moves, the Mac app as soon as the appcast is published, and the two App Store apps only after Apple reviews them, which is days. So between step 4 and Apple approving, `main` legitimately says a version the stores have not shipped. Do not "fix" that by holding the other surfaces back. Two consequences worth knowing:
+
+- **The public site describes what is SHIPPED, not what is tagged.** Anything claiming a store state waits for Apple (this is what E16 was, held back for a week on purpose).
+- **The shells' repo version can lead the store.** A Mac-only patch bumps them too, so `project.yml` may read 1.9.1 while the store still has 1.9.0. Harmless: the submission tags record what was actually uploaded, and Apple only requires the version to increase. **Build numbers are per-platform counters**, incremented every run precisely so an upload can never collide with a number App Store Connect has already seen.
 
 ### In-place updates (self-update from GitHub): Phase 1
 
@@ -973,6 +982,33 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-09-02: one version line across all four surfaces (E19 shipped)
+
+`release.sh` bumped `player/package.json` and `mac-app/project.yml` only, so the two App Store shells
+were bumped by hand and silently drifted: they sat at **1.6.2 while the platform was at 1.8.0**. E19
+offered a choice, teach the tool or declare the shells a separate line. Matt chose **one line for the
+whole platform** (2026-09-01), so the tool learned it.
+
+- **`bump_app_version()`** now bumps `tv-app/project.yml` and `ipad-app/project.yml` alongside the
+  other two. It also runs `xcodegen generate` in each: those apps **commit their generated
+  `.xcodeproj`**, so bumping the yml alone would leave the project that actually builds carrying the
+  old version. That trap is the reason the helper exists rather than two more `sed` lines.
+- **Build numbers stay per-platform counters** and are NOT synced. App Store Connect rejects a build
+  number it has already seen *for that platform*, and the two apps are at different counts (tvOS 2,
+  iOS 1). They increment on every run even when no upload follows: an unused number costs nothing,
+  while a colliding one blocks an upload halfway through a release. Verified on copies: tvOS 1.6.2
+  build 2 goes to 1.9.0 build 3, iOS 1.6.2 build 1 to 1.9.0 build 2.
+- **Both `project.yml` comments were asserting the opposite of the truth** ("release.sh does NOT bump
+  these", and an iOS note claiming no build had ever been uploaded, written before it shipped). Both
+  corrected, since a comment that lies is worse than none.
+- **§15 is now the all-surfaces checklist**, six steps, and records the thing that actually confuses
+  this project: **the four lanes move at different speeds and that is correct.** The frame updates as
+  soon as `main` moves, the Mac app when the appcast publishes, the App Store apps days later after
+  review. `main` legitimately names a version the stores have not shipped, and the fix is never to
+  hold the other surfaces back. E19's second half lands here too: tag each submission
+  (`tvos-<version>-submitted`, `ios-<version>-submitted`) so "what changed since the binary in review"
+  is a one-line query.
 
 ### 2026-09-01: the site says the iPad and iPhone app is available (E16 shipped)
 

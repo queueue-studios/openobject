@@ -30,15 +30,42 @@ if [ -n "$LAST_TAG" ]; then
   echo
 fi
 
-# --- 1. bump the shared version (engine + Mac app) --------------------------------------------------
-echo "[release] bumping version to $VERSION"
+# --- 1. bump the version on ALL FOUR surfaces -------------------------------------------------------
+# One version line across the platform (Matt, 2026-09-01, "option C"): the engine/frame, the Mac app,
+# and BOTH App Store shells move together. The shells used to be bumped by hand and silently drifted a
+# version or two behind every cut (they sat at 1.6.2 while the platform was at 1.8.0), which is what
+# E19 was raised for. Doing it here makes "the versions are in sync" a property of the tool instead of
+# something a human has to remember at the end of a long release.
+#
+# Build numbers are deliberately NOT shared. CURRENT_PROJECT_VERSION is a per-platform counter and App
+# Store Connect rejects a build number it has already seen for that platform, so each surface keeps its
+# own and simply increments. They are bumped on every run even when no App Store upload follows: an
+# unused build number costs nothing, while a COLLIDING one blocks an upload at the worst possible
+# moment, halfway through a release.
+bump_app_version() {                      # <app dir> <label>
+  local dir="$1" label="$2" cur new
+  cur="$(sed -nE 's/.*CURRENT_PROJECT_VERSION: "([0-9]+)".*/\1/p' "$dir/project.yml")"
+  new=$(( ${cur:-0} + 1 ))
+  sed -i '' -E "s/MARKETING_VERSION: \"[0-9.]+\"/MARKETING_VERSION: \"$VERSION\"/" "$dir/project.yml"
+  sed -i '' -E "s/CURRENT_PROJECT_VERSION: \"[0-9]+\"/CURRENT_PROJECT_VERSION: \"$new\"/" "$dir/project.yml"
+  # The generated .xcodeproj is COMMITTED for these apps, so regenerate it here. Bumping project.yml
+  # alone would leave the project that actually builds still carrying the old version.
+  ( cd "$dir" && xcodegen generate >/dev/null )
+  echo "        $label → $VERSION (build $new)"
+}
+
+echo "[release] bumping version to $VERSION on all four surfaces"
 ( cd "$REPO_ROOT/player" && npm version "$VERSION" --no-git-tag-version --allow-same-version >/dev/null )
-# Mac app: the marketing version, plus an incrementing build number (Sparkle compares CFBundleVersion).
+echo "        engine + frame → $VERSION"
+# Mac app: marketing version plus an incrementing build number (Sparkle compares CFBundleVersion). Its
+# xcodegen run happens in step 2, so only the file is touched here.
 CUR_BUILD="$(sed -nE 's/.*CURRENT_PROJECT_VERSION: "([0-9]+)".*/\1/p' project.yml)"
 NEW_BUILD=$(( ${CUR_BUILD:-1} + 1 ))
 sed -i '' -E "s/MARKETING_VERSION: \"[0-9.]+\"/MARKETING_VERSION: \"$VERSION\"/" project.yml
 sed -i '' -E "s/CURRENT_PROJECT_VERSION: \"[0-9]+\"/CURRENT_PROJECT_VERSION: \"$NEW_BUILD\"/" project.yml
-echo "        engine + app → $VERSION (build $NEW_BUILD)"
+echo "        Mac app → $VERSION (build $NEW_BUILD)"
+bump_app_version "$REPO_ROOT/tv-app"   "tvOS app"
+bump_app_version "$REPO_ROOT/ipad-app" "iOS app"
 
 # --- 2. regenerate the project + build Release (bundles the engine via the post-build script) --------
 echo "[release] xcodegen + xcodebuild (Release) ..."
@@ -80,11 +107,20 @@ cat <<EOF
    dmg     : $DMG
    appcast : $APPCAST
 ====================================================================
+ Version files this touched (ALL must go in the one commit):
+   player/package.json (+ lockfile), mac-app/project.yml, tv-app/project.yml,
+   ipad-app/project.yml, the regenerated .xcodeproj for each, site/appcast.xml
  Next (outward, done from chat so it stays gated):
-   1. Commit the version bump (INCLUDING the synced site/appcast.xml) + tag $TAG.
+   1. Commit the version bump (INCLUDING site/appcast.xml and BOTH app
+      project.yml + .xcodeproj) + tag $TAG.
    2. Create the GitHub Release and upload the dmg (asset name must stay
       OpenObject-$VERSION.dmg so the appcast URL resolves).
    3. Publish appcast.xml to gh-pages (openobject.io/appcast.xml).
+   4. The frame picks $VERSION up on its next Software Update (it tracks main).
+   5. App Store, only if submitting: archive + upload tvOS and iOS, then tag
+      each submission (tvos-$VERSION-submitted, ios-$VERSION-submitted) so
+      "what changed since the binary in review" is a one-line query.
+ The full checklist, and what to do while the stores lag, is HANDOFF section 15.
  Paste the paths above back into chat and we'll finish the publish.
 ====================================================================
 EOF
