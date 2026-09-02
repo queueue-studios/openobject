@@ -36,8 +36,8 @@ settings:
     # version line, bumped by `mac-app/scripts/release.sh`, not by hand. The build number is a
     # per-platform counter and does not have to match tvOS's; build 1 is the 1.6.2 binary that shipped,
     # so the next upload takes 2.
-    MARKETING_VERSION: "1.6.2"
-    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "1.9.0"
+    CURRENT_PROJECT_VERSION: "2"
     TARGETED_DEVICE_FAMILY: "1,2" # Universal: 1 = iPhone, 2 = iPad
     # Signed for on-device testing (Phase G5) with the Queueue Studios LLC team (J87JRCN9RM). Automatic
     # signing provisions a development profile for a paired iPad/iPhone on the first device build; the
