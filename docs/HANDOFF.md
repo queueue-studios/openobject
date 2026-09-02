@@ -786,10 +786,20 @@ order:
 Gallery"** in 1.9.0 (E23). A reviewer scanning for an exact string is the failure mode these notes
 exist to prevent, so grep the notes for the old "OpenObject Gallery" whenever the label moves.
 
-**Do not edit notes on a submission already in review** to apply this. The tvOS 1.9.0 submission went
-in with the older, weaker notes on purpose: editing metadata mid-review can flip the version back to
-"Prepare for Submission" and cost its place in the queue, which is a real cost against a marginal copy
-improvement.
+**App Review Information IS editable while a version sits in review** (verified 2026-09-02: the tvOS
+1.9.0 notes were rewritten in place after submission and the version stayed in *Waiting for Review*).
+An earlier draft of this note claimed the opposite and told Matt to leave weaker notes alone; he
+questioned it, and he was right. **The distinction is which field**: *version metadata* (description,
+screenshots, What's New) is the risky category, while *App Review Information* (contact details, demo
+account, notes) is meant to be updatable so you can answer a reviewer. What editing cannot guarantee is
+that a reviewer who already has the build queued re-reads the notes, so it is a cheap improvement, not
+a certain one. This is the second time a confident, unverified process claim in this section has cost
+something (the first cost seven days). **Verify or say you are unsure.**
+
+**Gotcha that looks like a length error:** App Store Connect only enables **Save** when a field's value
+actually *changes*. Pasting text identical to what is already stored leaves the button greyed out, and
+deleting a character wakes it up, which reads exactly like hitting a character limit. It is not. Check
+whether the field already holds what you are pasting before hunting for a limit.
 
 **The reply and the notes that work** open by stating **no account or password exists** (Apple's
 template assumes credentials, so answer that first), then give **numbered imperative steps** to reach
