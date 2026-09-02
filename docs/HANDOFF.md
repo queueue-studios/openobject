@@ -808,6 +808,49 @@ the demo, then defuse whatever was cited as the blocker. Keep the zero-chrome ex
 2.1 for being unable to navigate, but it must not dilute the steps that get them in. The original
 notes failed by being prose-heavy with the one required action buried mid-block.
 
+### Connect has no pending state, and discovery cannot be retried (noted 2026-09-02)
+
+Found on a real iPhone the day 1.9.0 was approved, with the frame healthy and advertising normally.
+The app showed only the OpenObject Demo Gallery and never listed the frame. Typing the frame's address
+and pressing **Connect appeared to do nothing**, and then, some time later, art started playing with no
+further input.
+
+**What actually happened.** The Connect press worked; it just finished long after it looked dead.
+Discovery populating the list does not auto-connect, it renders a row that has to be chosen, and
+nothing was chosen. The only path from an empty picker to playing art with no further tap is
+`submitManualEntry` succeeding and calling `select(host)`. So the tap was live the whole time.
+
+**Why it reads as broken (E24).** `submitManualEntry` awaits `DisplayClient().fetchDisplay(from:)` and
+renders **no pending state whatsoever**: the button stays enabled, nothing spins, no text changes.
+`DisplayClient` takes `URLSession.shared`, whose `timeoutIntervalForRequest` defaults to **60 seconds**,
+so a slow or unreachable address can leave the UI silent for a minute before either connecting or
+showing "No Host answered at that address." The first local-network connection after an iOS Local
+Network permission change is exactly the slow case: the system re-arms the gate and ARP/mDNS are cold.
+
+The fix is the house pattern rather than new machinery: disable Connect while a probe is in flight
+(it already disables on an empty field, E23), show progress on it, and give the client a short explicit
+timeout, five to ten seconds, instead of inheriting sixty. **This is the same defect family as E23**:
+the picker failing to say what it is doing. E23 fixed the empty state's wording; this is the same
+silence one interaction later, and it produces the worst impression an app can give, a button that
+does nothing.
+
+**Why the frame never appeared on its own (E25).** Toggling the iOS Local Network permission off and on
+invalidates any in-flight Bonjour browse. The app restarts browsing only in
+`.onChange(of: scenePhase)`, when it becomes `.active` with `hosts.isEmpty`, so an owner who stays in
+the app after the browse dies never triggers a rescan and has **no visible way to ask for one**. The
+existing recovery is real but invisible: background the app and return. A picker whose list can go
+permanently stale while the owner watches needs an explicit retry, or a browse that restarts itself on
+a timer while the list is empty.
+
+**Worth keeping about the diagnosis.** The symptom split the problem cleanly: the Gallery worked while
+the LAN found nothing, which isolates internet-versus-local-network and pointed straight at the Local
+Network permission. That turned out to be a red herring (it was already granted), but the split was
+still the right first cut. What settled it was checking the frame from the Mac rather than trusting the
+phone: `dns-sd -B _openobject._tcp` showed the frame advertising on both interfaces,
+`dns-sd -G v4 openobject.local` resolved it to 192.168.1.53, and `/api/display` returned the real
+library. Frame healthy, therefore phone. **Check the server from a machine that is known good before
+theorising about the client.**
+
 ### Connected Collections on the viewer apps: the WebKit path reopened by measurement (noted 2026-08-05)
 
 `docs/TVOS-APP-PLAN.md` §2 rules that **neither** viewer app renders Connected art. The Apple TV half of that ruling is permanent (tvOS ships no web engine and none can be added). The **iPad and iPhone half was never measured**, and it has now been falsified as a blanket rule.
