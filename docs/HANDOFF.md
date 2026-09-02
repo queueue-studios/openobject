@@ -762,6 +762,35 @@ diagnostic is the status: *Unresolved Issues* means it is on you, *Waiting for R
 means it is genuinely queued. **Appealing is the wrong instrument** here: an appeal disputes a
 decision believed to be incorrect, not a case of waiting to be read.
 
+**The canonical App Review notes live on the iOS side of the record (settled 2026-09-02).** Both
+platforms had their own notes and the iOS ones, rewritten to clear the 2.1(a) rejection, are markedly
+better. Copy them to tvOS next cycle rather than maintaining two voices. What makes them work, in
+order:
+
+1. **Sentence one denies credentials.** "There is no account and no password required for this app."
+   Apple's template assumes credentials, so this is the highest-value position in the document.
+2. **One line saying what the app is**, and that App Review will not have a Host, so a demo exists.
+3. **Numbered imperative steps**, including the wait ("about 5 seconds for the network scan"), because
+   the demo row is probe-gated and does not appear instantly.
+4. **A closing claim on the step that reaches the art**: "This is the app's complete functionality."
+   That speaks directly to 2.1(a), which is an inability to evaluate, not a defect report.
+5. **The zero-chrome exit, as a parenthetical after the steps.** Needed on iOS, where an app with no
+   visible way out is unusual and could draw a second 2.1. **Not needed on tvOS**, where full screen
+   and Menu-to-go-back are the platform norm (Matt, 2026-09-02).
+6. **A fallback**: type `https://gallery.openobject.io` into the address field. Verified to work,
+   `Host.manualEntry` accepts a full URL and preserves the https scheme.
+7. **An IMPORTANT paragraph defusing the address field**: optional, not a login, no credentials. That
+   field is what the reviewer misread, so it gets its own closing block.
+
+**Every mention of the demo row must match the shipped label**, which changed to **"OpenObject Demo
+Gallery"** in 1.9.0 (E23). A reviewer scanning for an exact string is the failure mode these notes
+exist to prevent, so grep the notes for the old "OpenObject Gallery" whenever the label moves.
+
+**Do not edit notes on a submission already in review** to apply this. The tvOS 1.9.0 submission went
+in with the older, weaker notes on purpose: editing metadata mid-review can flip the version back to
+"Prepare for Submission" and cost its place in the queue, which is a real cost against a marginal copy
+improvement.
+
 **The reply and the notes that work** open by stating **no account or password exists** (Apple's
 template assumes credentials, so answer that first), then give **numbered imperative steps** to reach
 the demo, then defuse whatever was cited as the blocker. Keep the zero-chrome exit as a parenthetical
