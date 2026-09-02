@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import DisplayCore
 
 // The touch Host picker (TVOS-APP-PLAN §5, §13): the first screen when no Host is remembered. It lists
@@ -65,11 +66,15 @@ struct HostPickerView: View {
         }
     }
 
-    // The empty state (§13): honest that no Host was found. When the public Gallery actually answers
-    // (probe-gated), it offers the OpenObject Gallery so the screen is never a dead end. The Gallery row is
-    // styled exactly like a discovered-Host row (same size/area); its name plus the framed-picture icon say
-    // what it is, so no instructional copy is needed. When the Gallery is unreachable (or still being
-    // probed) the plain "it will appear here automatically" reassurance stands in its place.
+    // The empty state (§13): WAITING, not failed. The shipped build had drifted to a bare negative ("No
+    // Hosts found on your network.") which, with the Gallery row beside it, an App Store reviewer read as
+    // a failure with an unexplained button (§17, E23). The headline is also the explanation, so nothing is
+    // repeated beneath it. It drops the "OpenObject" §13 wrote into it (Matt, 2026-09-01): the wordmark sits
+    // directly above, and the scanning line one second earlier says plain "Hosts", so the brand here was
+    // both redundant and inconsistent. §13 was corrected to match rather than left to drift again. When the public Gallery answers its probe it
+    // is offered as a row styled exactly like a discovered-Host row (same size/area); its name plus the
+    // framed-picture icon say what it is, so no instructional copy is needed. Unreachable (or still
+    // probing) shows the one sentence the headline does not already cover: that this device itself is fine.
     @ViewBuilder private var emptyState: some View {
         VStack(spacing: 14) {
             if model.scanning {
@@ -77,18 +82,33 @@ struct HostPickerView: View {
                 Text("Looking for Hosts on your network…")
                     .font(.title3).foregroundStyle(.secondary)
             } else {
-                Text("No Hosts found on your network.")
+                Text("Hosts on your network will appear here.")
                     .font(.title3).foregroundStyle(.secondary)
                 if model.galleryReachable == true {
-                    PickerRow(icon: "photo.artframe", title: "OpenObject Gallery", iconFont: .title3) { model.connectToGallery() }
+                    PickerRow(icon: "photo.artframe", title: Host.gallery.name, iconFont: .title3) { model.connectToGallery() }
                 } else {
-                    Text("Once an OpenObject Host is running on your network, it will appear here automatically.")
+                    Text("Your \(deviceName) is ready to connect.")
                         .font(.callout).foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center)
                 }
             }
         }
         .frame(minHeight: 120)
+    }
+
+    // tvOS names the device in this line already; this app is Universal, so the name comes from the idiom
+    // rather than being hard-coded (saying "Your iPad" on an iPhone would be its own small lie).
+    private var deviceName: String {
+        UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone"
+    }
+
+    // Connect means nothing with nothing typed, so it is DISABLED rather than labelled with a hint (the
+    // house rule is to fix behavior to match expectation, not to explain it). Tapping it empty used to put
+    // a red error under the field, which the App Review reviewer read as a required login that had failed
+    // (§17, E23). The keyboard's Go key is guarded in submit() for the same reason; model.manualError stays
+    // as a defensive guard, but the UI can no longer reach its empty case.
+    private var addressIsEmpty: Bool {
+        model.manualAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     @ViewBuilder private var manualEntry: some View {
@@ -107,6 +127,7 @@ struct HostPickerView: View {
                     .onSubmit { submit() }
                 Button("Connect") { submit() }
                     .buttonStyle(.borderedProminent)
+                    .disabled(addressIsEmpty)
             }
             if let error = model.manualError {
                 Text(error).font(.callout).foregroundStyle(.red)
@@ -115,6 +136,7 @@ struct HostPickerView: View {
     }
 
     private func submit() {
+        guard !addressIsEmpty else { return }
         addressFocused = false
         Task { await model.submitManualEntry() }
     }
@@ -136,7 +158,11 @@ private struct PickerRow: View {
         Button(action: action) {
             HStack(spacing: 14) {
                 Image(systemName: icon).font(iconFont)
-                Text(title).font(.title3).fontWeight(.medium).lineLimit(1)
+                // Scale down before truncating. "OpenObject Demo Gallery" is 6 characters longer than the
+                // name it replaced and overflows a single line on iPhone, and an ellipsis there would eat
+                // the word "Demo" - the one word the rename exists to show. Only engages when needed, so
+                // the iPad and every shorter Host name are untouched.
+                Text(title).font(.title3).fontWeight(.medium).lineLimit(1).minimumScaleFactor(0.75)
                 Spacer(minLength: 0)
             }
             .padding(.vertical, 16).padding(.horizontal, 20)

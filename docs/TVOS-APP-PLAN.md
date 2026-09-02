@@ -486,11 +486,11 @@ is missing.
 | State | Reads as | Wording |
 |---|---|---|
 | Scanning on launch | active | "Looking for OpenObject Hosts..." |
-| No Hosts found | waiting, not failed | "OpenObject Hosts on your network will appear here." |
+| No Hosts found | waiting, not failed | "Hosts on your network will appear here." (the "OpenObject" this line originally carried was dropped 2026-09-01: the wordmark is directly above it, and the scanning line says plain "Hosts") |
 | Hosts found | a named list | (the picker) |
 | Connecting | active, brief | "Connecting to \<name>..." |
 | Nothing renderable in the rotation | the existing splash (§4) | "add art at ..." |
-| Host disappeared mid-playback | calm, not alarming | open item, §16 |
+| Host disappeared mid-playback | calm, not alarming | hold the last frame, keep retrying silently (RESOLVED, §16) |
 | A typed address did not answer | **a real error, stated plainly** | "No OpenObject Host answered at that address." |
 
 Two implementation notes carry most of the effect:

@@ -92,6 +92,8 @@ when the check is done or when the build carrying it ships.
 |--------|---------------|--------|
 | Frame (fresh install) | The `install.sh` Wi-Fi handoff now delegates to `nm-handoff.sh` with the guard off. The retrofit path is device-proven, but the fresh-install path cannot be exercised without installing a new frame, which nobody can currently do | `36b6ffa`, 2026-08-08 |
 | Apple TV | The per-Host row icon in the picker now matches its label size. Confirm on the real Apple TV, since that is where the undersized icon was noticed; the simulator before/after only proves the change took effect | `8adbbbe`, 2026-08-08 |
+| Apple TV | E23's picker empty state: the headline reads as waiting, the Gallery row says **Demo**, and Connect is greyed until an address is typed. Simulator-verified; the real remote's focus behaviour around a disabled Connect is what the device pass is for | this change |
+| iPad + iPhone | The same three E23 fixes. Verified on both idioms in the simulator with the frame powered down. **Not seen rendered: the device-name line** (`Your iPad` / `Your iPhone`), which only draws when the Gallery is unreachable too, so forcing it needs a moment with no Host *and* no internet | this change |
 
 ## Closed: decided against, or not worth tracking
 

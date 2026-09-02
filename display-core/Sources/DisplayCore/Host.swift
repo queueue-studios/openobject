@@ -62,7 +62,7 @@ public extension Host {
     /// button. HTTPS, so it needs no ATS exception (unlike LAN Hosts).
     static let gallery = Host(
         id: "openobject-gallery",
-        name: "OpenObject Gallery",
+        name: "OpenObject Demo Gallery",
         baseURL: URL(string: "https://gallery.openobject.io")!
     )
 }

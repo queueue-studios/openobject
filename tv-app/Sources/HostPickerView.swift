@@ -128,10 +128,15 @@ struct HostPickerView: View {
         }
     }
 
-    // The empty state (§13): honest that no Host was found. When the public Gallery actually answers
-    // (probe-gated), it offers the OpenObject Gallery so the screen is never a dead end. The Gallery row is
-    // a focusable row styled like a discovered-Host row (photo.artframe instead of play.tv); its name says
-    // what it is, so no instructional copy. Unreachable (or still probing) shows the reassurance copy.
+    // The empty state (§13): WAITING, not failed. The shipped build had drifted to a bare negative ("No
+    // Hosts found on your network.") which, with the Gallery row beside it, an App Store reviewer read as
+    // a failure with an unexplained button (§17, E23). The headline is also the explanation, so nothing is
+    // repeated beneath it. It drops the "OpenObject" §13 wrote into it (Matt, 2026-09-01): the wordmark sits
+    // directly above, and the scanning line one second earlier says plain "Hosts", so the brand here was
+    // both redundant and inconsistent. §13 was corrected to match rather than left to drift again. When the public Gallery answers its probe it
+    // is offered as a focusable row styled like a discovered-Host row (photo.artframe instead of play.tv);
+    // its name says what it is, so no instructional copy. Unreachable (or still probing) shows the one
+    // sentence the headline does not already cover: that this device itself is fine.
     @ViewBuilder private var emptyState: some View {
         VStack(spacing: 20) {
             if model.scanning {
@@ -139,7 +144,7 @@ struct HostPickerView: View {
                 Text("Looking for Hosts on your network…")
                     .font(.title3).foregroundStyle(.secondary)
             } else {
-                Text("No Hosts found on your network.")
+                Text("Hosts on your network will appear here.")
                     .font(.title3).foregroundStyle(.secondary)
                 if model.galleryReachable == true {
                     VStack(spacing: 16) {
@@ -149,7 +154,7 @@ struct HostPickerView: View {
                                 // padding), so bump it to match the discovered-host rows. Carries the same
                                 // .title3 as those rows, with .large keeping the relative compensation.
                                 Image(systemName: "photo.artframe").font(.title3).imageScale(.large)
-                                Text("OpenObject Gallery").font(.title2).lineLimit(1)
+                                Text(Host.gallery.name).font(.title2).lineLimit(1)
                                 Spacer(minLength: 0)
                             }
                             .padding(.vertical, 8)
@@ -159,7 +164,7 @@ struct HostPickerView: View {
                     }
                     .frame(width: 1500)
                 } else {
-                    Text("Your Apple TV is ready to connect. Once an OpenObject Host is running on your network, it will appear here automatically.")
+                    Text("Your Apple TV is ready to connect.")
                         .font(.callout).foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 1100)
@@ -167,6 +172,14 @@ struct HostPickerView: View {
             }
         }
         .frame(minHeight: 200)
+    }
+
+    // Connect means nothing with nothing typed, so it is DISABLED rather than labelled with a hint (the
+    // house rule is to fix behavior to match expectation, not to explain it). Tapping it empty used to put
+    // a red error under the field, which the App Review reviewer read as a required login that had failed
+    // (§17, E23). model.manualError stays as a defensive guard; the UI can no longer reach its empty case.
+    private var addressIsEmpty: Bool {
+        model.manualAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     @ViewBuilder private var manualEntry: some View {
@@ -178,6 +191,7 @@ struct HostPickerView: View {
                     .textContentType(.URL)
                     .frame(width: 760)
                 Button("Connect") { Task { await model.submitManualEntry() } }
+                    .disabled(addressIsEmpty)
             }
             if let error = model.manualError {
                 Text(error).font(.callout).foregroundStyle(.red)
