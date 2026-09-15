@@ -32,12 +32,15 @@ settings:
     ARCHS: arm64
     ONLY_ACTIVE_ARCH: "NO"
     SWIFT_VERSION: "5.0"          # the UI layer; DisplayCore builds in its own Swift 6 mode
-    # Kept in lockstep with tv-app (see the note there): both shells now follow the single platform
-    # version line, bumped by `mac-app/scripts/release.sh`, not by hand. The build number is a
-    # per-platform counter and does not have to match tvOS's; build 1 is the 1.6.2 binary that shipped,
-    # build 2 was set for the 1.9.0 E23 fixes, and build 3 carries the local copy (E3) to TestFlight
-    # (2026-09-15). Bump it here, then `xcodegen generate`, before every archive.
-    MARKETING_VERSION: "1.9.0"
+    # Kept in lockstep with tv-app (see the note there): both shells follow the single platform version
+    # line, bumped by `mac-app/scripts/release.sh`, not by hand. ONE deliberate exception, 2026-09-15: iOS
+    # runs ahead at 1.10.0 for the local-copy TestFlight build, because App Store Connect closes a version
+    # train once it is approved (iOS 1.9.0, build 2, shipped) and refuses any further build under it. The
+    # platform line catches up at the 1.10.0 release, when release.sh rewrites this value anyway. The build
+    # number is a per-platform counter and does not have to match tvOS's; build 1 was 1.6.2, build 2 was
+    # 1.9.0, build 3 carries the local copy (E3). Bump it here, then `xcodegen generate`, before every
+    # archive.
+    MARKETING_VERSION: "1.10.0"
     CURRENT_PROJECT_VERSION: "3"
     TARGETED_DEVICE_FAMILY: "1,2" # Universal: 1 = iPhone, 2 = iPad
     # Signed for on-device testing (Phase G5) with the Queueue Studios LLC team (J87JRCN9RM). Automatic
