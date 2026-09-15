@@ -324,10 +324,12 @@ and three things keep it from being a real "load it at home, then take it off th
 mode: the cache is bounded (512 MB LRU), so a larger rotation evicts its earlier pieces; it
 lives in `Caches`, which the OS may purge at any time; and the rotation list is held only in
 memory from the last poll, so a relaunch while offline has nothing to play and shows
-Connecting. A genuine portable mode would need the rotation manifest persisted, a real
-non-purgeable offline store kept separate from the cache, an explicit "Download for offline"
-choice (the app stays a viewer and does not own art, §3), and an offline launch path that
-plays the saved set instead of waiting to connect.
+Connecting. A genuine portable mode needs the rotation manifest persisted, a real
+non-purgeable offline store kept separate from the cache, and an offline launch path that
+plays the saved set instead of waiting to connect. (This note first also asked for an explicit
+"Download for offline" choice, so that the app stays a viewer and does not own art, §3. The
+iPad design settled 2026-09-15, HANDOFF §17, makes the copy automatically instead and keeps
+the principle: it is a mirror of the Host's rotation, never a library of its own.)
 
 **Settled 2026-08-08: not on tvOS, ever, for a platform reason.** tvOS guarantees an app only
 **500 KB** of persistent storage; anything larger lives in `Library/Caches`, which the OS may
