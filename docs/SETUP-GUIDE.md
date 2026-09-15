@@ -321,8 +321,10 @@ runs the control panel. The **Apple TV, iPad and iPhone** app ([on the App
 Store](https://apps.apple.com/app/id6797132025), one app for all three) is a display that plays from a
 Host on the same network, so it can show the frame's rotation on your TV or your iPad as well. Install
 it, open it, and pick your frame from the list it finds. Connected Collections don't play on these
-apps (the apps can't run them), but they keep playing on the frame. See [the app section in the Mac guide](MAC-DISPLAY-SETUP.md#watch-on-an-apple-tv-ipad-or-iphone-optional)
-for the details, which are the same whichever Host you use.
+apps (the apps can't run them), but they keep playing on the frame. The iPad and iPhone app also keeps a
+**local copy** of the rotation on the device, so it keeps playing with the frame asleep, or away from your
+network entirely. See [the app section in the Mac guide](MAC-DISPLAY-SETUP.md#watch-on-an-apple-tv-ipad-or-iphone-optional)
+for the details, including the local copy, which are the same whichever Host you use.
 
 ---
 

@@ -87,13 +87,29 @@ configure on the TV itself.
 same app as the Apple TV one. Install it, open it, and pick your Mac the same way. The art plays full
 screen, following the rotation and settings you set from the control panel.
 
+**Taking the art with you (iPad and iPhone).** The iPad and iPhone app keeps a **local copy** of the
+rotation it is showing, on the device itself, so it keeps playing with the Mac asleep, and away from your
+network entirely: load it at home, carry it to a gallery, and play with no Wi-Fi at all. There is nothing
+to turn on. Leave the app on the art for a few minutes while the Mac is running; tap the art once and the
+status in the top corner tells you where it stands, **Saving local copy** with a count while it fills,
+then **Local copy ready**. After that, opening the app anywhere plays the art straight away. When the Mac
+is not answering, the same corner reads **Playing local copy**, which is also why changes you make on the
+Mac will not appear until the device sees it again. In the Host list, a Host that is not on the network
+but whose art is on the device shows with a **Local copy** tag; tap it to play. The copy follows your
+rotation: a piece you take out of the rotation leaves the device a day later, and choosing a different
+Host replaces the copy with that Host's. It uses as much space as the rotation needs, never past a
+reserve it leaves free for the rest of the device (a tenth of its storage); if a rotation will not all
+fit, the corner says how many pieces did. To remove the copy entirely, delete the app from the device
+(Settings > General > iPad Storage, or iPhone Storage, then OpenObject and Delete App).
+
 **What plays on them.** Your uploaded images and video, and Folder Collections, all exactly as on
 your Mac. **Connected Collections do not play on these apps**, because the pieces are small web
 programs and neither Apple TV nor iPad has a way to run them. They keep playing on your Mac and on
 a frame.
 
-**No art is stored on these apps.** They read from the Host as they play, so they need it running.
-Turn the Mac off and the TV has nothing to show; turn it back on and the art returns.
+**The Apple TV stores no art.** It reads from the Host as it plays, so it needs the Mac running: turn
+the Mac off and the TV has nothing to show; turn it back on and the art returns. The iPad and iPhone keep
+the local copy described above, so they carry on without the Mac.
 
 ---
 

@@ -60,10 +60,25 @@ struct HostPickerView: View {
                     ForEach(model.hosts) { host in
                         PickerRow(icon: "play.tv", title: host.name) { model.select(host) }
                     }
+                    localCopyRow
                 }
             }
             .frame(minHeight: 120)
         }
+    }
+
+    // The local copy (HANDOFF §17): the held Host's own row, tagged "Local copy", shown only while that Host is
+    // not on the network. Its glyph is this device, since that is where the art is (a live Host keeps play.tv).
+    // It sits after any live Hosts and before the Demo Gallery. Deliberately not a generic "cached gallery"
+    // pseudo-Host: the row says exactly what is true, the Host is not here but its art is.
+    @ViewBuilder private var localCopyRow: some View {
+        if let host = model.localCopyRow {
+            PickerRow(icon: deviceIcon, title: host.name, detail: "Local copy") { model.select(host) }
+        }
+    }
+
+    private var deviceIcon: String {
+        UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"
     }
 
     // The empty state (§13): WAITING, not failed. The shipped build had drifted to a bare negative ("No
@@ -81,12 +96,14 @@ struct HostPickerView: View {
                 ProgressView().tint(.white).scaleEffect(1.2)
                 Text("Looking for Hosts on your network…")
                     .font(.title3).foregroundStyle(.secondary)
+                localCopyRow
             } else {
                 Text("Hosts on your network will appear here.")
                     .font(.title3).foregroundStyle(.secondary)
+                localCopyRow
                 if model.galleryReachable == true {
                     PickerRow(icon: "photo.artframe", title: Host.gallery.name, iconFont: .title3) { model.connectToGallery() }
-                } else {
+                } else if model.localCopyRow == nil {
                     Text("Your \(deviceName) is ready to connect.")
                         .font(.callout).foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center)
@@ -152,6 +169,8 @@ private struct PickerRow: View {
     // with more built-in padding (photo.artframe) is bumped to match a fuller one (play.tv). Default keeps
     // the host row's icon unchanged.
     var iconFont: Font = .body
+    // A quiet right-aligned tag ("Local copy"); nil for a plain row.
+    var detail: String? = nil
     let action: () -> Void
 
     var body: some View {
@@ -164,6 +183,9 @@ private struct PickerRow: View {
                 // the iPad and every shorter Host name are untouched.
                 Text(title).font(.title3).fontWeight(.medium).lineLimit(1).minimumScaleFactor(0.75)
                 Spacer(minLength: 0)
+                if let detail {
+                    Text(detail).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                }
             }
             .padding(.vertical, 16).padding(.horizontal, 20)
             .frame(maxWidth: .infinity, alignment: .leading)

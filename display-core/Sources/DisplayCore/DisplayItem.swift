@@ -16,7 +16,7 @@ public enum Fit: String, Sendable, Codable {
     case fill
 }
 
-public struct DisplayItem: Sendable, Hashable, Identifiable, Decodable {
+public struct DisplayItem: Sendable, Hashable, Identifiable, Codable {
     public let id: String
     public let kind: MediaKind?
     public let format: MediaFormat?
@@ -59,6 +59,19 @@ public struct DisplayItem: Sendable, Hashable, Identifiable, Decodable {
         src = optString(.src)
         let decodedFit: Fit? = (try? c.decodeIfPresent(Fit.self, forKey: .fit)) ?? nil
         fit = decodedFit ?? .fit // absent/odd -> Fit, matching display.js
+    }
+
+    // Encoding exists for one reason: the iPad's local copy persists the last /api/display response as its
+    // manifest (HANDOFF §17), and it must read back through the same lenient decoder above. Only the decoded
+    // fields are written (id already normalized to a String, which the decoder accepts).
+    public func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encodeIfPresent(kind, forKey: .kind)
+        try c.encodeIfPresent(format, forKey: .format)
+        try c.encode(fit, forKey: .fit)
+        try c.encodeIfPresent(filename, forKey: .filename)
+        try c.encodeIfPresent(src, forKey: .src)
     }
 }
 

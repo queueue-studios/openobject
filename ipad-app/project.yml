@@ -35,9 +35,10 @@ settings:
     # Kept in lockstep with tv-app (see the note there): both shells now follow the single platform
     # version line, bumped by `mac-app/scripts/release.sh`, not by hand. The build number is a
     # per-platform counter and does not have to match tvOS's; build 1 is the 1.6.2 binary that shipped,
-    # so the next upload takes 2.
+    # build 2 was set for the 1.9.0 E23 fixes, and build 3 carries the local copy (E3) to TestFlight
+    # (2026-09-15). Bump it here, then `xcodegen generate`, before every archive.
     MARKETING_VERSION: "1.9.0"
-    CURRENT_PROJECT_VERSION: "2"
+    CURRENT_PROJECT_VERSION: "3"
     TARGETED_DEVICE_FAMILY: "1,2" # Universal: 1 = iPhone, 2 = iPad
     # Signed for on-device testing (Phase G5) with the Queueue Studios LLC team (J87JRCN9RM). Automatic
     # signing provisions a development profile for a paired iPad/iPhone on the first device build; the

@@ -15,7 +15,9 @@ struct RootView: View {
                 HostPickerView(model: model)
             case .display(let host):
                 ArtStageView(player: model.player, host: host, pipeline: model.pipeline,
-                             muted: !model.soundOn, onExit: { model.showPicker() })
+                             muted: !model.soundOn,
+                             localCopy: host.id == Host.gallery.id ? nil : model.localCopy,
+                             onExit: { model.showPicker() })
             }
         }
         .ignoresSafeArea()

@@ -8,9 +8,9 @@ import DisplayCore
 // setting identically. G2 uses the remembered-Host path to open straight to art; the touch picker that
 // drives discovery/manual entry arrives in G3.
 //
-// (Currently a near-verbatim copy of tv-app's AppModel. If it stays identical through G4 it can move to a
-// shared package, same pattern as the views; it is kept per-app for now since the touch exit/orientation
-// work may add iPad-specific state.)
+// It diverged from tv-app's AppModel with the local copy (HANDOFF §17, 2026-09-15): this app holds a durable
+// mirror of the remembered Host's rotation, which tvOS cannot (no non-purgeable storage), so the two models
+// stay per-app rather than shared.
 @MainActor
 @Observable
 final class AppModel {
@@ -22,8 +22,12 @@ final class AppModel {
     private(set) var route: Route = .picker
 
     let discovery = HostDiscovery()
-    let player = RotationPlayer()
+    let player: RotationPlayer
     let pipeline: MediaPipeline
+    /// The local copy (§17): a durable, automatic mirror of the remembered Host's rotation, always on, no
+    /// switch. It feeds the stage overlay's status and the picker's "Local copy" row, and seeds the stage when
+    /// the Host is not answering, so opening the app is the whole offline gesture.
+    let localCopy: LocalCopy
 
     // Manual-entry field + its error, and the "still looking" flag that drives the waiting copy (§13).
     var manualAddress = ""
@@ -52,18 +56,48 @@ final class AppModel {
         self.store = store
         soundOn = (UserDefaults.standard.object(forKey: Self.soundKey) as? Bool) ?? true
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let localCopy = LocalCopy(directory: support.appendingPathComponent("OpenObject/LocalCopy", isDirectory: true))
+        self.localCopy = localCopy
+        // A held piece is read straight from the copy, no network at all; anything else goes through the
+        // purgeable cache exactly as before.
         pipeline = MediaPipeline(cache: MediaCache(directory: caches.appendingPathComponent("OOMedia")),
-                                 maxPixel: 3840)
-        // Open straight to art if a Host is remembered from a previous launch (§5).
+                                 maxPixel: 3840,
+                                 localFile: { host, item in await localCopy.localFile(host: host, item: item) })
+        // Every successful poll of a real Host also feeds the local copy (§17). The Gallery is never saved:
+        // choosing it is non-persisting, it is public and online by nature, and it is demo art, not the owner's.
+        let client = DisplayClient()
+        player = RotationPlayer(fetch: { host in
+            let response = try await client.fetchDisplay(from: host)
+            if host.id != Host.gallery.id { await localCopy.observe(host: host, response: response) }
+            return response
+        })
+        player.wakesWhenHostUnreachable = true          // offline ignores the Sleep schedule (§17)
+        // Open straight to art if a Host is remembered from a previous launch (§5). With a local copy of that
+        // Host the art plays at once and the Host folds in if it answers: no Connecting beat, no watchdog.
         if let remembered = store.loadDefaultHost() {
             route = .display(remembered)
-            player.start(host: remembered)
-            startRememberedHostWatchdog()
+            if let seed = localCopy.seed(for: remembered) {
+                player.start(host: remembered, seed: seed)
+            } else {
+                player.start(host: remembered)
+                startRememberedHostWatchdog()
+            }
         }
     }
 
     /// The live discovery list, sorted and deduplicated (observed by the picker).
     var hosts: [Host] { discovery.hosts }
+
+    /// The Host whose rotation this device holds, offered as a picker row ONLY while that Host is not on the
+    /// network (§17): a live row plays the same art and refreshes the copy, so one name never appears twice.
+    /// A manually-typed Host is never discovered, so its row simply stays; tapping it still connects live if
+    /// the Host answers. The picker places it after the live Hosts and before the Gallery.
+    var localCopyRow: Host? {
+        guard localCopy.status.hasCopy, let held = localCopy.host else { return nil }
+        let live = hosts.contains { $0.id == held.id || $0.baseURL == held.baseURL }
+        return live ? nil : held
+    }
 
     /// Begin browsing when the picker is showing. Idempotent.
     func startDiscoveryIfPicking() {
@@ -118,7 +152,10 @@ final class AppModel {
         scanFloor?.cancel()
         connectWatchdog?.cancel()
         clearManualEntry()
-        player.start(host: host)
+        // One local copy at a time, the remembered Host's (§17): a different Host drops the previous copy now.
+        if let held = localCopy.host, held.id != host.id { localCopy.clear() }
+        // A held Host that is not answering plays from its copy at once (the picker's "Local copy" row).
+        player.start(host: host, seed: localCopy.seed(for: host))
         route = .display(host)
     }
 

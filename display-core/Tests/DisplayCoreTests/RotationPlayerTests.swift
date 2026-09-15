@@ -100,3 +100,80 @@ final class Sendbox: @unchecked Sendable {
         return items.count > 1 ? items.removeFirst() : items[0]   // last one repeats
     }
 }
+
+// The iPad's local copy (HANDOFF §17): a seed plays before any poll, and a Host gone while asleep wakes.
+@Suite @MainActor struct RotationPlayerSeedTests {
+    private func still(_ id: String) -> DisplayItem {
+        DisplayItem(id: id, kind: .still, format: .png, fit: .fit, filename: "\(id).png", src: nil)
+    }
+    private func response(_ ids: [String], asleep: Bool = false) -> DisplayResponse {
+        DisplayResponse(items: ids.map(still), durationMs: 100_000, mode: .sequence,
+                        pinnedId: nil, asleep: asleep, source: .library)
+    }
+    private func host() throws -> DisplayCore.Host { try #require(DisplayCore.Host.manualEntry("h:3000")) }
+    private func playingID(_ player: RotationPlayer) -> String? {
+        if case let .playing(item) = player.screen { return item.id }
+        return nil
+    }
+    private func waitUntil(_ timeout: Duration = .seconds(3), _ condition: @MainActor () -> Bool) async {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: timeout)
+        while clock.now < deadline {
+            if condition() { return }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
+    @Test func seededStartPlaysAtOnceWithoutTheHost() async throws {
+        struct Unreachable: Error {}
+        let player = RotationPlayer(fetch: { _ in throw Unreachable() }, pollInterval: .milliseconds(20))
+        player.start(host: try host(), seed: response(["copy"], asleep: true))
+        #expect(playingID(player) == "copy")                  // synchronously, before any poll
+        #expect(player.hasConnected)                          // no Connecting screen
+        #expect(!player.hostReachable)                        // but honest about the Host
+        try? await Task.sleep(for: .milliseconds(80))
+        #expect(playingID(player) == "copy")                  // failed polls change nothing
+        player.stop()
+    }
+
+    @Test func liveAnswerFoldsInOverTheSeed() async throws {
+        let live = response(["live"])
+        let player = RotationPlayer(fetch: { _ in live }, pollInterval: .seconds(100))
+        player.start(host: try host(), seed: response(["copy"]))
+        await waitUntil { playingID(player) == "live" }
+        #expect(playingID(player) == "live" && player.hostReachable)
+        player.stop()
+    }
+
+    @Test func hostGoneWhileAsleepWakesOnlyWhenAsked() async throws {
+        struct Unreachable: Error {}
+        let script = Sendbox([response(["a"], asleep: true)])
+        let gone = Flag()
+        let fetch: @Sendable (DisplayCore.Host) async throws -> DisplayResponse = { _ in
+            if await gone.value { throw Unreachable() }
+            return script.next()
+        }
+        let holds = RotationPlayer(fetch: fetch, pollInterval: .milliseconds(20))
+        holds.start(host: try host())
+        await waitUntil { holds.screen == .sleeping }
+        await gone.set(true)
+        try? await Task.sleep(for: .milliseconds(80))
+        #expect(holds.screen == .sleeping)                    // default: hold what the Host last said
+        holds.stop()
+
+        await gone.set(false)
+        let wakes = RotationPlayer(fetch: fetch, pollInterval: .milliseconds(20))
+        wakes.wakesWhenHostUnreachable = true
+        wakes.start(host: try host())
+        await waitUntil { wakes.screen == .sleeping }
+        await gone.set(true)
+        await waitUntil { playingID(wakes) == "a" }
+        #expect(playingID(wakes) == "a" && !wakes.hostReachable)
+        wakes.stop()
+    }
+}
+
+actor Flag {
+    private(set) var value = false
+    func set(_ v: Bool) { value = v }
+}

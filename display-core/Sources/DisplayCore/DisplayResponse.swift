@@ -15,7 +15,7 @@ public enum Source: String, Sendable, Codable {
     case folder
 }
 
-public struct DisplayResponse: Sendable, Decodable {
+public struct DisplayResponse: Sendable, Codable, Equatable {
     public let items: [DisplayItem]
     public let durationMs: Int
     public let mode: RotationMode
@@ -54,5 +54,25 @@ public struct DisplayResponse: Sendable, Decodable {
         asleep = (try? c.decode(Bool.self, forKey: .asleep)) ?? false
         let sourceRaw = (try? c.decodeIfPresent(String.self, forKey: .source)) ?? nil
         source = sourceRaw.flatMap(Source.init(rawValue:)) ?? .library
+    }
+
+    // Encoding exists for the iPad's local-copy manifest (HANDOFF §17): the last successful response is
+    // written to disk and read back through the lenient decoder above on an offline launch.
+    public func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(items, forKey: .items)
+        try c.encode(durationMs, forKey: .durationMs)
+        try c.encode(mode, forKey: .mode)
+        try c.encodeIfPresent(pinnedId, forKey: .pinnedId)
+        try c.encode(asleep, forKey: .asleep)
+        try c.encode(source, forKey: .source)
+    }
+
+    /// The same response with Sleep cleared. The iPad's local copy plays through the Host's sleep hours when
+    /// the Host is not there to say otherwise (offline ignores the schedule, §17), so a saved or last-seen
+    /// response is applied awake.
+    public var awake: DisplayResponse {
+        DisplayResponse(items: items, durationMs: durationMs, mode: mode, pinnedId: pinnedId,
+                        asleep: false, source: source)
     }
 }

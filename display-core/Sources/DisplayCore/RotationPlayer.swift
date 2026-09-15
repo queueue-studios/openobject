@@ -21,6 +21,14 @@ public final class RotationPlayer {
     /// then (§13). Stays true afterward even if later polls fail, so a Host that drops mid-playback holds
     /// its last frame rather than falling back to "Connecting" (§16: hold the last frame).
     public private(set) var hasConnected = false
+    /// Whether the most recent poll of the current Host succeeded: false until the first success and again
+    /// after any failure. The iPad overlay reads it to say "Playing local copy" (HANDOFF §17); `hasConnected`
+    /// stays the stage's Connecting gate, since a seeded copy is something to show before any poll.
+    public private(set) var hostReachable = false
+    /// iPad local copy (§17): when true, a Host that stops answering while asleep is woken to its last
+    /// rotation, because the device cannot know the Host's hours once the Host is gone (offline ignores the
+    /// schedule). Off by default: tvOS holds whatever the Host last said, exactly as the web display does.
+    public var wakesWhenHostUnreachable = false
 
     private let fetch: @Sendable (Host) async throws -> DisplayResponse
     private let engine: RotationEngine
@@ -29,6 +37,7 @@ public final class RotationPlayer {
     private var pollTask: Task<Void, Never>?
     private var advanceTask: Task<Void, Never>?
     private var shownID: String?   // the id whose duration the advance timer is currently counting
+    private var lastResponse: DisplayResponse?   // what the engine last applied (a seed, or a live poll)
 
     /// Designated init: `fetch` is the /api/display source (injected in tests; the real one is a
     /// DisplayClient, via the convenience init below).
@@ -49,17 +58,42 @@ public final class RotationPlayer {
 
     /// Begin rendering `host`: poll it now and every `pollInterval`, advancing on each piece's duration.
     /// Replaces any current session.
-    public func start(host: Host) {
+    ///
+    /// - Parameter seed: a rotation to play at once, before the Host has answered (the iPad's local copy,
+    ///   §17). Art first, then the network: the seed is applied awake, the stage skips Connecting, and a live
+    ///   answer folds in on top through the engine exactly as any later poll does. Nil (tvOS, the Gallery,
+    ///   a Host with no copy) is the original behavior.
+    public func start(host: Host, seed: DisplayResponse? = nil) {
         stop()
         hasConnected = false
+        hostReachable = false
+        lastResponse = nil
+        if let seed {
+            let awake = seed.awake
+            lastResponse = awake
+            engine.apply(awake)
+            hasConnected = true
+            reconcile()
+        }
         pollTask = Task { [weak self] in
             while !Task.isCancelled {
                 guard let self else { return }
                 // A failed poll keeps the current screen (playback is local), like display.js's catch.
                 if let response = try? await self.fetch(host) {
                     self.hasConnected = true
+                    self.hostReachable = true
+                    self.lastResponse = response
                     self.engine.apply(response)
                     self.reconcile()
+                } else {
+                    self.hostReachable = false
+                    // Gone while asleep: the copy plays on rather than holding a dark screen it cannot end.
+                    if self.wakesWhenHostUnreachable, let last = self.lastResponse, last.asleep {
+                        let awake = last.awake
+                        self.lastResponse = awake
+                        self.engine.apply(awake)
+                        self.reconcile()
+                    }
                 }
                 try? await Task.sleep(for: self.pollInterval)
             }

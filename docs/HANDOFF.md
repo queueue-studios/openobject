@@ -958,7 +958,7 @@ Let the **iPad/iPhone** app genuinely **hold** its art, so a device that has bee
 
 **Design (settled 2026-09-15, Matt): an always-on local copy, no switch, no new noun.** The iPad keeps a durable copy of the **remembered Host's current rotation** at all times. The one-sentence model an owner needs: *the iPad carries the rotation as it was when it last saw the Host.* The feature adds two small things to the UI and nothing else: a Host-named row in the picker when that Host is absent, and one status line in the overlay a tap on the art already reveals. The stage, the Sound control, and every other screen are untouched. The decisions, each with its reason:
 
-- **Always on, no switch.** The app already caches every piece it shows; today's cache is small, purgeable, and forgets the rotation list, so making it complete and durable is a change of degree, not of kind, and it earns no toggle. It is the frame's own principle, a full local mirror by default (§9), at a smaller scale: the rotation, not the Library, so the copy follows the owner's curation and stays bounded by it. A "Keep art on this iPad" switch was considered and not built; the natural limit (the rotation) plus the free-space reserve below make it unnecessary, and reclaiming space already has an iOS convention (Settings > General > iPad Storage lists the app's size with Offload and Delete).
+- **Always on, no switch.** The app already caches every piece it shows; today's cache is small, purgeable, and forgets the rotation list, so making it complete and durable is a change of degree, not of kind, and it earns no toggle. It is the frame's own principle, a full local mirror by default (§9), at a smaller scale: the rotation, not the Library, so the copy follows the owner's curation and stays bounded by it. A "Keep art on this iPad" switch was considered and not built; the natural limit (the rotation) plus the free-space reserve below make it unnecessary, and reclaiming space already has an iOS convention (Settings > General > iPad Storage lists the app's size; Delete App clears it, while Offload keeps an app's data and so does not).
 - **Vocabulary: "Local copy".** The picker row keeps the **Host's name** and carries a quiet **"Local copy"** tag. Weighed and rejected: *"On your iPad"* (the first draft, replaced at Matt's request for something closer to "local"), *"Downloaded"* (the Music/TV convention, but it names an act the owner never took), *"On-device"* (spec-sheet tone against a casual UI), and bare *"Local"* (ambiguous, since every discovered Host is already on the local network). A generic pseudo-Host such as "Cached Art Gallery" was the opening idea and was dropped because it invents a second thing to understand; "Matt's Frame · Local copy" says exactly what is true, the frame is not here but its art is. One word, used the same way everywhere: "Saving local copy", "Local copy ready", "Playing local copy".
 - **The picker.** Rows in this order: **live Hosts**, then the **local copy** of the remembered Host, then the **OpenObject Demo Gallery**. The local-copy row shows **only when its own Host is not on the network** (picking the live Host plays the same art and refreshes the copy, so two rows with one name would only confuse); when a *different* Host is live, the copy still sits below it. Its icon is the device glyph (`ipad` / `iphone`); network Hosts keep `play.tv`. The E23 waiting copy is unchanged: with no live Host, "Hosts on your network will appear here." sits above the local-copy row and the Gallery row. The Gallery keeps its existing probe gate (`TVOS-APP-PLAN.md` §13), so truly offline the picker shows the local copy alone, and on a venue's internet with no Host it shows both. Testing offline at home needs no test mode: turn off the iPad's Wi-Fi, the Host drops out of discovery, the row appears. **Removal** by press-and-hold ("Remove local copy", the Music/TV gesture) is **deferred out of the first build**: the copy already shrinks with the rotation and clears when a different Host is chosen.
 - **The stage overlay, the one real addition.** Always-on gives the owner everything except confidence that the iPad is ready before leaving, so the tap-revealed overlay (today just the "Hosts" button, top-left) gains one status capsule top-right, in the same material, and the zero-chrome stage stays zero-chrome. Four states: **"Saving local copy · 12 of 42"** while it fills; **"Local copy ready"** once everything in the rotation is on the device; **"Playing local copy"** while the Host is not answering (this doubles as the explanation for why edits made on the Host are not appearing); and **"30 of 42 fit on your iPad"** when the reserve stopped it. "Your iPad" becomes "your iPhone" from the idiom, as the picker's device-name line already does.
@@ -971,6 +971,8 @@ Let the **iPad/iPhone** app genuinely **hold** its art, so a device that has bee
 - **Saving runs in the foreground, on the stage.** It fetches the whole rotation **ahead of playback** over the LAN (today's stage only loads the current piece), so a few minutes on the stage covers most rotations; iOS background time is too short to rely on, and "leave it playing until the overlay says ready" is the honest instruction. For a very large rotation the practical limit is time, not space: a hundred gigabytes over Wi-Fi is the better part of an hour, and the overlay count is how the owner knows it is done.
 - **Offline, the Sleep schedule is ignored.** The manifest's `asleep` is a point-in-time value; the iPad cannot know the Host's hours, and a venue's differ. The copy just plays.
 - **Docs (§16).** The Setup Guide gains its iPad section when this ships, with the one instruction above and the local-copy row; nothing changes until then. `TVOS-APP-PLAN.md` §9 stays the engine-level note and was corrected to point here. The iPad-to-TV HDMI path above is unchanged and still unverified; nothing in this design depends on it.
+
+**Built 2026-09-15 (§20), simulator-verified on both idioms; the real-device check is a roadmap Checks row.** The block above is as designed; the as-built notes (the "not discovered" test for the picker row, the 24-hour grace, the reserve figures, the retry throttle, the Dynamic Island inset for the overlay) are in the §20 record. The Mac guide's app section and the frame guide's pointer paragraph describe the copy for owners (§16).
 
 **If an Apple TV specifically must be on the gallery wall, something has to serve it.** A Mac running the app, which can stand up its own network via Internet Sharing so no gallery Wi-Fi is needed, or the frame, which is self-contained and already plays from localhost with no network (§20 2026-07-12). Both are real answers to the gallerist; neither is an offline Apple TV.
 
@@ -1080,6 +1082,55 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-09-15: the iPad local copy (E3 built)
+
+The iPad/iPhone app now holds a **local copy** of the remembered Host's rotation, always on, per the §17
+design settled the same day ("Offline / portable playback"). What was built, and where:
+
+- **`display-core/Sources/DisplayCore/LocalCopy.swift`**: `LocalCopyStore` (an actor: the manifest, the held
+  files under Application Support, the free-space reserve, the departed grace) and `LocalCopy` (a main-actor
+  observable coordinator: status for the overlay and the picker, fill passes ahead of playback, and the
+  synchronous reads a launch needs). Foundation-only, so it unit-tests on macOS; **13 new tests** cover
+  reconcile, the grace, the reserve, departed-first purging, Host switching, Host-scoped lookup, seeding, and
+  the coordinator's passes (74 in the package now). `DisplayItem` and `DisplayResponse` gained `Encodable`
+  (and `Equatable`) so the manifest is our own JSON, read back through the existing lenient decoder;
+  `DisplayResponse.awake` clears Sleep for offline play.
+- **`MediaPipeline`** takes an optional Host-scoped `localFile` lookup, consulted before the cache, and
+  exposes `mediaPath(for:)`, the host-relative path that keys the copy (a DHCP address change keeps it).
+- **`RotationPlayer.start(host:seed:)`** applies a seed at once (`hasConnected` true, so no Connecting beat)
+  and polls on top of it; `hostReachable` tracks the last poll; `wakesWhenHostUnreachable` (set by the iPad
+  app only) wakes a Host that vanished while asleep, so a device carried away overnight never holds a dark
+  screen it cannot end. **tvOS is untouched**: every new parameter defaults to the old behavior, and the
+  tvOS app was rebuilt to prove it. One platform gate: tvOS lacks `volumeAvailableCapacityForImportantUsage`,
+  so the shared file falls back to the plain free-space figure there.
+- **`ipad-app`**: `AppModel` feeds every real Host's successful poll to the copy (never the Gallery), seeds
+  the stage at launch and from the picker, clears the copy when a different Host is chosen, and derives the
+  picker row; `HostPickerView` shows the held Host's row tagged **Local copy** (device glyph) after live Hosts
+  and before the Gallery, only while that Host is not discovered; `ArtStageView`'s tap-revealed overlay
+  gained the status capsule, top-right, with the four states. The overlay now pads itself by the key
+  window's top safe-area inset, because the capsule had landed under the iPhone's Dynamic Island in the
+  simulator pass: the root ignores the safe area so the art runs edge to edge, which strips it from the
+  overlay too. (Moving the ignore off the root and onto each screen was tried first and reverted: it left
+  the iPad's home indicator visible on the stage.)
+
+**Verified in the simulator (iPad Pro 11-inch and iPhone 17 Pro) against a throwaway Host on localhost**
+(`OO_NO_MDNS=1`, its own data directory, eight generated pieces): the fill reached "Local copy ready" with
+the files on disk under Application Support, backup-excluded, original extensions kept; the Host put to
+Sleep and then killed: the stage woke to the copy and read "Playing local copy"; a cold relaunch with the
+Host down opened straight to art; the picker listed Matt's real frame (live on the LAN) first and
+"localhost · Local copy" beneath it, and tapping that row played; deleting a piece on the Host marked its
+file departed, dated, and kept it. **Not seen: the empty-network picker** (no live Host at all), because the
+real frame stayed discoverable throughout; it is the same row inserted into the E23 waiting state, and a
+Checks row covers it on the device.
+
+**As-built notes against the §17 design.** The picker row's "not on the network" test is "not in the
+discovered list", so a manually typed Host (never discovered) keeps its row even while live; tapping it
+still connects live. The departed grace is **24 hours**; departed pieces are purged first when a wanted
+piece needs room. The reserve is one tenth of the volume with a 5 GB floor, checked per file (an HTTP HEAD
+for the size, verified after the download when the Host does not say). A pass that ended short on space, or
+with a failed download, is retried no sooner than 30 s later, on the next successful poll. Press-and-hold
+removal stays deferred.
 
 ### 2026-09-02: one version line across all four surfaces (E19 shipped)
 
