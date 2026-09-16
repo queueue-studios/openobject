@@ -116,6 +116,11 @@ const REGISTRY = [
   },
   {
     slug: 'perfect-everything',
+    // The page composes a SQUARE (its tinted mat plus the canvas, sized min(w,h)) and leaves the rest of a
+    // non-square viewport bare: on a portrait phone that square sat at the top with black beneath (Matt,
+    // iPhone Safari, 2026-09-15). Declaring the square as the aspect centers it on any viewport; the 1:1
+    // frame and the height-limited square on a widescreen Mac are pixel-identical to before (§20).
+    aspect: '1 / 1',
     artist: 'V4w.enko',
     name: 'Perfect Everything',
     chain: 'Tezos',
@@ -136,6 +141,7 @@ const REGISTRY = [
   },
   {
     slug: 'pendulum',
+    aspect: '1 / 1', // same square page as Perfect Everything, same portrait fix (§20 2026-09-15)
     artist: 'Cinzia y Gabriel',
     name: 'Pendulum',
     chain: 'Tezos',
@@ -506,6 +512,17 @@ const REGISTRY = [
     // (a Mac) keeps the sharper default 2. Applied at display time per device role (display.js), so it needs
     // no re-mirror: an existing piece picks it up as soon as the display updates. See §20 2026-07-29.
     framePixelDensity: 1,
+    // PHONES: the bundle picks its entry point by user agent (iPhone / iPod / Android / Mobi, the iPad
+    // excluded) and on a phone loads script2mobile.js, a static cover (forCover/inkField_<token>.jpg, which
+    // the mirror does not carry, so the phone showed "Unable to load cover"; Matt, iPhone Safari,
+    // 2026-09-15). The artist's own escape hatch is a one-shot sessionStorage flag (set by a double-tap on
+    // the cover) that forces script.js. A same-origin iframe shares the display page's sessionStorage, so
+    // the display sets the flag before every load (`sessionFlags`, generic) and a phone plays the live
+    // sketch, at the frame's pixelDensity 1 (display.js applies `_pix` to phones too). Matt's call, 2026-09-15:
+    // the platform owes the artist's visual result, and a current iPhone far outruns the frame's GPU; the
+    // cover was a marketplace-browsing courtesy, not a capability limit. On the frame and the Mac the flag
+    // is a harmless no-op (they are the live path already). Nothing in the mirror changes.
+    sessionFlags: { _inkForceLive: '1' },
     // The bundle ships an "artist" mode (a full in-page editor) and a "collector" mode (clean, cursor
     // hidden, auto-play, loop pinned on); collector only auto-engages on the fxhash platform, so force it.
     // That one flip yields the clean display AND the loop. Then the INKFIELD_HOOK (black stage) and the

@@ -47,7 +47,7 @@ Decided, unblocked, ready to start.
 | E23 | Apps (tvOS, iPad) | Host picker empty state: restore the "waiting, not failed" copy and stop suppressing it when the Gallery row shows, rename toward **OpenObject Demo Gallery**, and disable Connect on an empty address field. **Unblocked 2026-09-01**: both apps are live at 1.6.2, so the fixes ship in the next app build | HANDOFF §17 "Host picker empty state" | Small. Both apps: tvOS has the same defects and drew a luckier reviewer |
 | E24 | Apps (tvOS, iPad) | Connect gives no feedback while it probes: the button stays enabled, nothing spins, and `URLSession.shared`'s default **60 second** timeout means it can look dead for a minute. Disable it while in flight, show progress, and use a short timeout | HANDOFF §17 "Connect has no pending state" | Small, and the higher priority of the pair. Found on a real iPhone 2026-09-02: a typed address appeared to do nothing, then connected on its own well after the tap |
 | E25 | Apps (tvOS, iPad) | No way to retry discovery from the picker. The Bonjour browse only restarts when the app returns to the foreground with an empty list, so a browse that goes stale while the owner is watching the screen has no visible recovery | HANDOFF §17 "Connect has no pending state" | Small. Same 2026-09-02 session: toggling iOS Local Network permission killed the in-flight browse, and staying in the app meant nothing ever re-browsed |
-| E1 | Apps (iPad) | Connected Collections on the iPad/iPhone app via `WKWebView`, plus the skip mechanism and the "Chrome Only" pill. **Unblocked 2026-09-01**: the iOS build is approved and live, so the external wall is gone | HANDOFF §17 "Connected Collections on the viewer apps" | **Large**, and deliberately not queued ahead of the 1.9.0 release. **One check** now opens it: Connected art on a real **iPhone** (inkField cleared 2026-09-01). Running the shipped app on an iPhone does not count, since it renders no Connected art |
+| E1 | Apps (iPad) | Connected Collections on the iPad/iPhone app via `WKWebView`, plus the skip mechanism and the "Chrome Only" pill. **Unblocked 2026-09-01**: the iOS build is approved and live, so the external wall is gone | HANDOFF §17 "Connected Collections on the viewer apps" | **Large.** **The iPhone check passed 2026-09-15** (Matt, Safari on his iPhone at the frame's display page: Golden Lining and every other piece clean; the layout findings were display-side and fixed the same day, HANDOFF §20). No rendering unknown remains. Two things to settle before building: Connected pieces offline with the local copy (skip them, as the engine does today, or carry the bundles), and the `WKWebView` memory budget, which only the build can measure |
 
 ## Blocked
 
@@ -66,7 +66,6 @@ Worth doing, deliberately not now.
 |----|------|------|--------------|---------------|
 | E14 | Mac app | Move the Settings window to tabs | Settings reaches **five or six rows**. It has two (Dock icon, Auto Display), and tabs would cost a click and look emptier than the single pane (Matt, 2026-08-02) | HANDOFF §20 2026-08-06 Auto Display record. Small |
 | E6 | Apps (tvOS, iPad) | Retro Arcade easter egg on tvOS / iPad. `arcade.js` is dependency-free canvas 2D and maps onto SpriteKit or SwiftUI Canvas; a Siri Remote D-pad is a better trigger than a keyboard | Whenever wanted. Post-v1 by choice, no external condition | `TVOS-APP-PLAN.md` §5. Medium |
-| E2 | Apps (iPad) | Golden Lining as a pre-rendered looping video, a per-piece WebKit fallback | Nothing: this one **closes** rather than resumes, and is now one check away, the iPhone. Provisionally retired already, since the piece rendered correctly on a real iPad | HANDOFF §17 "Golden Lining as a pre-rendered video" |
 
 ## Candidate
 
@@ -96,6 +95,7 @@ when the check is done or when the build carrying it ships.
 | Apple TV | The per-Host row icon in the picker now matches its label size. Confirm on the real Apple TV, since that is where the undersized icon was noticed; the simulator before/after only proves the change took effect | `8adbbbe`, 2026-08-08 |
 | Apple TV | E23's picker empty state: the headline reads as waiting, the Gallery row says **Demo**, and Connect is greyed until an address is typed. Simulator-verified; the real remote's focus behaviour around a disabled Connect is what the device pass is for | this change |
 | iPad + iPhone | The same three E23 fixes. Verified on both idioms in the simulator with the frame powered down. **Not seen rendered: the device-name line** (`Your iPad` / `Your iPhone`), which only draws when the Gallery is unreachable too, so forcing it needs a moment with no Host *and* no internet | this change |
+| iPhone | During the 2026-09-15 Safari survey the display went black and froze once, and afterwards Safari could not reach `openobject.local` until Wi-Fi was toggled, while the Mac still could. Next time: try the frame's IP address in Safari. If the IP answers, the phone lost the name (mDNS), not the page, and the freeze was a piece failing to fetch; if the IP fails too, Safari's page process died under a heavy piece, which is a memory question for E1 | HANDOFF §20 2026-09-15 |
 
 ## Closed: decided against, or not worth tracking
 
@@ -105,6 +105,7 @@ of §20 and the memory files cannot quietly resurrect them as new items.
 
 | ID | Item | When |
 |----|------|------|
+| D20 | Golden Lining as a pre-rendered looping video, a per-piece WebKit fallback. **Formerly E2.** The piece renders clean on a real iPad (2026-08-06) and a real iPhone (2026-09-15), so the fallback has no failing surface; the reasoning stays in HANDOFF §17 in case a future piece fails | 2026-09-15 |
 | D1 | Library pagination. Keep one growing list; the Show All / In-rotation filter solved the clutter | 2026-06-25 |
 | D2 | A sort control on the Settings Connected Collections list. It is a fixed curated shelf, not a growing set | 2026-06-25 |
 | D3 | "Paste any URL" / a general live on-chain resolver | HANDOFF §17/§20 |

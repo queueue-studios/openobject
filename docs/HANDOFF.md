@@ -887,6 +887,8 @@ The one thing Safari cannot answer is app memory budget, since a `WKWebView` hos
 
 **Apple TV is unchanged by all of this** and stays native-only.
 
+**The iPhone check passed (Matt, 2026-09-15).** Safari on his iPhone at the frame's display page, the whole rotation of Connected pieces: **Golden Lining clean**, Binary Mountains and an SVG upload perfect, nothing showing the tile corruption. So WebKit renders every piece correctly on both target devices, this section's whole exception is retired on evidence, and E2 closes (roadmap D20). The run also surfaced three display-side findings, all fixed the same day (§20 2026-09-15): inkField's phone path, the square pieces' portrait centering, and Chromie Squiggle "too wide", which was its Fill setting doing exactly that on a portrait screen. One open observation, a black freeze followed by Safari losing `openobject.local` until Wi-Fi was toggled, is a roadmap Checks row with the IP-address test that separates name resolution from a page-process death. E1 is now a straight build with two design points to settle first (the roadmap row names them).
+
 **Sequencing: submit the iOS app FIRST, unchanged, then build this (Matt, 2026-08-06).** Nothing in these findings makes the staged iOS build wrong. It is complete, device-verified, and correct as designed (native rendering, no Connected art). **Do not open `ipad-app` before it ships.** Doing so would mean submitting something other than what was tested, would put a brand-new capability in front of a first App Review, and would leave a dirty tree if tvOS review comes back needing a respin. So: iOS submits unchanged, and Connected art becomes the natural follow-on release once there is a shipped baseline to compare against. The two open checks above (inkField, iPhone) fit naturally into that gap.
 
 **Amended 2026-08-07: the pair now ships at 1.6.2, not 1.6.1.** Two tvOS bugs surfaced on the real Apple TV the day the App Store build went live, so `tv-app/` and `display-core/` are no longer untouched since submission (`55adc30`, `bd25f1e`), and both shells moved to 1.6.2 together (`a2dc043`). The "do not open `ipad-app`" rule still holds in substance: its only change is that version bump, so the iOS binary is still the device-verified build, and it debuts at 1.6.2 so the two apps stay matched. **The iOS side of the App Store record still reads 1.0**, a placeholder from when the record was created; it must be set to 1.6.2 by hand before submitting.
@@ -1082,6 +1084,43 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-09-15: three phone-display fixes from the iPhone survey (E1's last check)
+
+Matt ran every Connected piece in Safari on his iPhone at the frame's display page, the last rendering
+check gating E1 (§17). WebKit passed (Golden Lining clean), and three things looked wrong that turned out
+to be the display page and the registry, not the engine. Fixed the same day, verified in the in-app
+browser at 375x812 against a local player fed a copy of the Mac app's data (`OO_NO_MDNS=1`, its own
+`OO_DATA_DIR`), so nothing touched the frame or the Mac's library.
+
+- **inkField showed "Unable to load cover" (`forCover/inkField_<token>.jpg not found`).** The bundle picks
+  its entry point by user agent (iPhone / iPod / Android / Mobi, the iPad excluded) and on a phone loads
+  `script2mobile.js`, a static cover the mirror does not carry, since no phone had ever requested it. The
+  artist's own escape hatch is a one-shot `sessionStorage` flag, `_inkForceLive`, set by a double-tap on the
+  cover, which forces the live sketch. A same-origin iframe shares the display page's `sessionStorage`, so
+  the display now sets the flag right before every load: a generic `sessionFlags` field on the registry
+  entry, passed through `/api/display`, applied in `display.js`. **Matt's call: live on phones, at the
+  frame's pixelDensity 1** (`_pix:1` now goes to phones as well as the frame, by the bundle's own
+  user-agent test), on the reasoning that the platform owes the artist's visual result, a current iPhone
+  far outruns the frame's GPU, and the cover was a marketplace-browsing courtesy rather than a capability
+  limit; density 1 also keeps a square recording clear of mobile Safari's canvas cap. On the frame and the
+  Mac the flag is a no-op (already live). **Nothing in the mirror changed**, so tokens 31 and 38 and the
+  desktop archive bundles stay as they are. Verified: with the phone user agent the bundle reports phone
+  plus force-live, loads `script.js`, draws a 900x900 canvas, and the painting replays centered with the
+  artist's grid box intact.
+- **Perfect Everything and Pendulum sat at the top of a portrait screen.** Both pages compose a SQUARE
+  (a tinted mat plus the `min(w,h)` canvas) and leave the rest of a non-square viewport bare; the 1:1 frame
+  never noticed, and a widescreen Mac shows a height-limited square anyway. They now declare `aspect: '1 /
+  1'`, so the existing `.layer.aspect` rule centers the square on any viewport; the frame and the Mac are
+  pixel-identical to before.
+- **Chromie Squiggle "too wide, off both edges" was not a bug.** The piece is set to **Fill** on Matt's
+  frame (read from `/api/library`), and Fill covers a portrait screen by center-cropping the 3:2 canvas,
+  which is exactly that. Fit would letterbox it. No change.
+
+Files: `player/src/collections.js` (`sessionFlags` and the phone note on inkField; `aspect` on
+perfect-everything and pendulum), `player/server.js` (`sessionFlags` passthrough), `player/public/display.js`
+(`isPhone()`, `_pix` on phones, the session-flag set). The Setup Guide is unchanged: nothing it says about
+phones is affected. The player picks these up on the frame at the next Software Update.
 
 ### 2026-09-15: the iPad local copy (E3 built)
 

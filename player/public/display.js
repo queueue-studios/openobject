@@ -56,6 +56,11 @@ let items = [];
 let durationMs = 8000;
 let mode = 'sequence';
 let muted = true; // the web display's Sound setting (§12): true = video muted. Set from /api/display each poll.
+// A phone, by the same user-agent test the inkField bundle uses (the iPad is a capable display, not a phone).
+function isPhone() {
+  const ua = navigator.userAgent || '';
+  return /Mobi|Android|iPhone|iPod/i.test(ua) && !/iPad/i.test(ua);
+}
 let deviceRole = null; // 'frame' | 'standalone', from /api/display each poll — lets render() pick a frame-safe
                        // pixel density for a GPU-heavy connected collection. Comes with the items (no race).
 
@@ -181,8 +186,16 @@ function render(layer, item, onReady) {
     const qIdx = srcNoFrag.indexOf('?');
     if (qIdx >= 0) params.push(srcNoFrag.slice(qIdx + 1));               // per-piece seed (shared bundles)
     // A GPU-heavy collection (inkField) renders at a lighter pixelDensity on the weak frame GPU: pass the
-    // bundle's own ?_pix param ONLY on a frame Display, so a capable display keeps the sharper default (§8).
-    if (item.framePixelDensity != null && deviceRole === 'frame') params.push('_pix:' + item.framePixelDensity);
+    // bundle's own ?_pix param on a frame Display, and on a PHONE (Matt, 2026-09-15: live at density one, so
+    // a square recording never nears mobile Safari's canvas cap), so a capable display keeps the sharper
+    // default (§8).
+    if (item.framePixelDensity != null && (deviceRole === 'frame' || isPhone())) params.push('_pix:' + item.framePixelDensity);
+    // Some bundles read a one-shot sessionStorage flag on load (inkField: its force-live switch, otherwise a
+    // phone gets a static cover). A same-origin iframe shares this page's sessionStorage, so set each named
+    // flag right before the load; the bundle consumes it. Best-effort: storage can be disabled.
+    if (item.sessionFlags) {
+      for (const k in item.sessionFlags) { try { sessionStorage.setItem(k, item.sessionFlags[k]); } catch (_) {} }
+    }
     if (item.rpcUrl) params.push('rpc_url=' + encodeURIComponent(item.rpcUrl)); // live RPC override
     if (item.animate) params.push('ooanim=1');                          // fire the bundle's animate hook
     if (item.speed != null) params.push('oospeed=' + encodeURIComponent(item.speed)); // 0..10 cosine sweep speed
