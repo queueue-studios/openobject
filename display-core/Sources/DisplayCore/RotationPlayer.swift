@@ -29,6 +29,10 @@ public final class RotationPlayer {
     /// rotation, because the device cannot know the Host's hours once the Host is gone (offline ignores the
     /// schedule). Off by default: tvOS holds whatever the Host last said, exactly as the web display does.
     public var wakesWhenHostUnreachable = false
+    /// iOS Connected art (HANDOFF §17, phase one): when true, a Host that stops answering has its Connected
+    /// pieces dropped from the running rotation, because a web view can only load them from a Host that
+    /// answers; the next successful poll brings them back. Off by default: tvOS never renders them anyway.
+    public var dropsConnectedWhenHostUnreachable = false
     /// The offline rotation override (§17, E26): while the Host is not answering, its duration and/or mode
     /// replace the captured ones. Ignored while the Host is reachable, and cleared by a successful poll, so
     /// an offline change lasts exactly until the device sees the Host again. Set it before `start` so a
@@ -95,16 +99,18 @@ public final class RotationPlayer {
                 } else {
                     let wasReachable = self.hostReachable
                     self.hostReachable = false
-                    // Gone while asleep: the copy plays on rather than holding a dark screen it cannot end.
-                    if self.wakesWhenHostUnreachable, let last = self.lastResponse, last.asleep {
-                        let awake = last.awake
-                        self.lastResponse = awake
-                        self.engine.apply(awake.overridden(by: self.offlineOverride))
-                        self.reconcile()
-                    } else if wasReachable, self.offlineOverride != nil, let last = self.lastResponse {
-                        // Just lost the Host with an override waiting: apply it now (E26).
-                        self.engine.apply(last.overridden(by: self.offlineOverride))
-                        self.reconcile()
+                    // The Host is not answering: reshape what it last said for offline play, if anything
+                    // about it has to change (gone while asleep: the copy plays on rather than holding a
+                    // dark screen it cannot end; Connected pieces: dropped, a web view cannot load them;
+                    // an override waiting from E26: applied now). Each reshaping happens once, since the
+                    // stored response is replaced by its offline form.
+                    if let last = self.lastResponse {
+                        let offline = self.offlineShape(of: last)
+                        if offline != last || (wasReachable && self.offlineOverride != nil) {
+                            self.lastResponse = offline
+                            self.engine.apply(offline.overridden(by: self.offlineOverride))
+                            self.reconcile()
+                        }
                     }
                 }
                 try? await Task.sleep(for: self.pollInterval)
@@ -119,9 +125,37 @@ public final class RotationPlayer {
     public func setOfflineOverride(_ override: RotationOverride?) {
         offlineOverride = (override?.isEmpty == true) ? nil : override
         guard !hostReachable, let last = lastResponse else { return }
-        engine.apply(last.awake.overridden(by: offlineOverride))
+        engine.apply(offlineShape(of: last).awake.overridden(by: offlineOverride))
         reconcile()
         armAdvance()
+    }
+
+    /// The stage reports that `id` is now actually visible. If it is the current piece, its duration is
+    /// counted from now: a piece's duration is visible time (HANDOFF §7), and a Connected bundle can take
+    /// seconds to generate before it paints. Only the iOS web layer calls this; native media reveals within
+    /// milliseconds of the pick, so the tvOS cadence is unchanged.
+    public func pieceRevealed(id: String) {
+        guard id == shownID else { return }
+        armAdvance()
+    }
+
+    /// Move to the next piece at once. The iOS web layer calls this when a Connected piece's web content
+    /// process has died twice (HANDOFF §17): the piece cannot paint, so it gives up its turn rather than
+    /// holding a black stage. A lone piece stays (the next pick is itself); the piece gets its normal turn
+    /// again next pass.
+    public func advanceNow() {
+        engine.advance()
+        reconcile()
+    }
+
+    // A response as it should play while the Host is not answering, per the app's options: awake if the
+    // device wakes a gone Host, and without Connected pieces if it drops them. tvOS sets neither, so this
+    // is the identity there.
+    private func offlineShape(of response: DisplayResponse) -> DisplayResponse {
+        var next = response
+        if wakesWhenHostUnreachable, next.asleep { next = next.awake }
+        if dropsConnectedWhenHostUnreachable, next.hasConnected { next = next.withoutConnected }
+        return next
     }
 
     /// Stop polling and advancing, and drop the timers.

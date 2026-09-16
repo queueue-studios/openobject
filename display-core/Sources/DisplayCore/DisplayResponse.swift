@@ -88,6 +88,20 @@ public struct DisplayResponse: Sendable, Codable, Equatable {
                                mode: override.mode ?? mode, pinnedId: pinnedId, asleep: asleep, source: source)
     }
 
+    /// The same response without its Connected pieces. A web view can only load a Connected piece from a
+    /// Host that answers, so when the Host stops answering the iOS player plays on without them (HANDOFF
+    /// §17, phase one); the next successful poll brings them back. A Pin on a Connected piece is dropped
+    /// with it rather than collapsing the rotation to nothing.
+    public var withoutConnected: DisplayResponse {
+        let kept = items.filter { $0.kind != .connected }
+        let pin = kept.contains { $0.id == pinnedId } ? pinnedId : nil
+        return DisplayResponse(items: kept, durationMs: durationMs, mode: mode, pinnedId: pin,
+                               asleep: asleep, source: source)
+    }
+
+    /// Whether any piece is a Connected one.
+    public var hasConnected: Bool { items.contains { $0.kind == .connected } }
+
     /// The same response with Sleep cleared. The iPad's local copy plays through the Host's sleep hours when
     /// the Host is not there to say otherwise (offline ignores the schedule, §17), so a saved or last-seen
     /// response is applied awake.

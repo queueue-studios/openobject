@@ -47,13 +47,17 @@ public final class RotationEngine {
     private var shuffleBag: [Int] = []           // remaining indices in this Shuffle pass
     private var itemsListSig = ""                // renderable ids; the bag resets only when this changes
 
-    private let filter = CapabilityFilter()
+    private let filter: CapabilityFilter
     private var rng: any RandomNumberGenerator
 
     /// - Parameter rng: randomness for Shuffle order. Inject a seeded generator in tests for
     ///   deterministic passes; defaults to the system generator.
-    public init(rng: any RandomNumberGenerator = SystemRandomNumberGenerator()) {
+    /// - Parameter filter: what this Display can render. The default skips Connected pieces (tvOS); the
+    ///   iOS app passes `CapabilityFilter(rendersConnected: true)` for its web view (HANDOFF §17).
+    public init(rng: any RandomNumberGenerator = SystemRandomNumberGenerator(),
+                filter: CapabilityFilter = CapabilityFilter()) {
         self.rng = rng
+        self.filter = filter
     }
 
     /// Fold a fresh /api/display poll into the running rotation (§8). Safe to call on every poll.
@@ -148,9 +152,12 @@ public final class RotationEngine {
     }
 
     // What determines how a renderable piece looks: a change here (e.g. a live Fit flip) re-renders it
-    // in place, matching display.js's `sig`. For a native item that is fit + the media source.
+    // in place, matching display.js's `sig`. For a native item that is fit + the media source; for a
+    // Connected piece it is everything that reaches its URL (a control-panel change to Animate, Speed, a
+    // choice or a control while the piece is on screen reloads it, exactly as the frame does).
     private func sig(_ item: DisplayItem) -> String {
-        "\(item.fit.rawValue)|\(item.src ?? item.filename ?? item.id)"
+        if item.kind == .connected { return "c|" + ConnectedURL.signature(for: item) + "|\(item.fit.rawValue)" }
+        return "\(item.fit.rawValue)|\(item.src ?? item.filename ?? item.id)"
     }
 
     // Fisher-Yates over 0..<n using the injected RNG (mirrors display.js's shuffle exactly, so a seeded
