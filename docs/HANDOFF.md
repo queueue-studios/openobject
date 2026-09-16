@@ -1110,6 +1110,11 @@ Per the §17 "Offline rotation controls" bullet settled the same morning. What w
 Sound stays on the picker, per the design. The Mac guide's local-copy paragraph gained one sentence (§16);
 the frame guide points there already.
 
+**Device-verified 2026-09-16** (Matt, TestFlight iOS 1.10.0 build 4, Wi-Fi off on the iPad as the
+"frame gone" state, which arrives at once; frame off with Wi-Fi on works too but can take up to the poll
+timeout to register): the chevron appears only offline, Order and Every apply and survive a relaunch, and
+the frame's return clears them and closes the panel.
+
 ### 2026-09-15: three phone-display fixes from the iPhone survey (E1's last check)
 
 Matt ran every Connected piece in Safari on his iPhone at the frame's display page, the last rendering
