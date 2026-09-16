@@ -851,6 +851,11 @@ phone: `dns-sd -B _openobject._tcp` showed the frame advertising on both interfa
 library. Frame healthy, therefore phone. **Check the server from a machine that is known good before
 theorising about the client.**
 
+**Fixed in the iOS app 2026-09-16 (§20).** Connect disables and shows a spinner while the probe is in
+flight, the probe runs through an ephemeral session with an 8 s timeout, and the picker re-browses itself
+every 15 s while its list is empty, with no new UI. The tvOS halves of E24 and E25 stay open on the
+roadmap: the same lines in `tv-app`, with the next tvOS release.
+
 ### Connected Collections on the viewer apps: the WebKit path reopened by measurement (noted 2026-08-05)
 
 `docs/TVOS-APP-PLAN.md` §2 rules that **neither** viewer app renders Connected art. The Apple TV half of that ruling is permanent (tvOS ships no web engine and none can be added). The **iPad and iPhone half was never measured**, and it has now been falsified as a blanket rule.
@@ -890,6 +895,17 @@ The one thing Safari cannot answer is app memory budget, since a `WKWebView` hos
 **The iPhone check passed (Matt, 2026-09-15).** Safari on his iPhone at the frame's display page, the whole rotation of Connected pieces: **Golden Lining clean**, Binary Mountains and an SVG upload perfect, nothing showing the tile corruption. So WebKit renders every piece correctly on both target devices, this section's whole exception is retired on evidence, and E2 closes (roadmap D20). The run also surfaced three display-side findings, all fixed the same day (§20 2026-09-15): inkField's phone path, the square pieces' portrait centering, and Chromie Squiggle "too wide", which was its Fill setting doing exactly that on a portrait screen. One open observation, a black freeze followed by Safari losing `openobject.local` until Wi-Fi was toggled, is a roadmap Checks row with the IP-address test that separates name resolution from a page-process death. E1 is now a straight build.
 
 **Two phases, settled 2026-09-16 (Matt).** *Phase one, live:* Connected pieces play on the iPad and iPhone while the Host is reachable, the web view pointed at the Host's own mirror with the same URL contract `display.js` builds (including the inkField session flag and the phone density cap added 2026-09-15); while the iPad plays its local copy offline they are skipped, as the engine does today, and the copy plays the rest. This phase proves the web view and measures the `WKWebView` memory budget on the real devices, the one unknown left. *Phase two, offline:* the local copy also carries each Connected piece's mirrored bundle (the Mac's whole Connected mirror is about 146 MB across ten collections) and the manifest gains the URL-building fields (seed, controls, crop, aspect, the session flag); an in-app custom URL scheme handler serves the bundle to the web view, since WebKit blocks a page's runtime `fetch` from plain file paths (inkField loads its recording that way). Nothing is redone between the phases. The mirror already makes every bundle offline-capable by design (external references localized at add time); the single exception, send/receive, reads the chain while it renders and offline shows the artist's own network-error sprite, exactly as on a frame with no network.
+
+**Phase one built 2026-09-16 (§20).** As designed in the two-phase paragraph, with the as-built shape in
+the §20 entry: the Connected render fields on `DisplayItem`, `ConnectedURL` as the byte-for-byte port of
+`display.js`'s URL building, `ConnectedLayout` for crop and aspect, an opt-in `CapabilityFilter` so tvOS
+and the local copy's wanted set are untouched, an optional Connected-layer slot on the shared stage, and
+the iOS app's `ConnectedWebLayer`. Three small player calls came with it: a gone Host drops its Connected
+pieces from the running rotation (a web view cannot load them from a Host that does not answer), a piece's
+duration counts from its reveal, and a piece whose web content process has died twice gives up its turn
+(after a 2 s floor) rather than holding a black stage. That last one is a runtime reaction, not the deferred
+skip mechanism above, which stays unbuilt with the pill unless a piece actually fails. Simulator-verified;
+Matt's device run measures the memory budget.
 
 **Sequencing: submit the iOS app FIRST, unchanged, then build this (Matt, 2026-08-06).** Nothing in these findings makes the staged iOS build wrong. It is complete, device-verified, and correct as designed (native rendering, no Connected art). **Do not open `ipad-app` before it ships.** Doing so would mean submitting something other than what was tested, would put a brand-new capability in front of a first App Review, and would leave a dirty tree if tvOS review comes back needing a respin. So: iOS submits unchanged, and Connected art becomes the natural follow-on release once there is a shipped baseline to compare against. The two open checks above (inkField, iPhone) fit naturally into that gap.
 
@@ -1087,6 +1103,89 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-09-16: Connected Collections on the iPad and iPhone while the Host is reachable (E1 phase one built), plus E24 and E25 on iOS
+
+Per the §17 two-phase decision settled the same day. What was built, and where:
+
+- **`DisplayCore`.** `DisplayItem` now decodes the Connected render fields the Host already sends
+  (`collection`, `token_id`, `source_url`, `perToken`, `animate`, `speed`, `choice`, `controls`, `rpcUrl`,
+  `crop`, `aspect`, `framePixelDensity`, `sessionFlags`, `awaitPaint`), leniently, with numbers kept in
+  their JavaScript spelling so a control value of 2.5 reaches the URL as `2.5` and 20 as `20`; they are
+  encoded into the local-copy manifest too, so phase two reads them back without a migration.
+  `CapabilityFilter(rendersConnected:)`, default off, and `RotationEngine(filter:)`: only the iOS player
+  opts in; tvOS and the local copy's wanted set keep the default, which is exactly the phase one rule
+  (offline the copy skips Connected pieces and plays the rest). **`ConnectedURL`** builds the bundle URL
+  as `display.js` does: the collections path with the per-token segment, the seed query spliced raw from
+  the source URL, `_pix:<n>` on phones, `rpc_url`, `ooanim`, `oospeed`, `oochoice`, the `oo_<key>` controls
+  with the Sound gate forcing `music=off` when muted, and the `#fragment` last. Control keys are emitted
+  sorted, the one deliberate difference (display.js walks the Host's object in insertion order; no bundle
+  depends on it). **`ConnectedLayout`** ports `display.css`'s crop and aspect sizing to a box on the stage.
+  `RotationPlayer` gained three calls only the iOS app uses: `dropsConnectedWhenHostUnreachable` (a web
+  view cannot load from a Host that does not answer, so a gone Host's Connected pieces leave the running
+  rotation and the next successful poll brings them back), `pieceRevealed(id:)` (a Connected piece's
+  duration counts from its reveal, §7), and `advanceNow()` (a piece whose web content process has died
+  twice gives up its turn). The engine's restyle signature for a Connected piece is its URL signature, so a
+  control-panel change to a piece on screen reloads it in place, as the frame does. 19 new tests (96 in the
+  package); the tvOS app was rebuilt to prove it is unchanged.
+- **`DisplayUI`.** `ArtStageCore` takes an optional `connectedLayer` builder (nil on tvOS). The stage
+  gives the layer its crop/aspect box and clips it to the stage, adds it hidden, crossfades it in only when
+  it reports ready, reports the reveal to the player, and drops the outgoing layer 750 ms after the fade,
+  so one web view is alive in steady state and two briefly (`display.js`'s two layers). WebKit never enters
+  the shared package. **No 30 s reveal backstop, deliberately.** The frame needs one because it arms the
+  next advance from the reveal, so a bundle that never reports ready would wedge its rotation; here the
+  player arms the advance from the pick and re-arms it at the reveal, so nothing can wedge, and the first
+  build's backstop only ever did harm: with Azulejo Galo pinned in the simulator it crossfaded to a layer
+  that had not painted, a black stage for the rest of the generate. The outgoing piece now holds until the
+  incoming one is genuinely ready, the §7 rule.
+- **`ipad-app`.** **`ConnectedWebLayer`**: a `WKWebView` at the Host's mirror, with autoplay allowed
+  without a gesture and inline playback on (the kiosk's `--autoplay-policy` flag), the bundle's
+  `sessionStorage` flags set by a user script at document start (inkField's force-live), a black
+  background from the first frame, no scrolling or previews, no touch (the art is not a control), and the
+  iframe sandbox's intent restored by policy: the main frame may only load this Host's `/collections/`
+  path and may not open windows. Ready is the navigation finishing, or for an `awaitPaint` bundle the
+  first painted frame by the same canvas-and-frameCount test as `display.js`, capped at 12 s. A dead web
+  content process is reloaded once; a second death hands the piece back to the stage, which advances
+  after a 2 s floor (Matt's call, over holding a black stage). "Phone" is the idiom, which is the answer
+  the bundle's own user-agent test gives (an iPhone web view reports an iPhone, an iPad one a Mac). Every
+  load, ready, unload, process death and memory warning is logged (subsystem `io.openobject.app`,
+  category `webview`, persisted) with the app's remaining memory, for the device measurement. `AppModel`
+  opts the engine in and drops Connected pieces when the Host is gone.
+- **E24 and E25, iOS only.** Connect disables and shows a spinner while a typed address is probed, and
+  the probe runs through an ephemeral session with an 8 s timeout instead of the shared session's 60 (the
+  Gallery probe already worked this way, at 3 s; both share one helper now). While the picker's list is
+  empty it re-browses itself every 15 s, with no UI; the Gallery is re-probed only when its last probe
+  failed, so an offered row never blinks out. The tvOS halves stay open on the roadmap.
+
+**Verified in the simulator (iPad Pro 11-inch, portrait, plus the Connect state on iPhone 17 Pro) against
+a throwaway Host on localhost** (`OO_NO_MDNS=1`, a copy of the Mac's data with its 146 MB Connected mirror,
+one piece of every collection plus the three uploads in rotation): every collection rendered from the
+Host's mirror (Lost in Moffat County, inkField live with its grid, Pendulum, The Bloom, Chromie Squiggle,
+Code-Art, Dune Reveries, Perfect Circles, Perfect Everything, send/receive, Tiles, Azulejo Galo, As the
+Days Go By, the bouncing logo), with the URLs in the log matching what `display.js` builds (the seed
+queries, `oospeed=1&oochoice=0` on the squiggle, `oochoice=tiled-low` on Tiles, `rpc_url` on send/receive,
+`oo_music=on` on The Bloom, `#38` on inkField); The Bloom and Code-Art sat in their 16:9 boxes and the
+square pieces centered; the crossfades ran web to web, web to native (logo to video) and native to web
+(still to Moffat); the outgoing layer unloaded after each fade; no blocked navigation, load failure or
+process death. **The Host taken away mid-piece** (the test server stopped while Moffat County was on
+screen): within 10 s the poll failed, the Connected pieces left the rotation, the local copy's video took
+the stage, and the cleanup dropped the Connected layer and unloaded its web view ("web layers alive 0");
+the Host brought back: the Connected pieces returned on the next advance. A cold relaunch with the Host
+remembered opened straight to the copy's upload and folded the live rotation in on the first poll. One
+earlier, uninstrumented run of the same cut did not log the outgoing layer's teardown, which is why the
+stage now logs every transition with the count of live Connected layers (category `stage`): the device
+run reads that count alongside the memory figures, so a leak would show. Connect on the phone spun and
+reported "No Host answered" in seconds against an unroutable address. Simulator limits, all for the device run: `os_proc_available_memory` reads zero
+there, audio is inaudible, the headless simulator cannot be rotated (landscape unchecked), and canvas
+work is far slower than on a real iPad: **Azulejo Galo's synchronous generate took 56 s in the simulator**
+(about 6 s in Chrome on the Mac; the frame's own Chromium renders it routinely), so in a 15 s rotation it
+never reached ready and the piece before it held. Its real load time on the iPad and iPhone is one of the
+device run's numbers; every other bundle reported ready within about 1.4 s of its load.
+
+The frame guide's app paragraph, the Mac guide's "What plays on them", the README's feature line and the
+tvOS plan's superseded note now say Connected Collections play on the iPad and iPhone while the Host is on
+the network, are not yet part of the local copy, and stay off the Apple TV (§16). The website's Connected
+line changes with the iOS release that carries this. iOS build 5.
 
 ### 2026-09-16: offline rotation controls on the local copy (E26 built)
 

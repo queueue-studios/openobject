@@ -106,9 +106,10 @@ fit, the corner says how many pieces did. To remove the copy entirely, delete th
 (Settings > General > iPad Storage, or iPhone Storage, then OpenObject and Delete App).
 
 **What plays on them.** Your uploaded images and video, and Folder Collections, all exactly as on
-your Mac. **Connected Collections do not play on these apps**, because the pieces are small web
-programs and neither Apple TV nor iPad has a way to run them. They keep playing on your Mac and on
-a frame.
+your Mac. **Connected Collections play on the iPad and iPhone** while the Mac is on the network: the
+pieces are small web programs, and the app runs them from the Mac as they come up, so they are not part
+of the local copy yet. **They do not play on the Apple TV**, which has no way to run them. They keep
+playing on your Mac and on a frame either way.
 
 **The Apple TV stores no art.** It reads from the Host as it plays, so it needs the Mac running: turn
 the Mac off and the TV has nothing to show; turn it back on and the art returns. The iPad and iPhone keep
