@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2B30729B2BCF7A85E1483196 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A844CD351E9A95F19B6E3888 /* AppModel.swift */; };
 		4B2EEE7514833F1A8648FF9F /* DisplayCore in Frameworks */ = {isa = PBXBuildFile; productRef = C17D79CD6B396B168F94A6BA /* DisplayCore */; };
+		623B98D4623AEC62A052810C /* ConnectedWebLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0F58CFF93DC087CD18FF6D3 /* ConnectedWebLayer.swift */; };
 		62BBB65E0C954985340A7241 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED4ED6C991174D53E98ADCB /* RootView.swift */; };
 		7998C806D8D4795FD548426D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9F495F9E260E654A7FF423B1 /* Assets.xcassets */; };
 		975256C9B88CC5551DFDE9D3 /* OpenObjectApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E5EAFDEBAABEBDFDC5CCFA /* OpenObjectApp.swift */; };
@@ -27,6 +28,7 @@
 		9F495F9E260E654A7FF423B1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A844CD351E9A95F19B6E3888 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		C9BEA43C301A266597B50BEC /* display-core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "display-core"; path = "../display-core"; sourceTree = SOURCE_ROOT; };
+		D0F58CFF93DC087CD18FF6D3 /* ConnectedWebLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectedWebLayer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,6 +59,7 @@
 			children = (
 				A844CD351E9A95F19B6E3888 /* AppModel.swift */,
 				5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */,
+				D0F58CFF93DC087CD18FF6D3 /* ConnectedWebLayer.swift */,
 				965CA6A5C9E0069F762371BE /* HostPickerView.swift */,
 				58E5EAFDEBAABEBDFDC5CCFA /* OpenObjectApp.swift */,
 				5ED4ED6C991174D53E98ADCB /* RootView.swift */,
@@ -161,6 +164,7 @@
 			files = (
 				2B30729B2BCF7A85E1483196 /* AppModel.swift in Sources */,
 				C0CC78C31BF06ED8D3BE499E /* ArtStageView.swift in Sources */,
+				623B98D4623AEC62A052810C /* ConnectedWebLayer.swift in Sources */,
 				D8A06044E1A19EDC97777A1B /* HostPickerView.swift in Sources */,
 				975256C9B88CC5551DFDE9D3 /* OpenObjectApp.swift in Sources */,
 				62BBB65E0C954985340A7241 /* RootView.swift in Sources */,
@@ -224,7 +228,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = J87JRCN9RM;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -293,7 +297,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = J87JRCN9RM;
 				ENABLE_NS_ASSERTIONS = NO;

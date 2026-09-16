@@ -34,7 +34,8 @@ struct ArtStageView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            ArtStageCore(player: player, host: host, pipeline: pipeline, muted: muted)
+            ArtStageCore(player: player, host: host, pipeline: pipeline, muted: muted,
+                         connectedLayer: Self.connectedLayer)
                 .ignoresSafeArea()
 
             // Full-stage tap catcher (near-transparent fill, contentShape-reliable): a tap on the art
@@ -110,6 +111,19 @@ struct ArtStageView: View {
         // Hiding the overlay, or the frame coming back, closes the panel with it.
         .onChange(of: showControls) { _, shown in if !shown { showRotation = false } }
         .onChange(of: player.hostReachable) { _, reachable in if reachable { showRotation = false } }
+    }
+
+    // A Connected piece's renderer (HANDOFF §17): the web view at the URL display.js would build for this
+    // device. "Phone" is decided by idiom, which is the same answer the bundle's own user-agent test gives
+    // (an iPhone web view reports an iPhone; an iPad one reports a Mac), so the phone density cap and the
+    // force-live flag land exactly where the frame's display page puts them.
+    private static func connectedLayer(_ request: ConnectedLayerRequest) -> AnyView {
+        let phone = UIDevice.current.userInterfaceIdiom == .phone
+        guard let url = ConnectedURL.url(for: request.item, on: request.host, phone: phone, muted: request.muted) else {
+            return AnyView(Color.black)
+        }
+        return AnyView(ConnectedWebLayer(url: url, host: request.host, item: request.item,
+                                         onReady: request.onReady, onFailed: request.onFailed))
     }
 
     // The two offline controls (E26), the control panel's own words. Order is a two-segment control, Every a

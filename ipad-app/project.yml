@@ -38,10 +38,12 @@ settings:
     # train once it is approved (iOS 1.9.0, build 2, shipped) and refuses any further build under it. The
     # platform line catches up at the 1.10.0 release, when release.sh rewrites this value anyway. The build
     # number is a per-platform counter and does not have to match tvOS's; build 1 was 1.6.2, build 2 was
-    # 1.9.0, build 3 carried the local copy (E3) to TestFlight, build 4 adds the offline rotation controls
-    # (E26). Bump it here, then `xcodegen generate`, before every archive.
+    # 1.9.0, build 3 carried the local copy (E3) to TestFlight, build 4 added the offline rotation controls
+    # (E26), build 5 adds Connected Collections while the Host is reachable (E1 phase one) plus the Connect
+    # pending state and self-restarting discovery (E24, E25). Bump it here, then `xcodegen generate`,
+    # before every archive.
     MARKETING_VERSION: "1.10.0"
-    CURRENT_PROJECT_VERSION: "4"
+    CURRENT_PROJECT_VERSION: "5"
     TARGETED_DEVICE_FAMILY: "1,2" # Universal: 1 = iPhone, 2 = iPad
     # Signed for on-device testing (Phase G5) with the Queueue Studios LLC team (J87JRCN9RM). Automatic
     # signing provisions a development profile for a paired iPad/iPhone on the first device build; the

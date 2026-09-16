@@ -42,9 +42,10 @@ final class AppModel {
     /// state falls back to the plain "No Hosts found" copy instead of a dead button (§12/§13).
     private(set) var galleryReachable: Bool?
 
-    // The app-owned Sound setting (§10): whether this device plays a scored video's audio. Sticky and
-    // default On; the device's own volume/mute is the loudness control above it. Only uploaded videos can
-    // carry audio here (Connected scored pieces are skipped), so this gates exactly that.
+    // The app-owned Sound setting (§10): whether this device plays a scored video's audio, and the master
+    // gate above a Connected piece's own audio control (The Bloom's Music), which is forced silent while
+    // Sound is off (§12). Sticky and default On; the device's own volume/mute is the loudness control above
+    // it. Changing it means leaving the stage (it lives on the picker), so no piece needs a live flip.
     var soundOn: Bool {
         didSet { UserDefaults.standard.set(soundOn, forKey: Self.soundKey) }
     }
@@ -79,12 +80,16 @@ final class AppModel {
         // Every successful poll of a real Host also feeds the local copy (§17). The Gallery is never saved:
         // choosing it is non-persisting, it is public and online by nature, and it is demo art, not the owner's.
         let client = DisplayClient()
+        // This app renders Connected pieces, in a web view at the Host's mirror (HANDOFF §17, phase one), so
+        // its engine rotates through them. The local copy keeps the default filter: offline they are skipped
+        // and the copy plays the rest, until phase two carries their bundles.
         player = RotationPlayer(fetch: { host in
             let response = try await client.fetchDisplay(from: host)
             if host.id != Host.gallery.id { await localCopy.observe(host: host, response: response) }
             return response
-        })
+        }, engine: RotationEngine(filter: CapabilityFilter(rendersConnected: true)))
         player.wakesWhenHostUnreachable = true          // offline ignores the Sleep schedule (§17)
+        player.dropsConnectedWhenHostUnreachable = true // a web view cannot load from a Host that is gone
         player.setOfflineOverride(localCopy.override)   // a venue setting survives a relaunch (E26)
         // Open straight to art if a Host is remembered from a previous launch (§5). With a local copy of that
         // Host the art plays at once and the Host folds in if it answers: no Connecting beat, no watchdog.
