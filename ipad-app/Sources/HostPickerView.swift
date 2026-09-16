@@ -124,6 +124,10 @@ struct HostPickerView: View {
     // a red error under the field, which the App Review reviewer read as a required login that had failed
     // (§17, E23). The keyboard's Go key is guarded in submit() for the same reason; model.manualError stays
     // as a defensive guard, but the UI can no longer reach its empty case.
+    //
+    // It is also disabled, and shows a spinner in place of its label, while a probe is in flight (E24): the
+    // shipped build kept it enabled and silent for up to a minute, which on a real iPhone read as a button
+    // that did nothing. The label is kept at its own width underneath so the button does not change size.
     private var addressIsEmpty: Bool {
         model.manualAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -142,9 +146,15 @@ struct HostPickerView: View {
                     .focused($addressFocused)
                     .frame(maxWidth: 360)
                     .onSubmit { submit() }
-                Button("Connect") { submit() }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(addressIsEmpty)
+                Button {
+                    submit()
+                } label: {
+                    Text("Connect")
+                        .opacity(model.connecting ? 0 : 1)
+                        .overlay { if model.connecting { ProgressView().tint(.white) } }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(addressIsEmpty || model.connecting)
             }
             if let error = model.manualError {
                 Text(error).font(.callout).foregroundStyle(.red)
@@ -153,7 +163,7 @@ struct HostPickerView: View {
     }
 
     private func submit() {
-        guard !addressIsEmpty else { return }
+        guard !addressIsEmpty, !model.connecting else { return }
         addressFocused = false
         Task { await model.submitManualEntry() }
     }
