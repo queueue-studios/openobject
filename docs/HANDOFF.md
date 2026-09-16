@@ -972,7 +972,7 @@ Let the **iPad/iPhone** app genuinely **hold** its art, so a device that has bee
 - **Offline, the Sleep schedule is ignored.** The manifest's `asleep` is a point-in-time value; the iPad cannot know the Host's hours, and a venue's differ. The copy just plays.
 - **Docs (§16).** The Setup Guide gains its iPad section when this ships, with the one instruction above and the local-copy row; nothing changes until then. `TVOS-APP-PLAN.md` §9 stays the engine-level note and was corrected to point here. The iPad-to-TV HDMI path above is unchanged and still unverified; nothing in this design depends on it.
 
-**Built 2026-09-15 (§20), simulator-verified on both idioms; the real-device check is a roadmap Checks row.** The block above is as designed; the as-built notes (the "not discovered" test for the picker row, the 24-hour grace, the reserve figures, the retry throttle, the Dynamic Island inset for the overlay) are in the §20 record. The Mac guide's app section and the frame guide's pointer paragraph describe the copy for owners (§16).
+**Built and device-verified 2026-09-15 (§20).** Simulator-verified on both idioms, then verified by Matt on his iPad through TestFlight (iOS 1.10.0, build 3): frame on, frame off, iPad fully offline, frame back on. The block above is as designed; the as-built notes (the "not discovered" test for the picker row, the 24-hour grace, the reserve figures, the retry throttle, the Dynamic Island inset for the overlay) are in the §20 record. The Mac guide's app section and the frame guide's pointer paragraph describe the copy for owners (§16).
 
 **If an Apple TV specifically must be on the gallery wall, something has to serve it.** A Mac running the app, which can stand up its own network via Internet Sharing so no gallery Wi-Fi is needed, or the frame, which is self-contained and already plays from localhost with no network (§20 2026-07-12). Both are real answers to the gallerist; neither is an offline Apple TV.
 
@@ -1121,8 +1121,20 @@ Sleep and then killed: the stage woke to the copy and read "Playing local copy";
 Host down opened straight to art; the picker listed Matt's real frame (live on the LAN) first and
 "localhost · Local copy" beneath it, and tapping that row played; deleting a piece on the Host marked its
 file departed, dated, and kept it. **Not seen: the empty-network picker** (no live Host at all), because the
-real frame stayed discoverable throughout; it is the same row inserted into the E23 waiting state, and a
-Checks row covers it on the device.
+real frame stayed discoverable throughout; it is the same row inserted into the E23 waiting state.
+
+**Device-verified the same evening (Matt, TestFlight iOS 1.10.0 build 3, his iPad and his frame).** The
+four-part script passed as written: frame on, the fill ran ahead of playback to "Local copy ready"; frame
+off, a cold launch opened straight to art, the overlay read "Playing local copy", and the picker showed
+the waiting line, the frame's row tagged Local copy, and the Demo Gallery beneath it (the empty-network
+state the simulator could not show); Wi-Fi off, the same minus the Gallery; frame back on, the copy
+reconciled to "ready". Two process lessons surfaced on the way. **App Store Connect closes a version train
+once it is approved**: the first upload as 1.9.0 (3) was refused (errors 90186 / 90062, iOS 1.9.0 build 2
+being live), so the iOS app went out as **1.10.0 (3)**, a deliberate one-surface run-ahead of the
+platform version line that `release.sh` rewrites at the 1.10.0 release; before any iOS archive, check the
+live version first, a new build number alone is never enough. And **TestFlight internal testing was set
+up for the first time** (an Internal group with automatic distribution, Matt as tester), so future iOS
+builds reach his iPad without the App Store.
 
 **As-built notes against the §17 design.** The picker row's "not on the network" test is "not in the
 discovered list", so a manually typed Host (never discovered) keeps its row even while live; tapping it
