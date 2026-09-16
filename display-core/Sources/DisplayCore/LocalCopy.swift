@@ -409,6 +409,12 @@ public final class LocalCopy {
     /// The Host whose rotation is held (nil until a Host has been polled successfully, or after `clear`).
     public private(set) var host: Host?
     public private(set) var status: LocalCopyStatus = .empty
+    /// The offline rotation override (E26), persisted so a venue setting survives a relaunch while away.
+    /// Cleared by `observe` (a successful poll): the Host is back and its values rule.
+    public private(set) var override: RotationOverride?
+    /// The Host's captured duration and order, from the manifest: what the override replaces.
+    public var capturedDurationMs: Int? { manifest?.response.durationMs }
+    public var capturedMode: RotationMode? { manifest?.response.mode }
 
     @ObservationIgnored private let store: LocalCopyStore
     @ObservationIgnored private let directory: URL
@@ -419,13 +425,20 @@ public final class LocalCopy {
     @ObservationIgnored private var lastPassAt = Date.distantPast
     @ObservationIgnored private var lastPassIncomplete = false
     @ObservationIgnored private let retryInterval: TimeInterval
+    @ObservationIgnored private let defaults: UserDefaults
+    private static let overrideKey = "openobject.localCopy.override"
 
     /// - Parameter retryInterval: how long after an incomplete pass (space, or a failed download) the next
     ///   successful poll may start another, so a full disk is not re-probed every five seconds.
     public init(directory: URL, grace: TimeInterval = LocalCopyStore.defaultGrace,
-                dependencies: LocalCopyStore.Dependencies = .live, retryInterval: TimeInterval = 30) {
+                dependencies: LocalCopyStore.Dependencies = .live, retryInterval: TimeInterval = 30,
+                defaults: UserDefaults = .standard) {
         self.directory = directory
         self.retryInterval = retryInterval
+        self.defaults = defaults
+        if let data = defaults.data(forKey: Self.overrideKey) {
+            override = try? JSONDecoder().decode(RotationOverride.self, from: data)
+        }
         store = LocalCopyStore(directory: directory, grace: grace, dependencies: dependencies)
         manifest = LocalCopyStore.readManifest(in: directory)          // synchronous: a launch decides on it
         host = manifest?.host
@@ -446,9 +459,21 @@ public final class LocalCopy {
         return LocalCopyStore.heldFile(for: item, in: directory)
     }
 
+    /// Change the offline override (E26). Nil, or one with nothing set, clears it.
+    public func setOverride(_ value: RotationOverride?) {
+        let next = (value?.isEmpty == true) ? nil : value
+        override = next
+        if let next, let data = try? JSONEncoder().encode(next) {
+            defaults.set(data, forKey: Self.overrideKey)
+        } else {
+            defaults.removeObject(forKey: Self.overrideKey)
+        }
+    }
+
     /// Feed a successful poll to the copy. The app calls this for every real Host it polls (never the
     /// Gallery); it reconciles the manifest and starts a fill pass when pieces are missing.
     public func observe(host: Host, response: DisplayResponse) async {
+        if override != nil { setOverride(nil) }                            // the Host is back (E26)
         let outcome = await store.adopt(host: host, response: response)
         manifest = outcome.manifest
         self.host = outcome.manifest.host
@@ -463,6 +488,7 @@ public final class LocalCopy {
         manifest = nil
         host = nil
         status = .empty
+        setOverride(nil)
         lastPassSignature = ""
         lastPassIncomplete = false
         Task { await store.clear() }

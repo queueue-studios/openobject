@@ -17,6 +17,9 @@ struct RootView: View {
                 ArtStageView(player: model.player, host: host, pipeline: model.pipeline,
                              muted: !model.soundOn,
                              localCopy: host.id == Host.gallery.id ? nil : model.localCopy,
+                             offline: OfflineRotation(durationMs: model.offlineDurationMs, mode: model.offlineMode,
+                                                      setDuration: { model.setOfflineDuration($0) },
+                                                      setMode: { model.setOfflineMode($0) }),
                              onExit: { model.showPicker() })
             }
         }

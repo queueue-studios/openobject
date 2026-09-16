@@ -29,6 +29,12 @@ public final class RotationPlayer {
     /// rotation, because the device cannot know the Host's hours once the Host is gone (offline ignores the
     /// schedule). Off by default: tvOS holds whatever the Host last said, exactly as the web display does.
     public var wakesWhenHostUnreachable = false
+    /// The offline rotation override (§17, E26): while the Host is not answering, its duration and/or mode
+    /// replace the captured ones. Ignored while the Host is reachable, and cleared by a successful poll, so
+    /// an offline change lasts exactly until the device sees the Host again. Set it before `start` so a
+    /// seeded start honors it, or any time after; a change while offline is applied at once and re-times
+    /// the piece on screen.
+    public private(set) var offlineOverride: RotationOverride?
 
     private let fetch: @Sendable (Host) async throws -> DisplayResponse
     private let engine: RotationEngine
@@ -71,7 +77,7 @@ public final class RotationPlayer {
         if let seed {
             let awake = seed.awake
             lastResponse = awake
-            engine.apply(awake)
+            engine.apply(awake.overridden(by: offlineOverride))
             hasConnected = true
             reconcile()
         }
@@ -83,21 +89,39 @@ public final class RotationPlayer {
                     self.hasConnected = true
                     self.hostReachable = true
                     self.lastResponse = response
+                    self.offlineOverride = nil                   // the Host is back: its values rule (E26)
                     self.engine.apply(response)
                     self.reconcile()
                 } else {
+                    let wasReachable = self.hostReachable
                     self.hostReachable = false
                     // Gone while asleep: the copy plays on rather than holding a dark screen it cannot end.
                     if self.wakesWhenHostUnreachable, let last = self.lastResponse, last.asleep {
                         let awake = last.awake
                         self.lastResponse = awake
-                        self.engine.apply(awake)
+                        self.engine.apply(awake.overridden(by: self.offlineOverride))
+                        self.reconcile()
+                    } else if wasReachable, self.offlineOverride != nil, let last = self.lastResponse {
+                        // Just lost the Host with an override waiting: apply it now (E26).
+                        self.engine.apply(last.overridden(by: self.offlineOverride))
                         self.reconcile()
                     }
                 }
                 try? await Task.sleep(for: self.pollInterval)
             }
         }
+    }
+
+    /// Set (or clear) the offline override (E26). While the Host is not answering the change applies at
+    /// once: the engine folds the new duration/mode in without restarting the piece, and the advance timer
+    /// is re-armed so "Every" counts from the piece on screen. While the Host is reachable it is only stored
+    /// (and a successful poll clears it), so it can never fight the Host.
+    public func setOfflineOverride(_ override: RotationOverride?) {
+        offlineOverride = (override?.isEmpty == true) ? nil : override
+        guard !hostReachable, let last = lastResponse else { return }
+        engine.apply(last.awake.overridden(by: offlineOverride))
+        reconcile()
+        armAdvance()
     }
 
     /// Stop polling and advancing, and drop the timers.

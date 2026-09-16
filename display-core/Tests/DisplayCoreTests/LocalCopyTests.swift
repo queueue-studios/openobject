@@ -267,3 +267,34 @@ final class Clock: @unchecked Sendable {
     var now: Date { lock.lock(); defer { lock.unlock() }; return date }
     func advance(_ seconds: TimeInterval) { lock.lock(); date = date.addingTimeInterval(seconds); lock.unlock() }
 }
+
+@Suite @MainActor struct LocalCopyOverrideTests {
+    private func tempDir() -> URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("oo-localcopy-\(UUID().uuidString)")
+    }
+    private func deps() -> LocalCopyStore.Dependencies {
+        LocalCopyStore.Dependencies(fetchSize: { _ in 1 },
+                                    download: { _, dest in try Data([1]).write(to: dest) },
+                                    space: { _ in nil })
+    }
+
+    @Test func overridePersistsAcrossLaunchesAndClearsOnASuccessfulPoll() async throws {
+        let dir = tempDir(); defer { try? FileManager.default.removeItem(at: dir) }
+        let suite = "oo-test-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite)); defer { defaults.removePersistentDomain(forName: suite) }
+        let copy = LocalCopy(directory: dir, dependencies: deps(), defaults: defaults)
+        #expect(copy.override == nil)
+        copy.setOverride(RotationOverride(durationMs: 60_000, mode: .shuffle))
+        let relaunched = LocalCopy(directory: dir, dependencies: deps(), defaults: defaults)
+        #expect(relaunched.override == RotationOverride(durationMs: 60_000, mode: .shuffle))   // survived
+        // The Host answers: the override is gone, here and on disk.
+        let h = try #require(DisplayCore.Host.manualEntry("a.local"))
+        await relaunched.observe(host: h, response: libraryResponse([item("a")], mode: .sequence, durationMs: 8000))
+        #expect(relaunched.override == nil)
+        #expect(relaunched.capturedDurationMs == 8000 && relaunched.capturedMode == .sequence)
+        #expect(LocalCopy(directory: dir, dependencies: deps(), defaults: defaults).override == nil)
+        // An empty override is treated as none.
+        relaunched.setOverride(RotationOverride())
+        #expect(relaunched.override == nil)
+    }
+}

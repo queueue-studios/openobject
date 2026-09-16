@@ -13,6 +13,11 @@ import DisplayUI
 // The same tap-revealed overlay carries the local copy's one status line (HANDOFF §17), top-right: whether
 // this device holds the rotation, so an owner knows it is ready before leaving the network. Nothing about it
 // shows until the art is tapped, so the stage stays zero-chrome.
+//
+// While the iPad is playing its local copy, that status line is also the way in to the two offline rotation
+// controls (§17, E26): it gains a chevron, and a tap drops a small panel beneath it with Order (Sequence /
+// Shuffle) and Every (the duration). They exist only in that state; when the frame is live nothing new shows,
+// which by itself says where settings normally live.
 struct ArtStageView: View {
     let player: RotationPlayer
     let host: Host
@@ -20,9 +25,12 @@ struct ArtStageView: View {
     let muted: Bool
     /// The local copy, or nil for a Host that is never held (the Demo Gallery).
     let localCopy: LocalCopy?
+    /// The offline rotation controls' values and setters (E26).
+    let offline: OfflineRotation
     let onExit: () -> Void
 
     @State private var showControls = false
+    @State private var showRotation = false
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -59,13 +67,36 @@ struct ArtStageView: View {
                     Spacer(minLength: 0)
 
                     if let status = localCopyStatus {
-                        Label(status.text, systemImage: status.icon)
-                            .font(.subheadline.weight(.medium))
-                            .lineLimit(1)
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 14)
-                            .background(.ultraThinMaterial, in: Capsule())
-                            .accessibilityLabel(status.text)
+                        VStack(alignment: .trailing, spacing: 8) {
+                            if status.opensRotation {
+                                // Offline: the capsule is a button and the panel hangs beneath it.
+                                Button {
+                                    withAnimation(.easeInOut(duration: 0.2)) { showRotation.toggle() }
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Label(status.text, systemImage: status.icon)
+                                        Image(systemName: showRotation ? "chevron.up" : "chevron.down")
+                                            .font(.caption.weight(.semibold))
+                                    }
+                                    .font(.subheadline.weight(.medium))
+                                    .lineLimit(1)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 14)
+                                    .background(.ultraThinMaterial, in: Capsule())
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("\(status.text). Rotation settings")
+                                if showRotation { rotationPanel }
+                            } else {
+                                Label(status.text, systemImage: status.icon)
+                                    .font(.subheadline.weight(.medium))
+                                    .lineLimit(1)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 14)
+                                    .background(.ultraThinMaterial, in: Capsule())
+                                    .accessibilityLabel(status.text)
+                            }
+                        }
                     }
                 }
                 .foregroundStyle(.white)
@@ -76,6 +107,72 @@ struct ArtStageView: View {
         }
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
+        // Hiding the overlay, or the frame coming back, closes the panel with it.
+        .onChange(of: showControls) { _, shown in if !shown { showRotation = false } }
+        .onChange(of: player.hostReachable) { _, reachable in if reachable { showRotation = false } }
+    }
+
+    // The two offline controls (E26), the control panel's own words. Order is a two-segment control, Every a
+    // menu of presets whose label shows the current value (a non-preset value stays readable until one is
+    // picked). Both apply at once; there is no Save, and no explanatory text.
+    private var rotationPanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Text("Order").font(.subheadline).foregroundStyle(.secondary).frame(width: 52, alignment: .leading)
+                Picker("Order", selection: Binding(
+                    get: { offline.mode ?? .sequence },
+                    set: { offline.setMode($0) }
+                )) {
+                    Text("Sequence").tag(RotationMode.sequence)
+                    Text("Shuffle").tag(RotationMode.shuffle)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 200)
+            }
+            HStack(spacing: 12) {
+                Text("Every").font(.subheadline).foregroundStyle(.secondary).frame(width: 52, alignment: .leading)
+                Menu {
+                    ForEach(Self.durationPresets, id: \.self) { ms in
+                        Button {
+                            offline.setDuration(ms)
+                        } label: {
+                            if ms == offline.durationMs {
+                                Label(Self.durationLabel(ms), systemImage: "checkmark")
+                            } else {
+                                Text(Self.durationLabel(ms))
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(Self.durationLabel(offline.durationMs ?? 8_000))
+                        Image(systemName: "chevron.up.chevron.down").font(.caption.weight(.semibold))
+                    }
+                    .font(.subheadline.weight(.medium))
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 12)
+                    .background(Color.white.opacity(0.12), in: Capsule())
+                }
+                .menuStyle(.button)
+                .buttonStyle(.plain)
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(14)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .transition(.opacity)
+    }
+
+    /// The Every presets, in milliseconds: 15 s to 1 hour.
+    static let durationPresets: [Int] = [15, 30, 60, 120, 300, 600, 1800, 3600].map { $0 * 1000 }
+
+    /// A duration as the control panel would say it: "15 s", "1 min", "2 min 30 s", "1 hour".
+    static func durationLabel(_ ms: Int) -> String {
+        let s = max(1, ms / 1000)
+        if s == 3600 { return "1 hour" }
+        if s > 3600 { return s % 3600 == 0 ? "\(s / 3600) hours" : "\(s / 60) min" }
+        if s < 60 { return "\(s) s" }
+        return s % 60 == 0 ? "\(s / 60) min" : "\(s / 60) min \(s % 60) s"
     }
 
     // The key window's top safe-area inset (the sensor housing on an iPhone, which survives a hidden status
@@ -92,6 +189,8 @@ struct ArtStageView: View {
     private struct CopyStatus {
         let icon: String
         let text: String
+        /// True only for "Playing local copy": the state in which the capsule opens the rotation panel (E26).
+        var opensRotation = false
     }
 
     // The four states of the one status line (§17), in priority order. "Playing local copy" wins whenever the
@@ -101,7 +200,7 @@ struct ArtStageView: View {
         guard let localCopy, localCopy.host?.id == host.id else { return nil }
         let s = localCopy.status
         if !player.hostReachable, s.hasCopy {
-            return CopyStatus(icon: deviceIcon, text: "Playing local copy")
+            return CopyStatus(icon: deviceIcon, text: "Playing local copy", opensRotation: true)
         }
         guard s.total > 0 else { return nil }
         if s.isSaving {
@@ -124,4 +223,13 @@ struct ArtStageView: View {
     private var deviceIcon: String {
         UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"
     }
+}
+
+/// The offline rotation controls' current values and setters (E26), passed in by the root so the stage stays a
+/// plain view over the model.
+struct OfflineRotation {
+    let durationMs: Int?
+    let mode: RotationMode?
+    let setDuration: (Int) -> Void
+    let setMode: (RotationMode) -> Void
 }

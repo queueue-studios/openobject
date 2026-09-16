@@ -15,6 +15,19 @@ public enum Source: String, Sendable, Codable {
     case folder
 }
 
+/// The two rotation settings an iPad may change while playing its local copy (HANDOFF §17, E26): the
+/// duration and the order. Nil fields mean "the Host's captured value". Held with the local copy, applied
+/// only while the Host is not answering, cleared on the next successful poll.
+public struct RotationOverride: Sendable, Codable, Equatable {
+    public var durationMs: Int?
+    public var mode: RotationMode?
+    public init(durationMs: Int? = nil, mode: RotationMode? = nil) {
+        self.durationMs = durationMs
+        self.mode = mode
+    }
+    public var isEmpty: Bool { durationMs == nil && mode == nil }
+}
+
 public struct DisplayResponse: Sendable, Codable, Equatable {
     public let items: [DisplayItem]
     public let durationMs: Int
@@ -66,6 +79,13 @@ public struct DisplayResponse: Sendable, Codable, Equatable {
         try c.encodeIfPresent(pinnedId, forKey: .pinnedId)
         try c.encode(asleep, forKey: .asleep)
         try c.encode(source, forKey: .source)
+    }
+
+    /// The same response with an offline override's duration and/or mode in place of the Host's (§17, E26).
+    public func overridden(by override: RotationOverride?) -> DisplayResponse {
+        guard let override else { return self }
+        return DisplayResponse(items: items, durationMs: override.durationMs ?? durationMs,
+                               mode: override.mode ?? mode, pinnedId: pinnedId, asleep: asleep, source: source)
     }
 
     /// The same response with Sleep cleared. The iPad's local copy plays through the Host's sleep hours when

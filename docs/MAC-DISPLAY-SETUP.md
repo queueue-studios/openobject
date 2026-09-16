@@ -95,7 +95,10 @@ status in the top corner tells you where it stands, **Saving local copy** with a
 then **Local copy ready**. After that, opening the app anywhere plays the art straight away. When the Mac
 is not answering, the same corner reads **Playing local copy**, which is also why changes you make on the
 Mac will not appear until the device sees it again. In the Host list, a Host that is not on the network
-but whose art is on the device shows with a **Local copy** tag; tap it to play. The copy follows your
+but whose art is on the device shows with a **Local copy** tag; tap it to play. While it is playing the
+copy, tapping **Playing local copy** opens two settings you can change on the spot, **Order** (Sequence or
+Shuffle) and **Every** (how long each piece stays); a change made this way lasts until the device sees the
+Mac again, when the Mac's own settings take over. The copy follows your
 rotation: a piece you take out of the rotation leaves the device a day later, and choosing a different
 Host replaces the copy with that Host's. It uses as much space as the rotation needs, never past a
 reserve it leaves free for the rest of the device (a tenth of its storage); if a rotation will not all

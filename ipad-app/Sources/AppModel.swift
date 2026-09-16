@@ -73,6 +73,7 @@ final class AppModel {
             return response
         })
         player.wakesWhenHostUnreachable = true          // offline ignores the Sleep schedule (§17)
+        player.setOfflineOverride(localCopy.override)   // a venue setting survives a relaunch (E26)
         // Open straight to art if a Host is remembered from a previous launch (§5). With a local copy of that
         // Host the art plays at once and the Host folds in if it answers: no Connecting beat, no watchdog.
         if let remembered = store.loadDefaultHost() {
@@ -128,6 +129,26 @@ final class AppModel {
             try? await Task.sleep(for: .seconds(4))
             self?.scanning = false
         }
+    }
+
+    // Offline rotation controls (§17, E26): the two settings an owner may change while the iPad plays its
+    // local copy. Persisted with the copy and handed to the player, which applies them only while the Host
+    // is not answering; a successful poll clears both.
+    var offlineDurationMs: Int? { localCopy.override?.durationMs ?? localCopy.capturedDurationMs }
+    var offlineMode: RotationMode? { localCopy.override?.mode ?? localCopy.capturedMode }
+
+    func setOfflineDuration(_ ms: Int) {
+        var next = localCopy.override ?? RotationOverride()
+        next.durationMs = ms
+        localCopy.setOverride(next)
+        player.setOfflineOverride(next)
+    }
+
+    func setOfflineMode(_ mode: RotationMode) {
+        var next = localCopy.override ?? RotationOverride()
+        next.mode = mode
+        localCopy.setOverride(next)
+        player.setOfflineOverride(next)
     }
 
     /// Leave the art stage for the picker. Stops playback so nothing polls in the background; the picker

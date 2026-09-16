@@ -177,3 +177,72 @@ actor Flag {
     private(set) var value = false
     func set(_ v: Bool) { value = v }
 }
+
+// Offline rotation controls (HANDOFF §17, E26): the override applies only while the Host is not answering.
+@Suite @MainActor struct RotationPlayerOverrideTests {
+    private func still(_ id: String) -> DisplayItem {
+        DisplayItem(id: id, kind: .still, format: .png, fit: .fit, filename: "\(id).png", src: nil)
+    }
+    private func response(_ ids: [String], durationMs: Int = 100_000, mode: RotationMode = .sequence) -> DisplayResponse {
+        DisplayResponse(items: ids.map(still), durationMs: durationMs, mode: mode,
+                        pinnedId: nil, asleep: false, source: .library)
+    }
+    private func host() throws -> DisplayCore.Host { try #require(DisplayCore.Host.manualEntry("h:3000")) }
+    private func waitUntil(_ timeout: Duration = .seconds(3), _ condition: @MainActor () -> Bool) async {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: timeout)
+        while clock.now < deadline {
+            if condition() { return }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
+    @Test func overrideShapesASeededOfflineStartAndClearsWhenTheHostAnswers() async throws {
+        struct Unreachable: Error {}
+        let gone = Flag()
+        await gone.set(true)
+        let live = response(["a", "b"], durationMs: 100_000, mode: .sequence)
+        let engine = RotationEngine()
+        let player = RotationPlayer(fetch: { _ in
+            if await gone.value { throw Unreachable() }
+            return live
+        }, engine: engine, pollInterval: .milliseconds(20))
+        player.setOfflineOverride(RotationOverride(durationMs: 7_000, mode: .shuffle))
+        player.start(host: try host(), seed: response(["a", "b"]))
+        #expect(engine.durationMs == 7_000)                    // the seed played with the override
+        #expect(player.offlineOverride?.mode == .shuffle)
+
+        player.setOfflineOverride(RotationOverride(durationMs: 9_000, mode: .shuffle))
+        #expect(engine.durationMs == 9_000)                    // an offline change applies at once
+
+        await gone.set(false)
+        await waitUntil { player.hostReachable }
+        #expect(engine.durationMs == 100_000)                  // the Host is back: its values rule
+        #expect(player.offlineOverride == nil)                 // and the override is gone
+        player.stop()
+    }
+
+    @Test func overrideWaitsWhileReachableAndAppliesWhenTheHostDrops() async throws {
+        struct Unreachable: Error {}
+        let gone = Flag()
+        let live = response(["a"], durationMs: 50_000)
+        let engine = RotationEngine()
+        let player = RotationPlayer(fetch: { _ in
+            if await gone.value { throw Unreachable() }
+            return live
+        }, engine: engine, pollInterval: .milliseconds(20))
+        player.start(host: try host())
+        await waitUntil { player.hostReachable }
+        player.setOfflineOverride(RotationOverride(durationMs: 4_000))
+        #expect(engine.durationMs == 50_000)                   // stored, not applied, while live
+        // A successful poll clears it (the Host rules).
+        try? await Task.sleep(for: .milliseconds(60))
+        #expect(player.offlineOverride == nil)
+        // Set again, then the Host drops: applied on the first failed poll.
+        player.setOfflineOverride(RotationOverride(durationMs: 4_000))
+        await gone.set(true)
+        await waitUntil { !player.hostReachable && engine.durationMs == 4_000 }
+        #expect(engine.durationMs == 4_000)
+        player.stop()
+    }
+}

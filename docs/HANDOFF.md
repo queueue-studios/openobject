@@ -1086,6 +1086,30 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-09-16: offline rotation controls on the local copy (E26 built)
+
+Per the §17 "Offline rotation controls" bullet settled the same morning. What was built:
+
+- **`RotationOverride`** (`DisplayResponse.swift`): the two optional fields, duration and mode, plus
+  `DisplayResponse.overridden(by:)`. **`RotationPlayer.offlineOverride` / `setOfflineOverride`**: applied
+  on a seeded start, on the first failed poll after the Host drops, and at once when changed while offline
+  (the engine folds the change in without restarting the piece and the advance timer is re-armed so Every
+  counts from the piece on screen); ignored while the Host is reachable and cleared by every successful
+  poll, so it can never fight the Host. **`LocalCopy.override`**: the same value persisted in UserDefaults
+  with the copy, cleared by `observe` and by `clear`, so a venue setting survives a relaunch while away and
+  vanishes the moment the frame answers. `capturedDurationMs` / `capturedMode` expose what it replaces.
+- **iPad UI** (`ArtStageView`): the "Playing local copy" capsule is a button only in that state, with a
+  chevron; it drops a panel of the same material beneath: **Order** as a segmented Sequence / Shuffle,
+  **Every** as a menu of eight presets (15 s to 1 hour) labelled with the current value (a non-preset value
+  reads as, say, "45 s" until one is picked). Hiding the overlay, or the Host coming back, closes the panel.
+  `AppModel` hands the seed the persisted override before `start`, and owns the two setters.
+- Tests: three new (77 in the package): the override shapes a seeded offline start, applies at once while
+  offline, waits while live, applies when the Host drops, clears on a successful poll; the coordinator
+  persists it across launches and clears it on `observe`.
+
+Sound stays on the picker, per the design. The Mac guide's local-copy paragraph gained one sentence (§16);
+the frame guide points there already.
+
 ### 2026-09-15: three phone-display fixes from the iPhone survey (E1's last check)
 
 Matt ran every Connected piece in Safari on his iPhone at the frame's display page, the last rendering
