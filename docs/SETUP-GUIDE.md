@@ -323,8 +323,8 @@ Host on the same network, so it can show the frame's rotation on your TV or your
 it, open it, and pick your frame from the list it finds. Connected Collections play on the iPad and
 iPhone while the frame is on the network (not on the Apple TV, which has no way to run them), and they
 keep playing on the frame either way. The iPad and iPhone app also keeps a **local copy** of the rotation
-on the device, so it keeps playing with the frame asleep, or away from your network entirely; Connected
-Collections are not part of the copy yet, so away from the frame the copy plays the rest. See [the app section in the Mac guide](MAC-DISPLAY-SETUP.md#watch-on-an-apple-tv-ipad-or-iphone-optional)
+on the device, so it keeps playing with the frame asleep, or away from your network entirely, Connected
+Collections included. See [the app section in the Mac guide](MAC-DISPLAY-SETUP.md#watch-on-an-apple-tv-ipad-or-iphone-optional)
 for the details, including the local copy, which are the same whichever Host you use.
 
 ---

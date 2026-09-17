@@ -86,8 +86,9 @@ is a better answer than any native reimplementation.
 > HANDOFF §17, "Connected Collections on the viewer apps". **The Apple TV reasoning above
 > is unaffected and still stands**: tvOS has no web engine at all, so none of this applies
 > to it. **Built for the iPad and iPhone 2026-09-16** (HANDOFF §20): the iOS app renders
-> Connected pieces in a `WKWebView` while its Host is reachable; the conclusion two
-> paragraphs below ("neither renders Connected art") now holds for the Apple TV only.
+> Connected pieces in a `WKWebView`, from the Host while it is reachable and from the
+> local copy when it is not (phase two, 2026-09-17); the conclusion two paragraphs below
+> ("neither renders Connected art") now holds for the Apple TV only.
 
 iPadOS *does* have `WKWebView`, so an iPad app could in principle render Connected art in
 a web view. It should not, for a reason already on the record: `MAC-APP-PLAN.md` §5 locks

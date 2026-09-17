@@ -72,7 +72,7 @@ your network. Simple, private, and resilient.
 - **Connected Collections.** Certain curated generative and on-chain artworks (such as live p5.js
   pieces) are mirrored locally so they continue to render even without an internet connection. This is
   a curated feature, not a general-purpose NFT browser. Note: Connected Collections play on the iPad and
-  iPhone app while its Host is on the network, and not on the Apple TV.
+  iPhone app, on the network and from its local copy, and not on the Apple TV.
 - **Built-in updates.** Install the latest release directly from within OpenObject.
 
 ## Requirements

@@ -907,6 +907,13 @@ duration counts from its reveal, and a piece whose web content process has died 
 skip mechanism above, which stays unbuilt with the pill unless a piece actually fails. Simulator-verified;
 Matt's device run measures the memory budget.
 
+**Phase two built 2026-09-17 (§20).** The local copy carries each Connected piece's mirrored bundle and an
+in-app URL scheme serves it to the web view when the Host is gone, per the two-phase paragraph; the one
+addition to the Host is a read-only bundle listing per piece, since a static directory cannot otherwise be
+enumerated. Matt's three calls: the Host endpoint (so this is a platform release, the frame updated over
+the air), the Host as the source while it answers with the copy purely a fallback, and the whole rotation
+copied under the existing reserve, no cap. E1 closes; the skip mechanism and the pill above stay unbuilt.
+
 **Sequencing: submit the iOS app FIRST, unchanged, then build this (Matt, 2026-08-06).** Nothing in these findings makes the staged iOS build wrong. It is complete, device-verified, and correct as designed (native rendering, no Connected art). **Do not open `ipad-app` before it ships.** Doing so would mean submitting something other than what was tested, would put a brand-new capability in front of a first App Review, and would leave a dirty tree if tvOS review comes back needing a respin. So: iOS submits unchanged, and Connected art becomes the natural follow-on release once there is a shipped baseline to compare against. The two open checks above (inkField, iPhone) fit naturally into that gap.
 
 **Amended 2026-08-07: the pair now ships at 1.6.2, not 1.6.1.** Two tvOS bugs surfaced on the real Apple TV the day the App Store build went live, so `tv-app/` and `display-core/` are no longer untouched since submission (`55adc30`, `bd25f1e`), and both shells moved to 1.6.2 together (`a2dc043`). The "do not open `ipad-app`" rule still holds in substance: its only change is that version bump, so the iOS binary is still the device-verified build, and it debuts at 1.6.2 so the two apps stay matched. **The iOS side of the App Store record still reads 1.0**, a placeholder from when the record was created; it must be set to 1.6.2 by hand before submitting.
@@ -1103,6 +1110,54 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-09-17: Connected Collections offline on the iPad and iPhone (E1 phase two built; E1 closes)
+
+Per the §17 two-phase design and Matt's three calls (the Host endpoint, the Host first while it answers,
+the whole rotation copied). What was built, and where:
+
+- **Host (`player`).** `GET /api/collections/<slug>/bundle` (`?token=` for a perToken piece) returns the
+  mirrored bundle's files: `{ base, files: [{ path, bytes, modified }], bytes }`, paths relative to the
+  bundle's URL under `/collections`, thumbnails excluded, a perToken listing its own token directory only;
+  404 for an unknown slug or an unmirrored piece, 400 for a perToken slug without a token. Open like
+  `/api/display` (it names only files the static route already serves openly). `collections.bundleFiles`
+  does the walk. A tar endpoint was the alternative and would lose resumability and caching. The frame gets
+  it by Software Update, the Mac by its next app build; against an older Host the app cannot capture bundles
+  and behaves exactly as phase one did.
+- **`DisplayCore`.** `BundleListing` (the wire shape). `LocalCopyStore` and `LocalCopy` take a
+  `CapabilityFilter`: with the default the copy wants uploads only, as before (tvOS-style readers, the old
+  tests, unchanged); with `rendersConnected` it wants Connected pieces too, keyed `bundle/<slug>` for a
+  shared bundle (captured once, held for every token of the collection) or `bundle/<slug>/<token>` for a
+  perToken piece, under `bundles/` in the copy. `saveBundle` fetches the listing, then each file the copy
+  does not hold at that size and modified time, one by one through the static route, atomic per file, the
+  reserve checked against what is still to fetch; files the mirror no longer lists are dropped; a completed
+  capture writes `.listing.json` beside the files, which is what makes the bundle held, so a pass that dies
+  halfway leaves nothing half-trusted and resumes file by file next time. Departed bundles age out under
+  the same 24 h grace. The seed includes Connected pieces whose bundle is held; `heldBundle`, `isHeld`,
+  `bundleDirectory(host:item:)` are the reads. `RotationPlayer.connectedHeldOffline` narrows the phase one
+  drop rule: a gone Host drops only the Connected pieces the copy does not hold
+  (`DisplayResponse.droppingConnected(unless:)`). `ConnectedURL.url(for:base:)` builds the same path
+  against any origin. Seven new tests (105 in the package); tvOS rebuilt unchanged.
+- **`ipad-app`.** `CopySchemeHandler` (`WKURLSchemeHandler`): `oo-copy://copy/collections/<slug>[/<token>]/<path>`
+  maps onto the held bundle's directory, one origin for the whole copy so the bundle's sessionStorage flag,
+  relative fetches, query seed and fragment behave as on the Host; byte ranges served, since WebKit's
+  media players require them; MIME by extension. The stage's request now says whether the Host answered:
+  the builder loads from the Host when it did (live control changes and the chain RPC intact) and from the
+  copy when it did not; a piece that is neither reachable nor held never reaches the stage. A Host load
+  that fails to start retries once from the copy if the bundle is held (a piece picked in the seconds before
+  a poll notices the Host is gone), and otherwise gives up its turn at once. The copy's status now counts
+  bundles, so "Local copy ready" is wholly true.
+
+**Verified in the simulator against the local Host** (the Mac's data copy, 17 pieces, 14 Connected):
+from an empty copy the fill captured all 14 bundles plus the uploads, 128 MB, in about a minute over
+localhost; the Host then stopped: the next picks loaded from `oo-copy://copy/…` and painted (Code-Art,
+The Bloom with its music control, Chromie Squiggle), no failure, no process death. **Not yet verified on
+a device:** Matt's iPad with Wi-Fi off playing the shelf from the copy, and the fill time for the shelf
+over the frame's Wi-Fi; it rides in TestFlight build 5 with phase one. The frame needs the player update
+(Software Update) before its bundles can be captured; until then the app behaves as phase one.
+
+The frame and Mac guides and the README now say the copy carries Connected Collections (§16). E1's
+roadmap row is closed; the design record stays in §17.
 
 ### 2026-09-17: the iOS app built a new AppModel on every local-copy status change (found in the iPhone round)
 
