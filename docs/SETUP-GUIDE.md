@@ -180,9 +180,10 @@ for example right after a software update, just remove it from the Library and a
 rebuilds its downloaded copy from scratch. Some connected pieces even change
 through the day on their own, for example one shifts from daytime colors to moonlit tones at night,
 following your frame's local time. Another, Snowfro's *send/receive*, is a living piece that reads
-its art network over the internet and animates non-stop, filling the whole panel edge to edge;
-with the frame online it shows the network as it is right now, and offline it keeps showing the
-network as it last saw it (the others play fully offline once they're added). One more, Juicy Julio's *Golden Lining*, is a desert photo that drifts between
+its art network and animates non-stop, filling the whole panel edge to edge; like every other
+connected piece it goes online once, when you add it, and from then on it shows the network as it was
+that day, with no internet needed (remove it and add it again whenever you want a fresh look at the
+network). One more, Juicy Julio's *Golden Lining*, is a desert photo that drifts between
 black-and-white and full color; a simple speed slider lets you set how fast that drift moves, or rest
 it on the full-color photo. Another, V4w.enko's *Perfect Everything*, is an ever-shifting pattern of
 concentric colored rings that fills the whole panel and drifts on its own. The same artist's *Perfect Circles* is a companion series, slowly shifting concentric circles that fill the panel and drift on their own. And Cinzia y Gabriel's *Pendulum* is a

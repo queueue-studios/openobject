@@ -12,6 +12,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const db = require('./db');
 
 const COLLECTIONS_DIR = path.join(db.DATA_DIR, 'collections');
@@ -61,13 +62,13 @@ const REGISTRY = [
     // time (block by block, the send/receive balance across all tokens) and animates from it. So:
     //  • perToken: the generator returns a different fully-inlined HTML per token (token id in the
     //    path, no query seed), so each token gets its own mirrored bundle, not a shared one.
-    //  • liveRpc: the piece needs an Ethereum RPC to animate. Its embedded endpoint is overridden
-    //    with the Host's own proxy (display.js appends ?rpc_url=rpc, relative to the piece's page;
-    //    server.js forwards to `rpc` below while online and keeps the last good answer beside the
-    //    bundle, replaying it with no internet, roadmap E30), and connect-src allows this collection's
-    //    bundle path to reach `rpc` directly as a fallback. So offline the piece shows the network as it
-    //    last saw it rather than the artist's network-error sprite; the iPad's copy carries the same
-    //    answers. It self-animates with live data, so no Animate toggle.
+    //  • liveRpc: the piece reads an Ethereum RPC to animate. Its subject, the collection's chain state,
+    //    is fetched ONCE at Add (primeLiveState, through `rpc` below) and kept beside the bundle as
+    //    rpc-cache.json; the display hands the piece `rpc` as its node (display.js appends ?rpc_url=rpc,
+    //    relative to the piece's page) and server.js answers that request from the file, never the
+    //    network, so after Add this piece calls out no more than any other (Matt's rule, 2026-09-17,
+    //    after roadmap E30). It shows the network as it was when added; the iPad's copy carries the same
+    //    file. It self-animates from that state, so no Animate toggle.
     perToken: true,
     liveRpc: true,
     animateDefault: false,
@@ -1115,6 +1116,56 @@ async function mirrorBundle(slug, sourceUrl, tokenId) {
     if (!existed) fs.rmSync(out, { recursive: true, force: true });
     throw e;
   }
+  // A live piece's subject (the chain state it draws) is fetched here too, once, and kept beside the
+  // bundle: Add is the one network moment every Connected piece gets (Matt, 2026-09-17), and after it
+  // this piece never calls out either. A failure here does not fail the Add (the bundle is whole; the
+  // startup pass retries the state while the Host is online).
+  if (c.liveRpc) { try { await primeLiveState(slug, tokenId); } catch (_) {} }
+}
+
+// ── A live piece's state, captured once (roadmap E30, then Matt's rule of 2026-09-17: no network after Add).
+// send/receive polls the chain with ONE fixed request per token: an eth_call to its hook contract for
+// (token number within the project, block 0, up to 36 sprites), body captured from the piece itself in a
+// headless Chrome on 2026-09-17. The display hands the piece `rpc` as its node, and both the Host route and
+// the iPad's copy scheme answer that request from rpc-cache.json by the hash of its exact body, so the body
+// built here must match byte for byte: the same key order and spacing JSON.stringify gives the sketch. The
+// selector and hook address are read from the mirrored HTML (the captured values are the fallback), the
+// token number is the Art Blocks token id modulo one million (5008372 -> 8372, as captured).
+const LIVE_HOOK_FALLBACK = { selector: '0x5ab53d9f', contract: '0x4ffc102cdc983c50bba66b4284c390b80229f4e3' };
+function liveStateRequest(slug, tokenId) {
+  const html = (() => { try { return fs.readFileSync(path.join(outDir(slug, tokenId), 'index.html'), 'utf8'); } catch (_) { return ''; } })();
+  const sel = (html.match(/getLiveDataFunctionSelector\s*=\s*'(0x[0-9a-fA-F]{8})'/) || [])[1] || LIVE_HOOK_FALLBACK.selector;
+  const to = (html.match(/hookContractAddress\s*=\s*'(0x[0-9a-fA-F]{40})'/) || [])[1] || LIVE_HOOK_FALLBACK.contract;
+  const pad = (n) => BigInt(n).toString(16).padStart(64, '0');
+  const tokenNumber = BigInt(String(tokenId)) % 1000000n;
+  const data = sel + pad(tokenNumber) + pad(0) + pad(36);
+  return JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to, data }, 'latest'] });
+}
+async function primeLiveState(slug, tokenId) {
+  const c = bySlug(slug);
+  if (!c || !c.liveRpc || !isMirrored(slug, tokenId)) return false;
+  const body = liveStateRequest(slug, tokenId);
+  const res = await fetch(c.rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: AbortSignal.timeout(20000) });
+  if (!res.ok) throw new Error(`node ${res.status}`);
+  const text = await res.text();
+  const parsed = JSON.parse(text);
+  if (!parsed || parsed.error) throw new Error('node error: ' + (parsed && parsed.error && parsed.error.message));
+  rpcCache(slug, tokenId).put(crypto.createHash('sha256').update(body).digest('hex'), text);
+  return true;
+}
+// Pieces added before the state was captured at Add (the two send/receive tokens on Matt's frame): fetch
+// it once at startup, only where it is missing, only while the Host is online. Fire-and-forget; a Host
+// with no internet simply tries again next start.
+async function primeMissingLiveState() {
+  let primed = 0;
+  for (const row of db.listLibrary()) {
+    if (row.kind !== 'connected') continue;
+    const c = bySlug(row.collection);
+    if (!c || !c.liveRpc || !isMirrored(row.collection, row.token_id)) continue;
+    if (fs.existsSync(path.join(outDir(row.collection, row.token_id), RPC_CACHE_FILE))) continue;
+    try { if (await primeLiveState(row.collection, row.token_id)) primed++; } catch (_) {}
+  }
+  return primed;
 }
 
 // Fetch the entry HTML + every relative asset it references (scripts, etc.). For collections that
@@ -1390,4 +1441,4 @@ function rpcCache(slug, tokenId) {
   };
 }
 
-module.exports = { REGISTRY, COLLECTIONS_DIR, bySlug, resolveToken, mirrorBundle, removeBundle, cacheThumb, toDataUrl, getState, setState, list, isMirrored, bundleFiles, rpcCache, liveRpcForPath };
+module.exports = { REGISTRY, COLLECTIONS_DIR, bySlug, resolveToken, mirrorBundle, removeBundle, cacheThumb, toDataUrl, getState, setState, list, isMirrored, bundleFiles, rpcCache, liveStateRequest, primeLiveState, primeMissingLiveState, liveRpcForPath };

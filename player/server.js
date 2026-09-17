@@ -139,6 +139,8 @@ const SLEEP_DAYS_ALL = [0, 1, 2, 3, 4, 5, 6];
 
 db.initDb(); // ensure the SQLite store + uploads dir exist before serving
 seed.seedSampleIfNeeded(); // first run: copy the shipped sample piece into the Library (HANDOFF §20)
+// Live pieces added before their state was captured at Add (2026-09-17): fetch it once, while online.
+setTimeout(() => { collections.primeMissingLiveState().then((n) => { if (n) console.log(`[collections] captured live state for ${n} piece(s)`); }).catch(() => {}); }, 5000);
 
 const app = express();
 app.disable('x-powered-by');
@@ -213,46 +215,33 @@ app.get('/folder-media/:id/:file', ah(async (req, res) => {
 // "Failed to fetch" on every load. No remote origins by default (no phoning home), with ONE narrow
 // exception: a `liveRpc` collection (e.g. send/receive) reads live on-chain state to animate, so its
 // own bundle path is allowed to connect to a single public Ethereum node (scoped per collection).
-// A liveRpc collection's node, proxied (roadmap E30, 2026-09-17): the piece is handed `rpc` as its node
-// address (relative to its own page, so the same value resolves on the iPad's copy scheme too), and this
-// route forwards each JSON-RPC request to the collection's public node while the Host has internet,
-// keeping the last good answer per request body in the piece's bundle directory (rpc-cache.json, so the
-// copy's bundle listing carries it). With no internet it replays the cached answer, so the piece renders
-// its last-known state instead of its network-error sprite; send/receive polls with an identical body
-// every time (token, block 0, 36), so the replay is exact. Before the static route, which would 404 it.
-app.post(/^\/collections\/([^/]+)(?:\/([^/]+))?\/rpc$/, express.json({ limit: '64kb', type: () => true }), ah(async (req, res) => {
+// A liveRpc piece's node (roadmap E30, then Matt's rule of 2026-09-17: no network after Add). The piece
+// is handed `rpc` as its node address (relative to its own page, so the same value resolves on the iPad's
+// copy scheme too), and this route answers its JSON-RPC request from the state captured at Add
+// (rpc-cache.json beside the bundle, keyed by the request body's hash), never from the network. Nothing
+// cached means the piece was added before the capture existed and the startup pass has not yet primed it;
+// the piece then shows its own network-error sprite, as it always did offline. Before the static route.
+app.post(/^\/collections\/([^/]+)(?:\/([^/]+))?\/rpc$/, express.json({ limit: '64kb', type: () => true }), (req, res) => {
   const slug = req.params[0];
   const token = req.params[1];
   const c = collections.bySlug(slug);
   if (!c || !c.liveRpc) return res.status(404).json({ error: 'not a live collection' });
   const body = JSON.stringify(req.body || {});
   const key = crypto.createHash('sha256').update(body).digest('hex');
-  const cache = collections.rpcCache(slug, token);
-  try {
-    const upstream = await fetch(c.rpc, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: AbortSignal.timeout(15000),
-    });
-    if (!upstream.ok) throw new Error(`upstream ${upstream.status}`);
-    const text = await upstream.text();
-    const parsed = JSON.parse(text);                             // malformed: treated as unreachable below
-    // Keep only a real answer. A JSON-RPC error (a revert, a rate limit) is passed through as the node said
-    // it, but never overwrites a good cached answer, since offline the cache must be the last-known STATE.
-    if (parsed && !parsed.error) cache.put(key, text);
-    res.type('application/json').send(text);
-  } catch (e) {
-    const cached = cache.get(key);
-    if (cached) return res.type('application/json').send(cached);
-    res.status(502).json({ jsonrpc: '2.0', id: (req.body && req.body.id) || null,
-                           error: { code: -32000, message: 'node unreachable and nothing cached' } });
-  }
-}));
+  const cached = collections.rpcCache(slug, token).get(key);
+  if (cached) return res.type('application/json').send(cached);
+  res.status(502).json({ jsonrpc: '2.0', id: (req.body && req.body.id) || null,
+                         error: { code: -32000, message: 'no captured state for this request' } });
+});
 
 app.use('/collections', (req, res, next) => {
-  const rpcOrigin = collections.liveRpcForPath(req.path); // non-null only for a liveRpc collection's path
+  // No remote origins for any collection, a live one included: since 2026-09-17 its node is the Host's own
+  // `rpc` route (covered by 'self'), and the public node it embeds as a fallback is deliberately blocked, so
+  // no piece phones home after Add.
   res.setHeader('Content-Security-Policy',
     "default-src 'self'; img-src 'self' data: blob:; media-src 'self' data: blob:; " +
     "script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; " +
-    `connect-src 'self' data: blob:${rpcOrigin ? ' ' + rpcOrigin : ''}; ` +
+    "connect-src 'self' data: blob:; " +
     "object-src 'none'; base-uri 'none'; frame-ancestors 'self'");
   next();
 }, express.static(collections.COLLECTIONS_DIR));
