@@ -138,6 +138,36 @@ import Foundation
         #expect(LocalCopyStore.heldBundle(for: ink, in: dir) == nil)
     }
 
+    @Test func aHeldBundleIsRevalidatedOnceItsCaptureIsOld() async throws {
+        // A held bundle is not "missing", so an ordinary pass skips it; once its capture is older than the
+        // revalidation cadence a pass re-reads its listing and fetches only what changed (the node answers a
+        // live piece accumulates beside its bundle reach the copy this way).
+        let dir = tempDir(); defer { try? FileManager.default.removeItem(at: dir) }
+        let counter = CallCounter()
+        let version = Version()
+        let store = LocalCopyStore(directory: dir, dependencies: deps(listings: { _ in
+            var files: [(String, Int64, Int64)] = [("index.html", 5, 1)]
+            if version.value >= 2 { files.append(("rpc-cache.json", 3, Int64(version.value))) }
+            return self.listing("/collections/send-receive/1", files)
+        }, counter: counter), filter: web, bundleRevalidation: 0.2)
+        let piece = connected("1", slug: "send-receive", token: "1", perToken: true)
+        let response = libraryResponse([piece])
+        _ = await store.adopt(host: try host(), response: response)
+        #expect(await fillAll(store) == [.saved])
+        #expect(await counter.count == 1)
+        // Fresh: nothing to do on the next poll.
+        #expect(await store.adopt(host: try host(), response: response).missing == 0)
+        #expect(await store.nextMissing(excluding: []) == nil)
+        // The Host has since added an answer file; once the capture is old enough, the pass picks it up.
+        version.value = 2
+        try? await Task.sleep(for: .milliseconds(250))
+        #expect(await store.adopt(host: try host(), response: response).missing == 1)
+        #expect(await fillAll(store) == [.saved])
+        #expect(await counter.count == 2)                                   // only the new file
+        #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("bundles/send-receive/1/rpc-cache.json").path))
+        #expect(await store.nextMissing(excluding: []) == nil)             // re-dated: fresh again
+    }
+
     @Test func aFailedListingOrFileLeavesTheBundleUnheld() async throws {
         let dir = tempDir(); defer { try? FileManager.default.removeItem(at: dir) }
         let store = LocalCopyStore(directory: dir, dependencies: deps(listings: { _ in nil }, counter: CallCounter()), filter: web)

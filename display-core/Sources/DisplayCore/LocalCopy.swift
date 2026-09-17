@@ -151,6 +151,10 @@ public actor LocalCopyStore {
 
     /// How long a departed piece is kept before deletion. A day covers an evening's Pin.
     public static let defaultGrace: TimeInterval = 24 * 60 * 60
+    /// How old a held bundle's capture may be before a fill pass re-reads its listing (§17 phase two): the
+    /// mirror can rewrite files, and a live piece's node answers accumulate beside its bundle, so a held
+    /// bundle is revalidated on this cadence; unchanged files are never refetched.
+    public static let defaultBundleRevalidation: TimeInterval = 60 * 60
     /// The smallest reserve, for small devices.
     public static let reserveFloor: Int64 = 5_000_000_000
 
@@ -164,17 +168,20 @@ public actor LocalCopyStore {
     private nonisolated let bundlesDir: URL
     private let deps: Dependencies
     private let grace: TimeInterval
+    private let bundleRevalidation: TimeInterval
     /// What the copy wants: the pieces this Display can render. The default skips Connected pieces; the iOS
     /// app passes `CapabilityFilter(rendersConnected: true)` and the copy carries their bundles too.
     public nonisolated let filter: CapabilityFilter
     private var manifest: LocalCopyManifest?
 
     public init(directory: URL, grace: TimeInterval = LocalCopyStore.defaultGrace,
-                dependencies: Dependencies = .live, filter: CapabilityFilter = CapabilityFilter()) {
+                dependencies: Dependencies = .live, filter: CapabilityFilter = CapabilityFilter(),
+                bundleRevalidation: TimeInterval = LocalCopyStore.defaultBundleRevalidation) {
         self.directory = directory
         self.mediaDir = Self.mediaDirectory(in: directory)
         self.bundlesDir = Self.bundlesDirectory(in: directory)
         self.grace = grace
+        self.bundleRevalidation = bundleRevalidation
         self.deps = dependencies
         self.filter = filter
         self.manifest = Self.readManifest(in: directory)
@@ -314,18 +321,28 @@ public actor LocalCopyStore {
             manifest = next
             writeManifest()
         }
-        let missing = wantedNames.filter { !held.contains($0) }.count
+        let wantedItems = Self.wantedItems(in: response, filter: filter)
+        let missing = wantedNames.filter { !held.contains($0) }.count + wantedItems.filter { isStaleBundle($0) }.count
         return AdoptOutcome(manifest: next, missing: missing, signature: wantedNames.joined(separator: "|"))
     }
 
-    /// The first wanted piece not held and not in `attempted`, in rotation order; nil when the pass is done.
+    /// The first wanted piece not held (or a held bundle due for revalidation) and not in `attempted`, in
+    /// rotation order; nil when the pass is done.
     public func nextMissing(excluding attempted: Set<String>) -> DisplayItem? {
         guard let manifest else { return nil }
         let held = heldNames()
         return Self.wantedItems(in: manifest.response, filter: filter).first { item in
             let name = Self.fileName(for: item)
-            return !held.contains(name) && !attempted.contains(name)
+            return !attempted.contains(name) && (!held.contains(name) || isStaleBundle(item))
         }
+    }
+
+    /// A held Connected bundle whose last capture is older than the revalidation cadence.
+    private func isStaleBundle(_ item: DisplayItem) -> Bool {
+        guard item.kind == .connected, let dir = Self.heldBundle(for: item, in: directory) else { return false }
+        let marker = dir.appendingPathComponent(Self.listingFileName)
+        guard let modified = (try? marker.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate else { return true }
+        return deps.now().timeIntervalSince(modified) >= bundleRevalidation
     }
 
     /// Download one piece into the copy, honoring the reserve. Departed pieces are purged first when room is
@@ -419,7 +436,8 @@ public actor LocalCopyStore {
             try? FileManager.default.removeItem(at: dir.appendingPathComponent(path))
         }
         guard let data = try? JSONEncoder().encode(listing) else { return .failed }
-        do { try data.write(to: dir.appendingPathComponent(Self.listingFileName), options: .atomic) } catch { return .failed }
+        let marker = dir.appendingPathComponent(Self.listingFileName)
+        do { try data.write(to: marker, options: .atomic) } catch { return .failed }   // (re)dates the capture
         return wanted.isEmpty && previous == listing ? .alreadySaved : .saved
     }
 
