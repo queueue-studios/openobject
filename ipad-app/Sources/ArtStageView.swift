@@ -35,7 +35,7 @@ struct ArtStageView: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             ArtStageCore(player: player, host: host, pipeline: pipeline, muted: muted,
-                         connectedLayer: Self.connectedLayer)
+                         connectedLayer: connectedLayer)
                 .ignoresSafeArea()
 
             // Full-stage tap catcher (near-transparent fill, contentShape-reliable): a tap on the art
@@ -117,13 +117,29 @@ struct ArtStageView: View {
     // device. "Phone" is decided by idiom, which is the same answer the bundle's own user-agent test gives
     // (an iPhone web view reports an iPhone; an iPad one reports a Mac), so the phone density cap and the
     // force-live flag land exactly where the frame's display page puts them.
-    private static func connectedLayer(_ request: ConnectedLayerRequest) -> AnyView {
+    // With the Host answering the piece loads from the Host, live control changes and the chain RPC intact;
+    // with it gone, from the local copy's held bundle through the copy scheme (§17 phase two). A piece that
+    // is neither reachable nor held never reaches the stage (the player drops it), so the black fallback is
+    // for a Host with no copy at all (the Gallery).
+    private func connectedLayer(_ request: ConnectedLayerRequest) -> AnyView {
         let phone = UIDevice.current.userInterfaceIdiom == .phone
-        guard let url = ConnectedURL.url(for: request.item, on: request.host, phone: phone, muted: request.muted) else {
+        let held = localCopy?.bundleDirectory(host: request.host, item: request.item) != nil
+        let base = (request.hostReachable || !held) ? request.host.baseURL : CopySchemeHandler.base
+        guard let url = ConnectedURL.url(for: request.item, base: base, phone: phone, muted: request.muted) else {
             return AnyView(Color.black)
         }
-        return AnyView(ConnectedWebLayer(url: url, host: request.host, item: request.item,
-                                         onReady: request.onReady, onFailed: request.onFailed))
+        // If the Host load fails and the copy holds the bundle, the layer retries from the copy once.
+        let fallback = (base == request.host.baseURL && held)
+            ? ConnectedURL.url(for: request.item, base: CopySchemeHandler.base, phone: phone, muted: request.muted) : nil
+        let handler: CopySchemeHandler? = localCopy.map { copy in
+            let host = request.host
+            return CopySchemeHandler { slug, token in
+                copy.bundleDirectory(host: host, item: DisplayItem(id: "", kind: .connected, format: nil, collection: slug,
+                                                                   tokenId: token, perToken: token != nil))
+            }
+        }
+        return AnyView(ConnectedWebLayer(url: url, host: request.host, item: request.item, copyHandler: handler,
+                                         fallbackURL: fallback, onReady: request.onReady, onFailed: request.onFailed))
     }
 
     // The two offline controls (E26), the control panel's own words. Order is a two-segment control, Every a

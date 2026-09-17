@@ -32,6 +32,11 @@ struct ConnectedWebLayer: UIViewRepresentable {
     let url: URL
     let host: Host
     let item: DisplayItem
+    /// Serves the local copy's bundles under the copy scheme (§17 phase two); nil for a Host with no copy.
+    let copyHandler: CopySchemeHandler?
+    /// The same piece from the held copy, tried once if the Host load fails: a piece picked in the seconds
+    /// before a poll notices the Host is gone would otherwise fail and hold the stage until the give-up.
+    let fallbackURL: URL?
     let onReady: () -> Void
     let onFailed: () -> Void
 
@@ -52,6 +57,7 @@ struct ConnectedWebLayer: UIViewRepresentable {
         content.addUserScript(WKUserScript(source: Self.errorBridge, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         content.add(context.coordinator, name: Self.errorHandlerName)
         config.userContentController = content
+        if let copyHandler { config.setURLSchemeHandler(copyHandler, forURLScheme: CopySchemeHandler.scheme) }
 
         let web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = context.coordinator
@@ -98,6 +104,7 @@ struct ConnectedWebLayer: UIViewRepresentable {
         private let parent: ConnectedWebLayer
         private var startedAt = ContinuousClock.now
         private var deaths = 0
+        private var triedFallback = false
         private var reported = false
         private var paintPoll: Task<Void, Never>?
         private static let log = Logger(subsystem: "io.openobject.app", category: "webview")
@@ -137,6 +144,8 @@ struct ConnectedWebLayer: UIViewRepresentable {
         func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
                      decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             guard action.targetFrame?.isMainFrame ?? true else { decisionHandler(.allow); return }
+            if action.request.url?.scheme == CopySchemeHandler.scheme,
+               action.request.url?.path.hasPrefix("/collections/") == true { decisionHandler(.allow); return }
             guard let target = action.request.url, let base = parent.host.baseURL.host,
                   target.host?.lowercased() == base.lowercased(),
                   (target.port ?? Self.defaultPort(target)) == (parent.host.baseURL.port ?? Self.defaultPort(parent.host.baseURL)),
@@ -170,8 +179,19 @@ struct ConnectedWebLayer: UIViewRepresentable {
             Self.log.error("failed \(self.label, privacy: .public): \(error.localizedDescription, privacy: .public)")
         }
 
+        // The page could not even start (the Host gone, most often). From the held copy if there is one, at
+        // once; otherwise this piece cannot paint, so give up its turn now rather than at the 30 s give-up
+        // (the next poll drops it from the rotation anyway while the Host is away).
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
             Self.log.error("failed \(self.label, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            if let fallback = parent.fallbackURL, !triedFallback {
+                triedFallback = true
+                Self.log.log("fallback \(self.label, privacy: .public) to \(fallback.absoluteString, privacy: .public)")
+                startedAt = .now
+                webView.load(URLRequest(url: fallback))
+            } else {
+                parent.onFailed()
+            }
         }
 
         // The hard signal for the memory budget: iOS killed the page's process. Reload once; on the second

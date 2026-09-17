@@ -70,7 +70,9 @@ final class AppModel {
         soundOn = (UserDefaults.standard.object(forKey: Self.soundKey) as? Bool) ?? true
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        let localCopy = LocalCopy(directory: support.appendingPathComponent("OpenObject/LocalCopy", isDirectory: true))
+        // The copy carries Connected pieces' bundles too (§17 phase two), so it wants what the engine renders.
+        let localCopy = LocalCopy(directory: support.appendingPathComponent("OpenObject/LocalCopy", isDirectory: true),
+                                  filter: CapabilityFilter(rendersConnected: true))
         self.localCopy = localCopy
         // A held piece is read straight from the copy, no network at all; anything else goes through the
         // purgeable cache exactly as before.
@@ -80,16 +82,19 @@ final class AppModel {
         // Every successful poll of a real Host also feeds the local copy (§17). The Gallery is never saved:
         // choosing it is non-persisting, it is public and online by nature, and it is demo art, not the owner's.
         let client = DisplayClient()
-        // This app renders Connected pieces, in a web view at the Host's mirror (HANDOFF §17, phase one), so
-        // its engine rotates through them. The local copy keeps the default filter: offline they are skipped
-        // and the copy plays the rest, until phase two carries their bundles.
+        // This app renders Connected pieces, in a web view at the Host's mirror (HANDOFF §17), so its engine
+        // rotates through them; offline the copy serves the bundles it holds and the rest are skipped.
         player = RotationPlayer(fetch: { host in
             let response = try await client.fetchDisplay(from: host)
             if host.id != Host.gallery.id { await localCopy.observe(host: host, response: response) }
             return response
         }, engine: RotationEngine(filter: CapabilityFilter(rendersConnected: true)))
         player.wakesWhenHostUnreachable = true          // offline ignores the Sleep schedule (§17)
-        player.dropsConnectedWhenHostUnreachable = true // a web view cannot load from a Host that is gone
+        player.dropsConnectedWhenHostUnreachable = true // a web view cannot load from a Host that is gone…
+        player.connectedHeldOffline = { [weak localCopy] item in   // …unless the copy holds its bundle (phase two)
+            guard let localCopy, let host = localCopy.host else { return false }
+            return localCopy.bundleDirectory(host: host, item: item) != nil
+        }
         player.holdsConnectedUntilRevealed = true       // a slow bundle keeps its turn, as on the frame
         player.setOfflineOverride(localCopy.override)   // a venue setting survives a relaunch (E26)
         // Open straight to art if a Host is remembered from a previous launch (§5). With a local copy of that
