@@ -1215,7 +1215,12 @@ generate the rest; the cache does not help, so the piece before it holds 25 s, a
 send/receive 0.5 s, Code-Art 0.4 s, Lost in Moffat County 0.35 s, The Bloom 0.26 s with its music on.
 Every piece picked reached ready and was shown. The WebContent process's own peak was not measured (it
 needs Instruments) and is deferred: with 5 GB of headroom in the app process and no death in two passes
-the budget question is answered well enough for phase one. The iPhone round is still to run.
+the budget question is answered well enough for phase one.
+
+**iPhone round passed (Matt, his iPhone 17 Pro Max over the cable, 2026-09-17):** inkField paints live
+at the phone density, The Bloom is audible, no black frame at any crossfade, one clean pass of the same
+rotation. No console was collected for it; the iPad's numbers stand for the budget. Phase one is
+device-verified on both devices.
 
 The frame guide's app paragraph, the Mac guide's "What plays on them", the README's feature line and the
 tvOS plan's superseded note now say Connected Collections play on the iPad and iPhone while the Host is on
