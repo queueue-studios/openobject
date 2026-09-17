@@ -1,6 +1,8 @@
 import Foundation
 import WebKit
 import UniformTypeIdentifiers
+import CryptoKit
+import os
 import DisplayCore
 
 // Serves a Connected piece's held bundle to the web view when the Host is not there (HANDOFF §17 "Connected
@@ -18,6 +20,7 @@ final class CopySchemeHandler: NSObject, WKURLSchemeHandler {
     /// The directory holding the bundle for a slug and optional token, or nil if the copy does not hold it.
     typealias Resolver = @MainActor (_ slug: String, _ token: String?) -> URL?
     private let resolve: Resolver
+    private static let log = Logger(subsystem: "io.openobject.app", category: "webview")
 
     init(resolve: @escaping Resolver) { self.resolve = resolve }
 
@@ -35,7 +38,23 @@ final class CopySchemeHandler: NSObject, WKURLSchemeHandler {
             } else if let dir = resolve(slug, nil) {
                 file = dir.appendingPathComponent(parts[2...].joined(separator: "/"))
             }
-            guard let file, let data = try? Data(contentsOf: file, options: .mappedIfSafe) else { return self.fail(task, 404) }
+            guard let file else { return self.fail(task, 404) }
+            // A live piece's node requests (E30): answered from the cached answers the Host kept beside the
+            // bundle, keyed by the request body's hash, exactly as the Host itself answers with no internet.
+            if task.request.httpMethod == "POST", file.lastPathComponent == "rpc" {
+                let cacheFile = file.deletingLastPathComponent().appendingPathComponent("rpc-cache.json")
+                let body = task.request.httpBody ?? Data()
+                let key = SHA256.hash(data: body).map { String(format: "%02x", $0) }.joined()
+                guard let cacheData = try? Data(contentsOf: cacheFile),
+                      let cache = try? JSONSerialization.jsonObject(with: cacheData) as? [String: String],
+                      let answer = cache[key] else {
+                    Self.log.error("copy has no node answer for \(slug, privacy: .public) \(url.path, privacy: .public)")
+                    return self.fail(task, 502)
+                }
+                Self.log.log("copy answered node request for \(slug, privacy: .public) from cache")
+                return self.respond(task, url: url, data: Data(answer.utf8), type: "application/json", range: nil)
+            }
+            guard let data = try? Data(contentsOf: file, options: .mappedIfSafe) else { return self.fail(task, 404) }
             self.respond(task, url: url, data: data, type: Self.mimeType(for: file), range: task.request.value(forHTTPHeaderField: "Range"))
         }
     }

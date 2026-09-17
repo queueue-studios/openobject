@@ -73,7 +73,13 @@ struct HostPickerView: View {
     // pseudo-Host: the row says exactly what is true, the Host is not here but its art is.
     @ViewBuilder private var localCopyRow: some View {
         if let host = model.localCopyRow {
-            PickerRow(icon: deviceIcon, title: host.name, detail: "Local copy") { model.select(host) }
+            // Live (the Host answers a direct probe): a plain Host row. Not answering, or not yet probed with
+            // nothing else known: the local copy, on this device.
+            if model.heldHostReachable == true {
+                PickerRow(icon: "play.tv", title: host.name) { model.select(host) }
+            } else {
+                PickerRow(icon: deviceIcon, title: host.name, detail: "Local copy") { model.select(host) }
+            }
         }
     }
 

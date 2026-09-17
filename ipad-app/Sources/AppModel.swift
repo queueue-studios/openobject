@@ -54,6 +54,7 @@ final class AppModel {
     @ObservationIgnored private let store: HostStore
     @ObservationIgnored private var scanFloor: Task<Void, Never>?
     @ObservationIgnored private var galleryProbe: Task<Void, Never>?
+    @ObservationIgnored private var heldProbe: Task<Void, Never>?
     @ObservationIgnored private var connectWatchdog: Task<Void, Never>?
     @ObservationIgnored private var rebrowse: Task<Void, Never>?
 
@@ -113,21 +114,29 @@ final class AppModel {
     /// The live discovery list, sorted and deduplicated (observed by the picker).
     var hosts: [Host] { discovery.hosts }
 
-    /// The Host whose rotation this device holds, offered as a picker row ONLY while that Host is not on the
-    /// network (§17): a live row plays the same art and refreshes the copy, so one name never appears twice.
-    /// A manually-typed Host is never discovered, so its row simply stays; tapping it still connects live if
-    /// the Host answers. The picker places it after the live Hosts and before the Gallery.
+    /// The Host whose rotation this device holds, offered as a picker row while it is not in the discovered
+    /// list (§17): a discovered row plays the same art and refreshes the copy, so one name never appears
+    /// twice. A manually-typed Host is never discovered, so its row stays; whether it reads as a live Host
+    /// or as the local copy is `heldHostReachable`'s call (a direct probe, since Bonjour cannot answer for a
+    /// typed Host: Matt's phone, whose Wi-Fi carries no Bonjour at all, showed "Local copy" against a frame
+    /// that was answering fine, 2026-09-17). Tapping it connects live if the Host answers, else plays the copy.
     var localCopyRow: Host? {
         guard localCopy.status.hasCopy, let held = localCopy.host else { return nil }
         let live = hosts.contains { $0.id == held.id || $0.baseURL == held.baseURL }
         return live ? nil : held
     }
 
+    /// Whether the held Host answered its last probe: nil while checking, then true (list it as a live Host)
+    /// or false (list it as the local copy). Probed whenever the picker starts or restarts discovery, and on
+    /// each empty-list re-browse, the same short-timeout probe the Gallery gets.
+    private(set) var heldHostReachable: Bool?
+
     /// Begin browsing when the picker is showing. Idempotent.
     func startDiscoveryIfPicking() {
         guard route == .picker else { return }
         discovery.start()
         probeGallery()
+        probeHeldHost()
         scanning = true
         // Hold "Looking…" briefly so a Host about to resolve doesn't flash the empty copy first (§13).
         scanFloor?.cancel()
@@ -152,6 +161,7 @@ final class AppModel {
                 self.discovery.stop()
                 self.discovery.start()
                 if self.galleryReachable == false { self.probeGallery() }
+                self.probeHeldHost()
             }
         }
     }
@@ -170,6 +180,7 @@ final class AppModel {
         discovery.stop()
         discovery.start()
         probeGallery()
+        probeHeldHost()
         scanning = true
         scanFloor?.cancel()
         scanFloor = Task { [weak self] in
@@ -240,6 +251,18 @@ final class AppModel {
             let ok = (try? await client.fetchDisplay(from: .gallery)) != nil
             guard !Task.isCancelled else { return }
             self?.galleryReachable = ok
+        }
+    }
+
+    /// Probe the held Host directly (3 s), so its picker row can say whether it is live or the local copy.
+    /// No-op without a copy. Each call supersedes the last probe.
+    func probeHeldHost() {
+        heldProbe?.cancel()
+        guard localCopy.status.hasCopy, let held = localCopy.host else { heldHostReachable = nil; return }
+        heldProbe = Task { [weak self] in
+            let ok = (try? await Self.probeClient(timeout: 3).fetchDisplay(from: held)) != nil
+            guard !Task.isCancelled else { return }
+            self?.heldHostReachable = ok
         }
     }
 
