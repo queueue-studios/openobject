@@ -61,11 +61,13 @@ const REGISTRY = [
     // time (block by block, the send/receive balance across all tokens) and animates from it. So:
     //  • perToken: the generator returns a different fully-inlined HTML per token (token id in the
     //    path, no query seed), so each token gets its own mirrored bundle, not a shared one.
-    //  • liveRpc: the piece needs a reachable Ethereum RPC to animate. We override its embedded
-    //    endpoint with our own swappable public node (display.js appends ?rpc_url=) and scope a
-    //    connect-src exception to just this collection's bundle path (server.js). Offline it falls
-    //    back to a static sprite with the artist's own network-error badge, so this is the one
-    //    collection that is not fully offline. It self-animates with live data, so no Animate toggle.
+    //  • liveRpc: the piece needs an Ethereum RPC to animate. Its embedded endpoint is overridden
+    //    with the Host's own proxy (display.js appends ?rpc_url=rpc, relative to the piece's page;
+    //    server.js forwards to `rpc` below while online and keeps the last good answer beside the
+    //    bundle, replaying it with no internet, roadmap E30), and connect-src allows this collection's
+    //    bundle path to reach `rpc` directly as a fallback. So offline the piece shows the network as it
+    //    last saw it rather than the artist's network-error sprite; the iPad's copy carries the same
+    //    answers. It self-animates with live data, so no Animate toggle.
     perToken: true,
     liveRpc: true,
     animateDefault: false,
@@ -210,7 +212,7 @@ const REGISTRY = [
     ],
     // Reveal on the sketch's first painted frame, not on the iframe's load event (which for a p5 sketch
     // fires before the artwork even starts): the outgoing piece holds the stage until the photo is up.
-    awaitPaint: true,
+    awaitPaint: true, // historical: since E27 (2026-09-17) every connected piece waits for its first paint
     // The photos are square (3840^2 / 2500^2) drawn object-fit: contain, so on the 1:1 stage they fill edge
     // to edge (no crop, no aspect).
     // Of the contract's live tokens, 3/4/5/6 carry an animation_url and render here; token 1 ("Desert Steel")
@@ -1363,4 +1365,29 @@ function list() {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-module.exports = { REGISTRY, COLLECTIONS_DIR, bySlug, resolveToken, mirrorBundle, removeBundle, cacheThumb, toDataUrl, getState, setState, list, isMirrored, bundleFiles, liveRpcForPath };
+// The last good node answers for a liveRpc piece, kept beside its bundle as rpc-cache.json (E30): a map of
+// request-body hash to the answer text, newest last, capped so a chatty piece cannot grow it without bound.
+// Lives in the bundle directory on purpose: the bundle listing carries it, so the iPad's copy holds the
+// answers and can play the piece with no network at all. Written atomically; unreadable means empty.
+const RPC_CACHE_FILE = 'rpc-cache.json';
+const RPC_CACHE_MAX = 50;
+function rpcCache(slug, tokenId) {
+  const dir = outDir(slug, tokenId);
+  const file = path.join(dir, RPC_CACHE_FILE);
+  const read = () => { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (_) { return {}; } };
+  return {
+    get(key) { const m = read(); return typeof m[key] === 'string' ? m[key] : null; },
+    put(key, text) {
+      if (!fs.existsSync(dir)) return;                          // not mirrored: nothing to keep it beside
+      const m = read();
+      delete m[key];
+      m[key] = text;
+      const keys = Object.keys(m);
+      for (const k of keys.slice(0, Math.max(0, keys.length - RPC_CACHE_MAX))) delete m[k];
+      const tmp = file + '.tmp';
+      try { fs.writeFileSync(tmp, JSON.stringify(m)); fs.renameSync(tmp, file); } catch (_) {}
+    },
+  };
+}
+
+module.exports = { REGISTRY, COLLECTIONS_DIR, bySlug, resolveToken, mirrorBundle, removeBundle, cacheThumb, toDataUrl, getState, setState, list, isMirrored, bundleFiles, rpcCache, liveRpcForPath };

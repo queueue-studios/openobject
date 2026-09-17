@@ -213,6 +213,40 @@ app.get('/folder-media/:id/:file', ah(async (req, res) => {
 // "Failed to fetch" on every load. No remote origins by default (no phoning home), with ONE narrow
 // exception: a `liveRpc` collection (e.g. send/receive) reads live on-chain state to animate, so its
 // own bundle path is allowed to connect to a single public Ethereum node (scoped per collection).
+// A liveRpc collection's node, proxied (roadmap E30, 2026-09-17): the piece is handed `rpc` as its node
+// address (relative to its own page, so the same value resolves on the iPad's copy scheme too), and this
+// route forwards each JSON-RPC request to the collection's public node while the Host has internet,
+// keeping the last good answer per request body in the piece's bundle directory (rpc-cache.json, so the
+// copy's bundle listing carries it). With no internet it replays the cached answer, so the piece renders
+// its last-known state instead of its network-error sprite; send/receive polls with an identical body
+// every time (token, block 0, 36), so the replay is exact. Before the static route, which would 404 it.
+app.post(/^\/collections\/([^/]+)(?:\/([^/]+))?\/rpc$/, express.json({ limit: '64kb', type: () => true }), ah(async (req, res) => {
+  const slug = req.params[0];
+  const token = req.params[1];
+  const c = collections.bySlug(slug);
+  if (!c || !c.liveRpc) return res.status(404).json({ error: 'not a live collection' });
+  const body = JSON.stringify(req.body || {});
+  const key = crypto.createHash('sha256').update(body).digest('hex');
+  const cache = collections.rpcCache(slug, token);
+  try {
+    const upstream = await fetch(c.rpc, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: AbortSignal.timeout(15000),
+    });
+    if (!upstream.ok) throw new Error(`upstream ${upstream.status}`);
+    const text = await upstream.text();
+    const parsed = JSON.parse(text);                             // malformed: treated as unreachable below
+    // Keep only a real answer. A JSON-RPC error (a revert, a rate limit) is passed through as the node said
+    // it, but never overwrites a good cached answer, since offline the cache must be the last-known STATE.
+    if (parsed && !parsed.error) cache.put(key, text);
+    res.type('application/json').send(text);
+  } catch (e) {
+    const cached = cache.get(key);
+    if (cached) return res.type('application/json').send(cached);
+    res.status(502).json({ jsonrpc: '2.0', id: (req.body && req.body.id) || null,
+                           error: { code: -32000, message: 'node unreachable and nothing cached' } });
+  }
+}));
+
 app.use('/collections', (req, res, next) => {
   const rpcOrigin = collections.liveRpcForPath(req.path); // non-null only for a liveRpc collection's path
   res.setHeader('Content-Security-Policy',
@@ -961,7 +995,10 @@ const withConnectedFlags = (item) => {
     choice: c && c.choice ? (st ? st.choice : c.choice.default) : null, // selected option value → ?oochoice
     controls: c && Array.isArray(c.controls) && c.controls.length && st ? st.controls : null, // general controls → ?oo_<key>
     perToken: !!(c && c.perToken),
-    rpcUrl: c && c.liveRpc ? c.rpc : null,
+    // The Host's own proxy, relative to the piece's page (E30): the display passes it as ?rpc_url, the
+    // bundle fetches it against its own URL, so the same value reaches the proxy on a Host and the cache on
+    // the iPad's copy. The public node itself stays behind the proxy.
+    rpcUrl: c && c.liveRpc ? 'rpc' : null,
     crop: c && c.crop ? c.crop : null, // art occupies this centered fraction; display zooms it edge to edge
     aspect: c && c.aspect ? c.aspect : null, // declared aspect → display letterboxes it natively (§6)
     // A GPU-heavy collection's pixel density for a FRAME display (display.js applies it only there); other

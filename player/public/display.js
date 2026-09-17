@@ -128,13 +128,18 @@ function pickNext() {
   return (pos + 1) % n; // sequence
 }
 
-// Reveal an `awaitPaint` bundle on its first painted frame instead of on the iframe's `load` event
-// (see the call site). The mirror is same-origin, so we can read the sketch's own state directly and no
-// bundle change is needed: the piece is ready once it has a canvas AND p5's global frameCount has passed
-// its first draw (>= 2, so a fully composited frame is on the canvas, not one that just started). A
-// non-p5 bundle exposes no frameCount, so a canvas alone is enough there. Anything unreadable resolves
-// immediately rather than holding the rotation, and a piece that never paints falls back to the cap, so
-// the worst case is the old behavior a few seconds later, never a stuck screen.
+// Reveal a connected piece on its first painted frame instead of on the iframe's `load` event (roadmap
+// E27, 2026-09-17; until then only `awaitPaint` collections waited, and a p5 sketch's load event fires
+// before it has drawn anything, so the crossfade landed on a black canvas for a moment: seen on the frame
+// around inkField, and on the iPad, which got this first). The mirror is same-origin, so the sketch's own
+// state is readable and no bundle change is needed: a p5 sketch is ready once it has a canvas and its
+// frame count has passed the first draw (>= 2, a fully composited frame), or has drawn once and stopped
+// looping (noLoop). The count is read from the p5 INSTANCE, not the page's global `frameCount`: inkField
+// keeps a page-level variable of that name at zero while its instance runs, which held it at the cap. A
+// page whose p5 has not yet built its sketch keeps waiting; any other page is ready once it has a canvas or
+// has none to wait for. Anything unreadable resolves immediately rather than holding the rotation, and a
+// piece that never paints falls back to the cap, so the worst case is the old behavior a few seconds
+// later, never a stuck screen.
 const PAINT_WAIT_MS = 12000; // cap on holding the outgoing piece; the artwork's own 30s backstop still applies
 function waitForPaint(el, onReady) {
   const done = once(onReady);
@@ -148,9 +153,18 @@ function waitForPaint(el, onReady) {
       let ready = document.hidden;
       try {
         const w = el.contentWindow;
-        const painted = w && w.document.querySelector('canvas') &&
-          (typeof w.frameCount !== 'number' || w.frameCount >= 2);
-        ready = ready || !!painted;
+        const canvas = !!(w && w.document.querySelector('canvas'));
+        const inst = w && w.p5 && w.p5.instance;
+        if (inst) {
+          const fc = inst.frameCount;
+          ready = ready || (canvas && (fc >= 2 || (fc >= 1 && inst._loop === false)));
+        } else if (w && typeof w.frameCount === 'number') {
+          ready = ready || (canvas && w.frameCount >= 2);
+        } else if (canvas) {
+          ready = true;
+        } else {
+          ready = ready || !!(w && typeof w.p5 === 'undefined');   // no sketch to wait for
+        }
       } catch { ready = true; }         // can't inspect it: reveal rather than stall the rotation
       if (ready || Date.now() - t0 > PAINT_WAIT_MS) { clearInterval(iv); done(); }
     }, 50);
@@ -172,9 +186,10 @@ function render(layer, item, onReady) {
     // exists: p5 waits for that very event to construct the sketch, THEN runs preload() (its images) and
     // setup(). Revealing on `load` therefore crossfades into an empty document and holds a black stage
     // until the sketch paints: measured at ~1.7s on a Mac for Lost in Moffat County, and longer on the
-    // frame. An `awaitPaint` collection instead reveals on its first painted frame, so the OUTGOING piece
-    // stays up until the incoming one is genuinely ready and the stage never goes black (HANDOFF §7).
-    if (item.awaitPaint) waitForPaint(el, onReady); else el.addEventListener('load', onReady, { once: true });
+    // frame. Every connected piece therefore reveals on its first painted frame (E27; it used to be only
+    // `awaitPaint` collections), so the OUTGOING piece stays up until the incoming one is genuinely ready
+    // and the stage never goes black (HANDOFF §7).
+    waitForPaint(el, onReady);
     const params = [];
     // A shared-bundle collection carries its per-piece seed in the official URL: usually a ?query (folded
     // into params below), but for some (inkField) a #fragment the sketch reads from location.hash. Split the

@@ -318,6 +318,24 @@ async function setLibraryFilter(value) {
 }
 
 // ── Rotation tab ────────────────────────────────────────────────────
+// A collection's audio control (today The Bloom's Music; the same table display.js gates, §12) set to its
+// silent value is invisible on the piece itself, and cost an evening on 2026-09-16 (The Bloom silent on
+// the iPad with every Sound setting on). A quiet "Music Off" pill on the Rotation card and on the
+// collection's row says so at a glance (roadmap E29). Nothing when the collection has no audio control or
+// it is on.
+const AUDIO_CONTROLS = { music: 'off' };
+function silentPillFor(slug) {
+  const c = collectionsBySlug[slug];
+  if (!c || !Array.isArray(c.controls)) return '';
+  for (const ctl of c.controls) {
+    const silent = AUDIO_CONTROLS[ctl.key];
+    if (silent === undefined) continue;
+    const v = ctl.value == null ? ctl.default : ctl.value;
+    if (String(v) === silent) return `<span class="rot-pill rot-pill-silent">${escapeHtml(ctl.label)} Off</span>`;
+  }
+  return '';
+}
+
 function rotRow(item, idx, total) {
   const el = document.createElement('div');
   el.className = 'rot-row';
@@ -337,12 +355,13 @@ function rotRow(item, idx, total) {
     ? '<span class="rot-pill rot-pill-connected">Connected</span>'
     : `<span class="rot-pill">${escapeHtml(item.format)}</span>`; // CSS uppercases it (svg -> SVG)
   const fillPill = item.fit === 'fill' ? '<span class="rot-pill">Fill</span>' : '';
+  const silentPill = connected ? silentPillFor(item.collection) : '';
   el.innerHTML = `
     <span class="rot-grip" title="Drag to reorder">${GRIP}</span>
     <span class="rot-num">${idx + 1}</span>
     <span class="rot-thumb fit-${item.fit === 'fill' ? 'fill' : 'fit'}${cs ? ' crop' : ''}">${thumbTag(item)}</span>
     <span class="rot-meta">
-      <span class="rot-name">${isPinned ? '<span class="rot-pin" title="Pinned">📌</span>' : ''}<span class="rot-title">${escapeHtml(item.original_name)}</span>${typePill}${fillPill}</span>
+      <span class="rot-name">${isPinned ? '<span class="rot-pin" title="Pinned">📌</span>' : ''}<span class="rot-title">${escapeHtml(item.original_name)}</span>${typePill}${fillPill}${silentPill}</span>
       ${artistName ? `<span class="rot-sub">${escapeHtml(artistName)}</span>` : ''}
     </span>
     <span class="rot-btns">
@@ -1426,9 +1445,11 @@ function renderConnectedCard() {
     connectedList.innerHTML = '<p class="cc-empty">No connected collections are supported yet.</p>';
     return;
   }
+  // (silentPillFor: see above the rotation card renderer.)
   connectedList.replaceChildren(...collectionsList.map((c) => {
     const row = document.createElement('div');
     row.className = 'cc-row' + (c.hidden ? ' is-hidden' : '');
+    const silentPill = silentPillFor(c.slug);
     // A collection's controls, rendered in order. These are no longer mutually exclusive: the Chromie
     // Squiggle carries both a 0–10 speed slider (0 = still) and a Background dropdown, shown in that order.
     // A speedControl piece (auto-animated at a chosen pace) gets the slider; a choice piece (a curated set
@@ -1482,7 +1503,7 @@ function renderConnectedCard() {
     row.innerHTML = `
       <span class="cc-meta">
         <span class="cc-name">${escapeHtml(c.name)}</span>
-        <span class="cc-sub">by ${escapeHtml(c.artist)} · ${c.pieces} piece${c.pieces === 1 ? '' : 's'}</span>
+        <span class="cc-sub">by ${escapeHtml(c.artist)} · ${c.pieces} piece${c.pieces === 1 ? '' : 's'}${silentPill}</span>
       </span>
       <span class="cc-controls">${motionCtl}</span>
       <button class="cc-hide">${c.hidden ? 'Unhide' : 'Hide'}</button>`;
