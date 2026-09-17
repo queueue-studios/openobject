@@ -298,3 +298,43 @@ final class Clock: @unchecked Sendable {
         #expect(relaunched.override == nil)
     }
 }
+
+// A download that keeps failing must be retried no faster than the retry interval, one attempt per pass,
+// however often the Host is polled (the iPhone round of 2026-09-17 logged some 65 timed-out downloads of
+// one upload in about 15 s).
+@Suite @MainActor struct LocalCopyRetryTests {
+    private func tempDir() -> URL {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("oo-copy-retry-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+    private func host(_ name: String) throws -> DisplayCore.Host { try #require(DisplayCore.Host.manualEntry(name)) }
+    private func waitUntil(_ timeout: Duration = .seconds(3), _ condition: @MainActor () -> Bool) async {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: timeout)
+        while clock.now < deadline {
+            if condition() { return }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
+    @Test func aFailingDownloadIsRetriedOncePerIntervalNotPerPoll() async throws {
+        let dir = tempDir(); defer { try? FileManager.default.removeItem(at: dir) }
+        let counter = CallCounter()
+        struct Down: Error {}
+        let deps = LocalCopyStore.Dependencies(
+            fetchSize: { _ in 100 },
+            download: { _, _ in await counter.increment(); throw Down() },
+            space: { _ in nil })
+        let copy = LocalCopy(directory: dir, dependencies: deps, retryInterval: 10)
+        let h = try host("a.local")
+        let response = libraryResponse([item("a"), item("b")])
+        for _ in 0..<8 {                                   // eight polls in well under the interval
+            await copy.observe(host: h, response: response)
+            try? await Task.sleep(for: .milliseconds(40))
+        }
+        await waitUntil { !copy.status.isSaving }
+        try? await Task.sleep(for: .milliseconds(100))
+        #expect(await counter.count == 2)                  // one attempt per missing piece, one pass
+    }
+}

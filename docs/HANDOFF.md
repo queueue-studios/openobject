@@ -1104,6 +1104,31 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-09-17: the iOS app built a new AppModel on every local-copy status change (found in the iPhone round)
+
+The iPhone's console from the E1 round (§20 2026-09-16) carried some sixty "request timed out" errors for
+one upload's download inside about fifteen seconds, from the local copy's own download session. The copy's
+retry gate was not at fault (a new test, `LocalCopyRetryTests`, proves a failing download is retried once
+per interval, not per poll). Reproduced in the simulator behind a proxy that never answers `/uploads/`:
+about 60 thousand URLSession tasks in 75 s, and, once instrumented, the cause: **`RootView` created the
+`AppModel` in a `@State` initializer.** A `@State` initial value is evaluated every time its view is
+constructed, and `RootView` is constructed inside `OpenObjectApp`'s `WindowGroup` closure, under the App
+body's observation tracking; `AppModel.init` reads the local copy's observable status (through `seed(for:)`),
+so the App body came to depend on it. Every later status change re-ran the App body, constructed another
+`RootView`, and built another `AppModel`, each with its own `RotationPlayer` (a poll at once), `LocalCopy`
+(a fill pass at once, which set `isSaving` and so changed the status again). SwiftUI kept only the first
+model, but the discarded ones' tasks ran regardless: about 75 app models a second, each with a poll and a
+download, for as long as a download kept the copy "saving". On the iPad it never showed because every
+download finished in milliseconds and the status settled; on the phone one PNG stalled and the loop had no
+end, and the flood of concurrent requests is what made that download time out.
+
+**Fix:** the one `AppModel` is an App-level `@State` in `OpenObjectApp`, evaluated once when the App struct
+is made, outside any body, and handed to `RootView(model:)`. Verified in the same reproduction: one app
+model, a poll every 5 s, one download attempt waiting on the stall. A bug of the local copy's first build
+(§20 2026-09-15), present in TestFlight builds 3 and 4 but harmless there for want of a stalled download;
+it goes out with build 5. tvOS is unaffected: its `RootView` owns no copy and its `AppModel.init` reads
+nothing observable.
+
 ### 2026-09-16: Connected Collections on the iPad and iPhone while the Host is reachable (E1 phase one built), plus E24 and E25 on iOS
 
 Per the §17 two-phase decision settled the same day. What was built, and where:

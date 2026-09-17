@@ -6,7 +6,10 @@ import DisplayCore
 // is landscape-locked in G3b; the stage's touch exit back to the picker arrives in G4 (so for now the app
 // opens straight to art whenever a Host is remembered).
 struct RootView: View {
-    @State private var model = AppModel()
+    /// The app's one model, owned by OpenObjectApp (see the note there on why it is not @State here).
+    let model: AppModel
+
+    init(model: AppModel) { self.model = model }
 
     var body: some View {
         Group {
