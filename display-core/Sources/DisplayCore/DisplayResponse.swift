@@ -92,8 +92,12 @@ public struct DisplayResponse: Sendable, Codable, Equatable {
     /// Host that answers, so when the Host stops answering the iOS player plays on without them (HANDOFF
     /// §17, phase one); the next successful poll brings them back. A Pin on a Connected piece is dropped
     /// with it rather than collapsing the rotation to nothing.
-    public var withoutConnected: DisplayResponse {
-        let kept = items.filter { $0.kind != .connected }
+    public var withoutConnected: DisplayResponse { droppingConnected(unless: { _ in false }) }
+
+    /// The same response without the Connected pieces `keep` rejects: offline, the ones whose bundle the local
+    /// copy does not hold (§17 phase two). A Pin on a dropped piece goes with it.
+    public func droppingConnected(unless keep: (DisplayItem) -> Bool) -> DisplayResponse {
+        let kept = items.filter { $0.kind != .connected || keep($0) }
         let pin = kept.contains { $0.id == pinnedId } ? pinnedId : nil
         return DisplayResponse(items: kept, durationMs: durationMs, mode: mode, pinnedId: pin,
                                asleep: asleep, source: source)

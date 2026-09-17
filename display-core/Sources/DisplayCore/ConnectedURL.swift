@@ -68,8 +68,14 @@ public enum ConnectedURL {
 
     /// The absolute URL on a Host: `path` resolved against the Host's baseURL.
     public static func url(for item: DisplayItem, on host: Host, phone: Bool, muted: Bool) -> URL? {
+        url(for: item, base: host.baseURL, phone: phone, muted: muted)
+    }
+
+    /// The same URL against any origin: the Host's, or the iOS app's copy scheme that serves a held bundle
+    /// offline (§17 phase two), which keeps the whole path contract identical.
+    public static func url(for item: DisplayItem, base: URL, phone: Bool, muted: Bool) -> URL? {
         guard let path = path(for: item, phone: phone, muted: muted) else { return nil }
-        return URL(string: path, relativeTo: host.baseURL)?.absoluteURL
+        return URL(string: path, relativeTo: base)?.absoluteURL
     }
 
     /// Everything of the piece that reaches its URL or its layout, joined for the engine's restyle

@@ -33,6 +33,9 @@ public final class RotationPlayer {
     /// pieces dropped from the running rotation, because a web view can only load them from a Host that
     /// answers; the next successful poll brings them back. Off by default: tvOS never renders them anyway.
     public var dropsConnectedWhenHostUnreachable = false
+    /// With `dropsConnectedWhenHostUnreachable`: the Connected pieces to KEEP while the Host is gone, the ones
+    /// the local copy holds a bundle for (§17 phase two). Nil keeps none.
+    public var connectedHeldOffline: (@MainActor (DisplayItem) -> Bool)?
     /// iOS Connected art: when true, a Connected piece's duration is not counted until the stage reports it
     /// revealed (`pieceRevealed`); until then only a give-up timer runs, `revealGiveUp` from the pick, after
     /// which the rotation moves on without it. A bundle whose generate outlasts a short Every (Azulejo Galo
@@ -168,7 +171,9 @@ public final class RotationPlayer {
     private func offlineShape(of response: DisplayResponse) -> DisplayResponse {
         var next = response
         if wakesWhenHostUnreachable, next.asleep { next = next.awake }
-        if dropsConnectedWhenHostUnreachable, next.hasConnected { next = next.withoutConnected }
+        if dropsConnectedWhenHostUnreachable, next.hasConnected {
+            next = next.droppingConnected(unless: { connectedHeldOffline?($0) ?? false })
+        }
         return next
     }
 

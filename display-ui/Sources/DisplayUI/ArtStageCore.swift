@@ -92,7 +92,7 @@ public struct ArtStageCore: View {
                     ForEach(webLayers) { layer in
                         let box = ConnectedLayout.box(for: layer.item, in: geo.size)
                         connectedLayer(ConnectedLayerRequest(
-                            item: layer.item, host: host, muted: muted,
+                            item: layer.item, host: host, muted: muted, hostReachable: player.hostReachable,
                             onReady: { revealWebLayer(layer.id) },
                             onFailed: { webLayerFailed(layer.id) }))
                             .frame(width: box.width, height: box.height)
@@ -250,6 +250,9 @@ public struct ConnectedLayerRequest {
     public let item: DisplayItem
     public let host: Host
     public let muted: Bool
+    /// Whether the Host answered its last poll: the builder loads from the Host when it did and from a held
+    /// copy of the bundle when it did not (§17 phase two).
+    public let hostReachable: Bool
     public let onReady: () -> Void
     public let onFailed: () -> Void
 }
