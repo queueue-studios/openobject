@@ -90,6 +90,7 @@ final class AppModel {
         }, engine: RotationEngine(filter: CapabilityFilter(rendersConnected: true)))
         player.wakesWhenHostUnreachable = true          // offline ignores the Sleep schedule (§17)
         player.dropsConnectedWhenHostUnreachable = true // a web view cannot load from a Host that is gone
+        player.holdsConnectedUntilRevealed = true       // a slow bundle keeps its turn, as on the frame
         player.setOfflineOverride(localCopy.override)   // a venue setting survives a relaunch (E26)
         // Open straight to art if a Host is remembered from a previous launch (§5). With a local copy of that
         // Host the art plays at once and the Host folds in if it answers: no Connecting beat, no watchdog.

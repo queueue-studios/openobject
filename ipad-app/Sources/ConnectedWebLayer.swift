@@ -1,5 +1,6 @@
 import SwiftUI
 import WebKit
+import AVFoundation
 import os
 import DisplayCore
 import DisplayUI
@@ -13,9 +14,15 @@ import DisplayUI
 //     (a same-origin iframe shared the display page's storage; here the page is top-level);
 //   • what the iframe sandbox gave for free: the page may not navigate anywhere but its own bundle and may
 //     not open windows.
-// It reports ready on the navigation finishing, or for an `awaitPaint` bundle on its first painted frame
-// (display.js waitForPaint, capped at 12 s), and tells the stage when its web content process has died
-// twice, the one failure a web view can have that the page cannot recover from itself. The page's own
+// It reports ready once the page has painted, not merely loaded: a p5 sketch's load event fires before it
+// has drawn anything, so revealing on load lands the crossfade on a black canvas (seen on the real iPad
+// 2026-09-16 between two sketches). display.js waits for the first painted frame only for the one
+// `awaitPaint` collection; here every piece gets that wait, by the same canvas-and-frameCount test, capped
+// at 12 s (a page with no sketch at all is ready as soon as it has loaded). It tells the stage when its web
+// content process has died twice, the one failure a web view can have that the page cannot recover from
+// itself. Each layer gets its own process pool, so the incoming piece's synchronous generate cannot stall
+// the outgoing piece's animation the way same-origin iframes stall each other on the frame (the freeze
+// seen alongside the black flash); the cost is a second web process during a crossfade. The page's own
 // uncaught errors and rejections are bridged into the log, so a bundle that fails on a device says why.
 //
 // Every load, ready, death and memory warning is logged (subsystem io.openobject.app, category webview,
@@ -32,6 +39,7 @@ struct ConnectedWebLayer: UIViewRepresentable {
 
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
+        config.processPool = WKProcessPool()                       // its own web process: no cross-piece stalls
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []      // the kiosk's autoplay flag
         config.websiteDataStore = .default()                       // bundles cache across pieces and launches
@@ -105,6 +113,11 @@ struct ConnectedWebLayer: UIViewRepresentable {
 
         func begin(_ web: WKWebView) {
             startedAt = .now
+            // The app's playback audio session (§10, set up at launch) is activated by a native video when it
+            // starts; a scored Connected piece plays through the same session, so activate it here too, which
+            // is what lets it sound with the device's silent mode on. Harmless for a silent piece. Off the main
+            // thread: the session API warns that activation there can stall the UI.
+            Task.detached(priority: .utility) { try? AVAudioSession.sharedInstance().setActive(true) }
             Self.log.log("load \(self.label, privacy: .public) free=\(WebTelemetry.freeMB)MB url=\(self.parent.url.absoluteString, privacy: .public)")
             web.load(URLRequest(url: parent.url))
         }
@@ -150,7 +163,7 @@ struct ConnectedWebLayer: UIViewRepresentable {
             let ms = Int(startedAt.duration(to: .now).components.seconds * 1000
                          + startedAt.duration(to: .now).components.attoseconds / 1_000_000_000_000_000)
             Self.log.log("loaded \(self.label, privacy: .public) in \(ms)ms free=\(WebTelemetry.freeMB)MB")
-            if parent.item.awaitPaint { waitForPaint(webView) } else { ready() }
+            waitForPaint(webView)
         }
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
@@ -175,12 +188,21 @@ struct ConnectedWebLayer: UIViewRepresentable {
             }
         }
 
-        // display.js waitForPaint: ready once the page has a canvas and, for a p5 sketch, frameCount has
-        // passed its first draw; anything unreadable counts as ready; capped so a piece that never paints
-        // reveals a few seconds later rather than never.
+        // display.js waitForPaint, applied to every piece: a p5 sketch is ready once its canvas exists and its
+        // frame count has passed the first draw (or it drew once and stopped looping). The count is read from
+        // the p5 instance, not the page's global `frameCount`: inkField keeps a page-level variable of that
+        // name at zero while its instance runs (measured: instance at 347, global at 0), which held it at the
+        // cap. A page whose p5 has not yet built its sketch keeps waiting; any other page is ready once it has
+        // a canvas or has none to wait for; anything unreadable counts as ready. Capped so a piece that never
+        // paints reveals a few seconds later rather than never.
         private func waitForPaint(_ web: WKWebView) {
             paintPoll?.cancel()
-            let js = "(function(){try{var c=document.querySelector('canvas');return !!c&&(typeof frameCount!=='number'||frameCount>=2)}catch(e){return true}})()"
+            let js = "(function(){try{var c=document.querySelector('canvas');"
+                + "var i=(typeof p5!=='undefined')&&p5.instance;"
+                + "if(i){if(!c)return false;var f=i.frameCount;return f>=2||(f>=1&&i._loop===false)}"
+                + "if(typeof frameCount==='number'){return !!c&&frameCount>=2}"
+                + "if(c){return true}"
+                + "return typeof p5==='undefined'}catch(e){return true}})()"
             paintPoll = Task { [weak self, weak web] in
                 let cap = ContinuousClock.now.advanced(by: .seconds(12))
                 while !Task.isCancelled, ContinuousClock.now < cap {
@@ -197,7 +219,9 @@ struct ConnectedWebLayer: UIViewRepresentable {
         private func ready() {
             guard !reported else { return }
             reported = true
-            Self.log.log("ready \(self.label, privacy: .public) free=\(WebTelemetry.freeMB)MB")
+            let ms = Int(startedAt.duration(to: .now).components.seconds * 1000
+                         + startedAt.duration(to: .now).components.attoseconds / 1_000_000_000_000_000)
+            Self.log.log("ready \(self.label, privacy: .public) at \(ms)ms free=\(WebTelemetry.freeMB)MB")
             parent.onReady()
         }
     }

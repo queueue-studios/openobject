@@ -1182,6 +1182,41 @@ work is far slower than on a real iPad: **Azulejo Galo's synchronous generate to
 never reached ready and the piece before it held. Its real load time on the iPad and iPhone is one of the
 device run's numbers; every other bundle reported ready within about 1.4 s of its load.
 
+**First device round (Matt, his iPad over the cable, the same evening).** Every Connected piece
+displayed, inkField and Dune Reveries clean, Azulejo acceptable (the piece before it holds, so its time is
+a log line, not something on screen). Three findings, fixed before the second round: (1) **a brief black
+frame at some crossfades, and the outgoing piece froze during them.** The flash: a p5 sketch's load event
+fires before it has drawn anything, so revealing on load lands on a black canvas; the frame guards only
+`awaitPaint` pieces against this, the app now waits for the first painted frame on every piece, reading
+the frame count from the p5 instance (inkField keeps a page-level `frameCount` at zero while its instance
+runs, which held it at the 12 s cap until the read moved). The freeze: same-origin pages share one WebKit
+process, so the incoming piece's synchronous generate stalled the outgoing sketch, exactly as same-origin
+iframes stall each other on the frame; each layer now gets its own `WKProcessPool`, a second web process
+during a crossfade, which the memory numbers cover. (2) **The Bloom was silent with Sound on.** The URL in
+the log carried `oo_music=off`, and the app writes that only when its own Sound is off or the Host sends
+the piece's Music control as Off: it was Off on the frame (the piece is silent everywhere then, the frame
+included). Turned on, the piece sounded on the iPad. Kept from the diagnosis: the web layer activates the
+app's playback audio session when a piece begins (only a native video did before), which is what lets a
+scored piece sound with the device's silent mode on; a probe that read the page's audio state was removed
+again. (3) "Local copy ready" reads true for what the copy covers (the uploads); Connected pieces join it
+in phase two. (4) **At a 10 s Every the app skipped Azulejo every pass and inkField on the first**: a
+piece's turn was counted from its pick, so a bundle whose load or generate outlasts the duration lost its
+turn, where the frame waits for the piece. `RotationPlayer.holdsConnectedUntilRevealed` (iOS only): a
+Connected piece's duration now starts at its reveal, and until then only a 30 s give-up runs, the
+frame's backstop figure; native pieces and tvOS are unchanged.
+
+**Second device round, the numbers (Matt's iPad Pro 11-inch, 4th generation, over the cable, two full
+passes of ten pieces at a 10 s Every).** No web content process death, no page error, no memory
+warning; the app's remaining budget read about 5.09 GB throughout (lowest 5.03 GB); live Connected
+layers peaked at two during a crossfade and returned to one every time, so nothing accumulates. Time
+from load to ready: **Azulejo Galo 25 s on both passes** (the bundle's files in 13 s, the synchronous
+generate the rest; the cache does not help, so the piece before it holds 25 s, as on the frame), Tiles
+4.1 s (the paint wait now covers it), Dune Reveries 1.4 s cold and 0.5 s warm, inkField 0.7 to 0.9 s,
+send/receive 0.5 s, Code-Art 0.4 s, Lost in Moffat County 0.35 s, The Bloom 0.26 s with its music on.
+Every piece picked reached ready and was shown. The WebContent process's own peak was not measured (it
+needs Instruments) and is deferred: with 5 GB of headroom in the app process and no death in two passes
+the budget question is answered well enough for phase one. The iPhone round is still to run.
+
 The frame guide's app paragraph, the Mac guide's "What plays on them", the README's feature line and the
 tvOS plan's superseded note now say Connected Collections play on the iPad and iPhone while the Host is on
 the network, are not yet part of the local copy, and stay off the Apple TV (§16). The website's Connected

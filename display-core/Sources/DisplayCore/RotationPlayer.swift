@@ -33,6 +33,14 @@ public final class RotationPlayer {
     /// pieces dropped from the running rotation, because a web view can only load them from a Host that
     /// answers; the next successful poll brings them back. Off by default: tvOS never renders them anyway.
     public var dropsConnectedWhenHostUnreachable = false
+    /// iOS Connected art: when true, a Connected piece's duration is not counted until the stage reports it
+    /// revealed (`pieceRevealed`); until then only a give-up timer runs, `revealGiveUp` from the pick, after
+    /// which the rotation moves on without it. A bundle whose generate outlasts a short Every (Azulejo Galo
+    /// on a real iPad at 10 s) would otherwise lose its turn on every pass, where the frame waits for it.
+    /// Off by default: tvOS never shows a Connected piece.
+    public var holdsConnectedUntilRevealed = false
+    /// How long a Connected piece may take to reveal before the rotation moves on (display.js's backstop).
+    public var revealGiveUp: Duration = .seconds(30)
     /// The offline rotation override (§17, E26): while the Host is not answering, its duration and/or mode
     /// replace the captured ones. Ignored while the Host is reachable, and cleared by a successful poll, so
     /// an offline change lasts exactly until the device sees the Host again. Set it before `start` so a
@@ -139,6 +147,12 @@ public final class RotationPlayer {
         armAdvance()
     }
 
+    // The piece just picked is a Connected one whose duration waits for its reveal.
+    private var currentHoldsForReveal: Bool {
+        guard holdsConnectedUntilRevealed, case let .playing(item) = screen else { return false }
+        return item.kind == .connected
+    }
+
     /// Move to the next piece at once. The iOS web layer calls this when a Connected piece's web content
     /// process has died twice (HANDOFF §17): the piece cannot paint, so it gives up its turn rather than
     /// holding a black stage. A lone piece stays (the next pick is itself); the piece gets its normal turn
@@ -172,7 +186,11 @@ public final class RotationPlayer {
         let currentID: String? = if case let .playing(item) = screen { item.id } else { nil }
         if currentID != shownID {
             shownID = currentID
-            armAdvance()                                      // a new piece appeared: count its duration
+            if currentHoldsForReveal {
+                armGiveUp()                                   // count nothing until it reveals; give up late
+            } else {
+                armAdvance()                                  // a new piece appeared: count its duration
+            }
         } else if engine.autoAdvances, advanceTask == nil {
             armAdvance()                                      // 1 -> many: resume cadence, don't restart
         } else if !engine.autoAdvances {
@@ -181,9 +199,17 @@ public final class RotationPlayer {
     }
 
     private func armAdvance() {
+        armAdvance(after: .milliseconds(engine.durationMs))
+    }
+
+    // A Connected piece that has not revealed yet: move on after `revealGiveUp`, not after its duration.
+    private func armGiveUp() {
+        armAdvance(after: revealGiveUp)
+    }
+
+    private func armAdvance(after interval: Duration) {
         advanceTask?.cancel()
         guard engine.autoAdvances else { advanceTask = nil; return }  // a lone/pinned piece holds forever
-        let interval = Duration.milliseconds(engine.durationMs)
         advanceTask = Task { [weak self] in
             try? await Task.sleep(for: interval)
             guard !Task.isCancelled, let self else { return }

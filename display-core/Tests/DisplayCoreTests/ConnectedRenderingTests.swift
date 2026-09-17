@@ -230,6 +230,34 @@ import Foundation
         player.stop()
     }
 
+    @Test func aConnectedPieceKeepsItsTurnUntilRevealedThenGivesUp() async throws {
+        // Duration 60 ms, give-up 300 ms: without the hold the Connected piece would be gone in 60 ms.
+        let two = libraryResponse([connected("c"), item("n")], durationMs: 60)
+        let player = webPlayer(fetch: { _ in two })
+        player.holdsConnectedUntilRevealed = true
+        player.revealGiveUp = .milliseconds(300)
+        player.start(host: try host())
+        await waitUntil { playingID(player) == "c" }
+        try? await Task.sleep(for: .milliseconds(150))
+        #expect(playingID(player) == "c")                    // past its duration, not revealed: still its turn
+        player.pieceRevealed(id: "c")                        // revealed: the duration counts from here
+        try? await Task.sleep(for: .milliseconds(30))
+        #expect(playingID(player) == "c")
+        await waitUntil { playingID(player) == "n" }
+        #expect(playingID(player) == "n")                    // advanced 60 ms after the reveal
+        player.stop()
+
+        // Never revealed: the give-up moves the rotation on.
+        let again = webPlayer(fetch: { _ in two })
+        again.holdsConnectedUntilRevealed = true
+        again.revealGiveUp = .milliseconds(200)
+        again.start(host: try host())
+        await waitUntil { playingID(again) == "c" }
+        await waitUntil { playingID(again) == "n" }
+        #expect(playingID(again) == "n")
+        again.stop()
+    }
+
     @Test func advanceNowMovesOnAtOnceAndALonePieceStays() async throws {
         let two = libraryResponse([item("1"), item("2")], durationMs: 100_000)
         let player = RotationPlayer(fetch: { _ in two }, pollInterval: .seconds(100))
