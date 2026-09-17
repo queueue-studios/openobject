@@ -198,7 +198,7 @@ process, stay lowercase and are not affected.)
 
 The square (1:1) panel makes this choice matter more than on a normal screen, because almost nothing displayed is square, hence per-clip control. **v1 uses center-crop only.**
 
-**Connected pieces (built 2026-06-16).** Beyond files, OpenObject can also show **connected artwork**: generative or hosted pieces from a curated collection (§8), rendered as a **`connected` kind** in a **sandboxed, same-origin `<iframe>`** that fills the stage. The render bundle is mirrored locally first, so it plays offline like any file (with one exception, the live piece below). Fit/Fill does not apply by default (the page sizes itself), though a collection may opt into the per-clip **Fit/Fill** toggle: Erick Calderon (Snowfro)'s *"Chromie Squiggle"* uses it, so its 3:2 can letterbox (Fit) or cover-crop to the panel edges (Fill). Where a collection composes its art in a centered inset, an optional per-collection **crop** zooms the iframe so it still reaches the panel edges (Snowfro's *"send/receive"* fills the middle 60%, so it is zoomed to fill; Azulejo Galo renders a centered square that already fills the 1:1 panel; V4w.enko's *"Perfect Everything"* and *"Perfect Circles"* and Cinzia y Gabriel's *"Pendulum"* likewise render squares that fill the 1:1 panel edge to edge, as does Jeremy Booth's *"Lost in Moffat County"* (a square photo) and Rich Caldwell's *"Tiles"* (a square p5 tile-shuffle sketch, rewritten to reach the edges on pure black); Alex Kittoe's *"As the Days Go By"* letterboxes its own portrait photo on black). A non-square piece may instead declare an **aspect**: the display sizes the iframe to the largest box of that ratio that fits inside the stage and centers it, a true `contain` on any panel shape (the square frame, or a wider screen when the Mac itself is the display), so the bare black stage forms the letterbox (top and bottom on the square panel, the sides on a wider screen), exactly as a landscape image does in Fit mode (Juicy Julio's *"Golden Lining"*, a 5:4 landscape; Chaz Wesley's *"The Bloom"*, a 16:9 landscape whose "Click to Bloom" gate is hidden from the first paint so the garden shows with no flash; NFTman76's *"Binary Mountains"*, a responsive three.js scene shown 16:9 so its wide mountain vista reads as a landscape image rather than a cramped, stretched-looking square; and Snowfro's *"Chromie Squiggle"*, a 3:2 landscape that letterboxes by default but can be switched to Fill, cover-cropping it to the panel edges; no painted background, no zoom-crop). A connected piece can be a **generative sketch** (Azulejo, whose motion an optional per-collection **Animate** engages on load; or V4w.enko's *"Perfect Everything"* and *"Perfect Circles"* and Cinzia y Gabriel's *"Pendulum"*, which simply loop on their own, so no Animate), a **time-aware piece** that the bundle itself redraws from the viewer's local clock (Kittoe's photographic still has nothing to engage, so no Animate; Jeremy Booth's *"Lost in Moffat County"* crossfades a day photo into a night one and adds an optional **Animate** that swaps in an animated easter-egg overlay), a **live/networked piece** that reads on-chain state at display time and animates from it (send/receive, self-animating, with an offline caveat: see §8), or an **interactive piece we auto-animate**: Golden Lining is a black-and-white to color crossfade the artist drives by mouse, which a per-collection **motion speed (0 to 10)** instead runs as a hands-free, fluid cosine sweep (0 = static full color), and Snowfro's *"Chromie Squiggle"* maps that same 0-to-10 control onto its own colour-cycle speed (0 = the static, as-minted still, default 1) and pairs it with a White/Black background choice, the first connected piece to carry more than one control; or a **self-animating piece with a discrete mode control**: NFTman76's *"Binary Mountains"* orbits and snows on its own, and a per-collection **choice** control (a small dropdown) sets one of the artwork's snowfall modes (Light, Moderate, Heavy, Blizzard) by replaying the artwork's own tap that many times at load. OpenObject's own *"Bouncing OpenObject Logo"* is a self-contained HTML piece that bounces the wordmark across the bare stage and recolours at each edge, self-animating, filling the square stage edge to edge (no Animate control); it is the first collection to carry a **general multi-control** set of its own (Speed and Size sliders, and a Corner effect choice), surfaced in Settings and applied at display time. See §8.
+**Connected pieces (built 2026-06-16).** Beyond files, OpenObject can also show **connected artwork**: generative or hosted pieces from a curated collection (§8), rendered as a **`connected` kind** in a **sandboxed, same-origin `<iframe>`** that fills the stage. The render bundle is mirrored locally first, so it plays offline like any file (with one exception, the live piece below). Fit/Fill does not apply by default (the page sizes itself), though a collection may opt into the per-clip **Fit/Fill** toggle: Erick Calderon (Snowfro)'s *"Chromie Squiggle"* uses it, so its 3:2 can letterbox (Fit) or cover-crop to the panel edges (Fill). Where a collection composes its art in a centered inset, an optional per-collection **crop** zooms the iframe so it still reaches the panel edges (Snowfro's *"send/receive"* fills the middle 60%, so it is zoomed to fill; Azulejo Galo renders a centered square that already fills the 1:1 panel; V4w.enko's *"Perfect Everything"* and *"Perfect Circles"* and Cinzia y Gabriel's *"Pendulum"* likewise render squares that fill the 1:1 panel edge to edge, as does Jeremy Booth's *"Lost in Moffat County"* (a square photo) and Rich Caldwell's *"Tiles"* (a square p5 tile-shuffle sketch, rewritten to reach the edges on pure black); Alex Kittoe's *"As the Days Go By"* letterboxes its own portrait photo on black). A non-square piece may instead declare an **aspect**: the display sizes the iframe to the largest box of that ratio that fits inside the stage and centers it, a true `contain` on any panel shape (the square frame, or a wider screen when the Mac itself is the display), so the bare black stage forms the letterbox (top and bottom on the square panel, the sides on a wider screen), exactly as a landscape image does in Fit mode (Juicy Julio's *"Golden Lining"*, a 5:4 landscape; Chaz Wesley's *"The Bloom"*, a 16:9 landscape whose "Click to Bloom" gate is hidden from the first paint so the garden shows with no flash; NFTman76's *"Binary Mountains"*, a responsive three.js scene shown 16:9 so its wide mountain vista reads as a landscape image rather than a cramped, stretched-looking square; and Snowfro's *"Chromie Squiggle"*, a 3:2 landscape that letterboxes by default but can be switched to Fill, cover-cropping it to the panel edges; no painted background, no zoom-crop). A connected piece can be a **generative sketch** (Azulejo, whose motion an optional per-collection **Animate** engages on load; or V4w.enko's *"Perfect Everything"* and *"Perfect Circles"* and Cinzia y Gabriel's *"Pendulum"*, which simply loop on their own, so no Animate), a **time-aware piece** that the bundle itself redraws from the viewer's local clock (Kittoe's photographic still has nothing to engage, so no Animate; Jeremy Booth's *"Lost in Moffat County"* crossfades a day photo into a night one and adds an optional **Animate** that swaps in an animated easter-egg overlay), a **live/networked piece** that reads on-chain state at display time and animates from it (send/receive, self-animating, from its last-known network state when offline: see §8 and §20 2026-09-17), or an **interactive piece we auto-animate**: Golden Lining is a black-and-white to color crossfade the artist drives by mouse, which a per-collection **motion speed (0 to 10)** instead runs as a hands-free, fluid cosine sweep (0 = static full color), and Snowfro's *"Chromie Squiggle"* maps that same 0-to-10 control onto its own colour-cycle speed (0 = the static, as-minted still, default 1) and pairs it with a White/Black background choice, the first connected piece to carry more than one control; or a **self-animating piece with a discrete mode control**: NFTman76's *"Binary Mountains"* orbits and snows on its own, and a per-collection **choice** control (a small dropdown) sets one of the artwork's snowfall modes (Light, Moderate, Heavy, Blizzard) by replaying the artwork's own tap that many times at load. OpenObject's own *"Bouncing OpenObject Logo"* is a self-contained HTML piece that bounces the wordmark across the bare stage and recolours at each edge, self-animating, filling the square stage edge to edge (no Animate control); it is the first collection to carry a **general multi-control** set of its own (Speed and Size sliders, and a Corner effect choice), surfaced in Settings and applied at display time. See §8.
 
 ---
 
@@ -907,6 +907,10 @@ duration counts from its reveal, and a piece whose web content process has died 
 skip mechanism above, which stays unbuilt with the pill unless a piece actually fails. Simulator-verified;
 Matt's device run measures the memory budget.
 
+**Send/Receive offline (E30, built 2026-09-17, §20).** The one piece that read the chain while it rendered now
+reads it through the Host, which keeps its last good answers beside the bundle; the copy carries them, so it
+plays its last-known network state anywhere. The design record is the §20 entry.
+
 **Phase two built 2026-09-17 (§20).** The local copy carries each Connected piece's mirrored bundle and an
 in-app URL scheme serves it to the web view when the Host is gone, per the two-phase paragraph; the one
 addition to the Host is a read-only bundle listing per piece, since a static directory cannot otherwise be
@@ -1111,6 +1115,44 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-09-17: the frame's paint wait (E27), Send/Receive offline (E30), a "Music Off" pill (E29), the picker's copy row
+
+The round Matt asked for after the E1 device runs, with E28 left a candidate on its cost.
+
+- **E27, `display.js`.** Every Connected piece now reveals on its first painted frame, not on its
+  iframe's load event, which for a p5 sketch fires before anything is drawn (the black frame Matt saw around
+  inkField on the frame). The wait is the iOS layer's, ported back: the frame count is read from the p5
+  INSTANCE (inkField's page-level `frameCount` sits at zero while its instance runs, which had held the
+  old `awaitPaint` test at the cap), a sketch that drew once and stopped looping counts as painted, a page
+  with no sketch is ready at once, the 12 s cap and the 30 s backstop stand. `awaitPaint` in the registry is
+  now historical. Verified in a headless Chrome at the local Host's display page (a hidden page stands the
+  wait down by design, so the in-app browser pane could not show it): every reveal across seven pieces had
+  the canvas present and the count past the first draw, inkField at 2.
+- **E30, the Host and the copy.** `POST /collections/<slug>[/<token>]/rpc` on a `liveRpc` collection
+  forwards the piece's JSON-RPC body to the collection's public node with a 15 s timeout, keeps each real
+  answer (never a JSON-RPC error) in `rpc-cache.json` beside the bundle, keyed by the body's hash and capped
+  at 50, and replays the cached answer when the node is unreachable; `withConnectedFlags` now hands the
+  piece `rpc` as its node, relative to its own page, so the same value reaches the proxy on a Host and the
+  copy scheme on the iPad. send/receive sends an identical body on every poll (token, block 0, 36), so the
+  replay is exact. The iOS scheme handler answers a POST to `…/rpc` from the bundle's cached answers by the
+  same hash, and held bundles are now **revalidated hourly** (`LocalCopyStore.defaultBundleRevalidation`,
+  the listing marker's age): a held bundle used to be skipped for good, so an answer file the Host added
+  beside it would never have reached the copy; one new test (106). Verified end to end in the simulator:
+  the display page's own poll through the proxy cached a real answer; the copy re-captured the bundle with
+  it; a cold launch with the Host down loaded the piece from the copy scheme, its polls were answered from
+  the cache on the piece's cadence, and the sprite rendered, not the error badge.
+- **E29, the control panel.** A quiet "Music Off" pill on a Connected piece's Rotation card and on its
+  collection row whenever an audio control (the same table `display.js` gates) is at its silent value;
+  nothing otherwise. Verified in the panel with The Bloom's Music set Off.
+- **The picker's copy row (iOS).** It showed "Local copy" for a typed Host even while that Host was live,
+  since a typed Host is never in the discovered list (Matt's phone, 2026-09-17). The app now probes the
+  held Host directly, the Gallery's 3 s probe, whenever the picker starts or restarts discovery and on each
+  empty-list re-browse, and lists it as a plain Host row when it answers, tagged "Local copy" only when it
+  does not.
+
+The frame guide's send/receive sentence now says offline it shows the network as it last saw it (§16).
+Frame: Software Update. Mac: the next app build. iOS: TestFlight build 6, to come.
+
 ### 2026-09-17: Connected Collections offline on the iPad and iPhone (E1 phase two built; E1 closes)
 
 Per the §17 two-phase design and Matt's three calls (the Host endpoint, the Host first while it answers,
@@ -1151,10 +1193,17 @@ the whole rotation copied). What was built, and where:
 **Verified in the simulator against the local Host** (the Mac's data copy, 17 pieces, 14 Connected):
 from an empty copy the fill captured all 14 bundles plus the uploads, 128 MB, in about a minute over
 localhost; the Host then stopped: the next picks loaded from `oo-copy://copy/…` and painted (Code-Art,
-The Bloom with its music control, Chromie Squiggle), no failure, no process death. **Not yet verified on
-a device:** Matt's iPad with Wi-Fi off playing the shelf from the copy, and the fill time for the shelf
-over the frame's Wi-Fi; it rides in TestFlight build 5 with phase one. The frame needs the player update
-(Software Update) before its bundles can be captured; until then the app behaves as phase one.
+The Bloom with its music control, Chromie Squiggle), no failure, no process death. **Device-verified the same
+day** (Matt, TestFlight iOS 1.10.0 build 5, the frame updated by Software Update first): the copy filled
+from the frame on both devices, then with Wi-Fi off the shelf kept rotating, Connected pieces included,
+on the iPhone and the iPad. Send/Receive showed its own network-error sprite offline, as designed (it
+reads the chain while it renders; the frame does the same with no network). Two observations from the
+round, neither a fault: inkField replays faster on the phone than on the iPad and the frame, because the
+phone alone gets the bundle's density-one setting (Matt's 2026-09-15 call) and so draws a quarter of the
+pixels; and the picker's "Local copy" row showed on the phone while the frame was live, because a typed
+Host is never in the discovered list, so the row's test is wrong for it (fixed next: the picker probes
+the remembered Host and tags the row only when it does not answer). The phone also cannot resolve
+Bonjour names on Matt's Wi-Fi at all (roadmap check C1), which is outside the app.
 
 The frame and Mac guides and the README now say the copy carries Connected Collections (§16). E1's
 roadmap row is closed; the design record stays in §17.

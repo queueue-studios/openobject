@@ -181,8 +181,8 @@ rebuilds its downloaded copy from scratch. Some connected pieces even change
 through the day on their own, for example one shifts from daytime colors to moonlit tones at night,
 following your frame's local time. Another, Snowfro's *send/receive*, is a living piece that reads
 its art network over the internet and animates non-stop, filling the whole panel edge to edge;
-because it's live, this one looks its best when the frame is online (the others play fully offline
-once they're added). One more, Juicy Julio's *Golden Lining*, is a desert photo that drifts between
+with the frame online it shows the network as it is right now, and offline it keeps showing the
+network as it last saw it (the others play fully offline once they're added). One more, Juicy Julio's *Golden Lining*, is a desert photo that drifts between
 black-and-white and full color; a simple speed slider lets you set how fast that drift moves, or rest
 it on the full-color photo. Another, V4w.enko's *Perfect Everything*, is an ever-shifting pattern of
 concentric colored rings that fills the whole panel and drifts on its own. The same artist's *Perfect Circles* is a companion series, slowly shifting concentric circles that fill the panel and drift on their own. And Cinzia y Gabriel's *Pendulum* is a
