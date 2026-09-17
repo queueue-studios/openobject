@@ -305,6 +305,10 @@ function authGate(req, res, next) {
   // /api/display and /folder-media: a frame reads them with no credential. The prefix covers the
   // per-folder /:id/items. They expose only names/counts and compliant filenames, never a path.
   if (req.path === '/api/shared-folders' || req.path.startsWith('/api/shared-folders/')) return next();
+  // A Connected piece's bundle listing is open for the same reason /api/display is: a Display keeping
+  // its own copy (the iPad, §17 phase two) reads it with no credential, and it names only files that
+  // the static /collections route already serves openly.
+  if (/^\/api\/collections\/[^/]+\/bundle$/.test(req.path)) return next();
   if (isAuthed(req)) return next();
   return res.status(401).json({ error: 'auth required' });
 }
@@ -476,6 +480,21 @@ app.delete('/api/library/:id', (req, res) => {
 // ── Connected collections (src/collections.js) ─────────
 // The supported list is code; the owner curates which show (hide/unhide) and toggles animate.
 app.get('/api/collections', (_req, res) => res.json(collections.list()));
+
+// The files of one piece's mirrored bundle, for a Display that carries its own copy of the rotation
+// (the iPad's local copy, HANDOFF §17 phase two): `{ base, files: [{ path, bytes, modified }], bytes }`,
+// with `base` the bundle's URL prefix under /collections and each path relative to it. `?token=` names
+// the piece for a perToken collection (ignored otherwise). 404 for an unknown slug or an unmirrored
+// piece. Read-only, open (see authGate), cheap: a directory walk of a few files.
+app.get('/api/collections/:slug/bundle', (req, res) => {
+  const c = collections.bySlug(req.params.slug);
+  if (!c) return res.status(404).json({ error: 'unknown collection' });
+  const token = req.query.token != null ? String(req.query.token) : '';
+  if (c.perToken && !token) return res.status(400).json({ error: 'token required for this collection' });
+  const listing = collections.bundleFiles(c.slug, token || undefined);
+  if (!listing) return res.status(404).json({ error: 'not mirrored' });
+  res.json(listing);
+});
 
 app.patch('/api/collections/:slug', (req, res) => {
   const { hidden, animate, speed, choice, controls } = req.body || {};

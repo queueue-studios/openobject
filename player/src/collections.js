@@ -707,6 +707,39 @@ function outDir(slug, tokenId) {
 }
 function isMirrored(slug, tokenId) { return fs.existsSync(path.join(outDir(slug, tokenId), 'index.html')); }
 
+// The files of a piece's mirrored bundle, for a Display that keeps its own copy (the iPad's local copy,
+// HANDOFF §17 "Connected Collections on the viewer apps", phase two). Relative paths under the bundle's
+// URL base, each with its size and modified time, so a client can fetch them one by one through the
+// static /collections route, resume, and refresh a file the mirror has rewritten. Thumbnails are the
+// control panel's, not the art's, and are left out; a perToken collection's listing is its own token
+// directory only. Null when the piece is not mirrored.
+function bundleFiles(slug, tokenId) {
+  if (!isMirrored(slug, tokenId)) return null;
+  const c = bySlug(slug);
+  const dir = outDir(slug, tokenId);
+  const base = '/collections/' + slug + (c && c.perToken ? '/' + encodeURIComponent(String(tokenId)) : '');
+  const files = [];
+  const walk = (abs, rel) => {
+    for (const ent of fs.readdirSync(abs, { withFileTypes: true })) {
+      if (ent.name === 'thumbs' && rel === '') continue;                 // the panel's thumbnails
+      if (ent.name.startsWith('.')) continue;
+      const nextAbs = path.join(abs, ent.name);
+      const nextRel = rel ? rel + '/' + ent.name : ent.name;
+      if (ent.isDirectory()) {
+        // A shared bundle's dir never holds token dirs; a perToken slug's tokens are siblings, not
+        // children, of each token dir, so no sibling exclusion is needed here.
+        walk(nextAbs, nextRel);
+      } else if (ent.isFile()) {
+        const st = fs.statSync(nextAbs);
+        files.push({ path: nextRel, bytes: st.size, modified: Math.round(st.mtimeMs) });
+      }
+    }
+  };
+  walk(dir, '');
+  files.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+  return { base, files, bytes: files.reduce((n, f) => n + f.bytes, 0) };
+}
+
 // Live (networked) collections read a public RPC at display time (e.g. send/receive reads the
 // global on-chain state that drives its animation). We scope a connect-src exception to just that
 // collection's bundle path; every other collection stays locked to same-origin. Given a request
@@ -1330,4 +1363,4 @@ function list() {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-module.exports = { REGISTRY, COLLECTIONS_DIR, bySlug, resolveToken, mirrorBundle, removeBundle, cacheThumb, toDataUrl, getState, setState, list, isMirrored, liveRpcForPath };
+module.exports = { REGISTRY, COLLECTIONS_DIR, bySlug, resolveToken, mirrorBundle, removeBundle, cacheThumb, toDataUrl, getState, setState, list, isMirrored, bundleFiles, liveRpcForPath };
