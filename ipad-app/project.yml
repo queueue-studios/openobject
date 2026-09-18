@@ -44,7 +44,7 @@ settings:
     # phase two), Send/Receive from the copy (E30) and the picker's probed copy row. Bump it here, then
     # `xcodegen generate`, before every archive.
     MARKETING_VERSION: "1.10.0"
-    CURRENT_PROJECT_VERSION: "6"
+    CURRENT_PROJECT_VERSION: "7"
     TARGETED_DEVICE_FAMILY: "1,2" # Universal: 1 = iPhone, 2 = iPad
     # Signed for on-device testing (Phase G5) with the Queueue Studios LLC team (J87JRCN9RM). Automatic
     # signing provisions a development profile for a paired iPad/iPhone on the first device build; the

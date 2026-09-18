@@ -40,8 +40,8 @@ settings:
     # CURRENT_PROJECT_VERSION stays a PER-PLATFORM counter (it need not match iOS's) and release.sh
     # increments it every run: App Store Connect rejects a build number it has already seen for this
     # platform, even when the marketing version changed.
-    MARKETING_VERSION: "1.9.0"
-    CURRENT_PROJECT_VERSION: "3"
+    MARKETING_VERSION: "1.10.0"
+    CURRENT_PROJECT_VERSION: "4"
     # Signed for on-device testing (Phase C6) with the Queueue Studios LLC team (J87JRCN9RM). Automatic
     # signing lets Xcode provision a development profile for a paired Apple TV on the first device build;
     # the simulator still builds ad-hoc ("Sign to Run Locally"). Phase E adds App Store distribution.
