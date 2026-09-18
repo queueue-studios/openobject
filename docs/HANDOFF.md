@@ -1158,8 +1158,12 @@ The round Matt asked for after the E1 device runs, with E28 left a candidate on 
   empty-list re-browse, and lists it as a plain Host row when it answers, tagged "Local copy" only when it
   does not.
 
-The frame guide's send/receive sentence now says it goes online once, when added, and shows the network
-as it was that day (§16). Matt's desktop archive bundles for the two tokens are to be regenerated from the
+**Frame-verified the same evening** (Matt, Software Update to 7c152ee): no black frame around inkField any
+more, Send/Receive animating, both tokens' state captured by the startup pass. **Devices the same evening**
+(TestFlight iOS 1.10.0 build 6): the iPhone's picker and rotation clean, and on the iPad, Wi-Fi off, a cold
+launch played Send/Receive from the copy, sprites moving, no error badge. The frame guide's
+send/receive sentence now says it goes online once, when added, and shows the network as it was that day
+(§16). Matt's desktop archive bundles for the two tokens are to be regenerated from the
 frame's bundles, answer file included, with whatever serves the bundle answering the piece's `rpc` request
 from it (a personal step, outside the repo).
 Frame: Software Update. Mac: the next app build. iOS: TestFlight build 6, to come.
