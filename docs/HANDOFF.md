@@ -1161,7 +1161,10 @@ The round Matt asked for after the E1 device runs, with E28 left a candidate on 
 **Frame-verified the same evening** (Matt, Software Update to 7c152ee): no black frame around inkField any
 more, Send/Receive animating, both tokens' state captured by the startup pass. **Devices the same evening**
 (TestFlight iOS 1.10.0 build 6): the iPhone's picker and rotation clean, and on the iPad, Wi-Fi off, a cold
-launch played Send/Receive from the copy, sprites moving, no error badge. The frame guide's
+launch played Send/Receive from the copy, sprites moving, no error badge. **The website changed 2026-09-18,
+ahead of Apple's approval at Matt's call** (the §15 "describes what is shipped" rule set aside for it): the
+landing page's device and Connected lines and the Apple TV page's Connected paragraph now say the iPad and
+iPhone app plays Connected Collections, on the network and from its local copy, and keeps that copy. The frame guide's
 send/receive sentence now says it goes online once, when added, and shows the network as it was that day
 (§16). Matt's desktop archive bundles for the two tokens are to be regenerated from the
 frame's bundles, answer file included, with whatever serves the bundle answering the piece's `rpc` request
