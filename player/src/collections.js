@@ -538,6 +538,55 @@ const REGISTRY = [
     ],
   },
   {
+    slug: 'conservation-of-energy',
+    artist: 'Jimena Buena Vida',
+    name: 'Conservation of Energy',
+    chain: 'Ethereum',
+    contract: '0xa71acf8ebd58e878ffe151f67e62095be2c9dcc6',
+    rpc: 'https://ethereum-rpc.publicnode.com',
+    // A series on its own contract (on chain "Jimena's Art For Marfa, TX 2026"): 22 tokens as of 2026-10-26 (1 to 21 are "CoE #02" to "#22", 22 is "CoE #01"), each
+    // a different artwork built on one shared harness, so the owner enters their Token ID (the Pendulum lesson)
+    // and each token mirrors into its own dir (perToken, like Tiles).
+    perToken: true,
+    // FULLY ON CHAIN: tokenURI is a data:application/json URI whose animation_url is a base64 data:text/html
+    // page (usually a stripped-down p5 subset inlined, no external assets) and whose image is an inline PNG.
+    // The resolve, mirror and thumbnail steps decode data: URIs instead of fetching (decodeDataUri).
+    //
+    // Each page loops seamlessly on its own (a 300-frame counter at 30 fps, a 10 s loop), so no Animate
+    // control. Its one control is the artist's own FORMAT: the page reads ?format=h|v|q (16:9, 9:16, square)
+    // and otherwise picks from its window (wider than 4:3 landscape, taller than 3:4 portrait, square
+    // between), then draws the largest canvas of that shape it can and centers it. Auto (no override) is the
+    // default, so the frame gets the square composition and a 16:9 Mac the landscape one; there is no
+    // collection-level aspect, since the page letterboxes itself. The choice rides in on ?oochoice, so the
+    // mirror points the page's own format read at it (tolerant regex: the minified code varies per token).
+    choice: {
+      label: 'Aspect Ratio',
+      default: 'auto',
+      options: [
+        { value: 'auto', label: 'Auto' },
+        { value: 'h',    label: 'Landscape (16:9)' },
+        { value: 'v',    label: 'Portrait (9:16)' },
+        { value: 'q',    label: 'Square' },
+      ],
+    },
+    animateDefault: false,
+    animatable: false,
+    // Not every token is self-contained: CoE #02 (token 1) loads the full p5.js from cdnjs by absolute URL
+    // instead of the inlined subset, so localize it for offline play (the Golden Lining mechanism). A token
+    // with no absolute refs is untouched.
+    localizeAbsolute: true,
+    // The page letterboxes on its own light surround (#e9e9e9, #e8e3d8 per token), so it is repainted black
+    // to match the bare stage (§6; Matt, 2026-10-26). The canvas paints its own background, so the art is untouched.
+    htmlReplace: [
+      { find: /\.get\((["'])format\1\)/g, replace: '.get("oochoice")' },
+      // CoE #14 (token 13) carries all three compositions but no ?format= read (it always picks from its
+      // window), so its bare auto call is wrapped to honor the choice too (Matt, 2026-10-26). Every other
+      // token calls autoFormat only behind its own format read, so this matches nothing there.
+      { find: /FMT=autoFormat\(([^,()]+),([^,()]+)\)/g, replace: 'FMT=(["h","v","q"].includes(new URLSearchParams(location.search).get("oochoice"))?new URLSearchParams(location.search).get("oochoice"):autoFormat($1,$2))' },
+      { find: '</head>', replace: '<style id="oo-stage">html,body{background:#000!important}</style>\n</head>' },
+    ],
+  },
+  {
     slug: 'bouncing-openobject-logo',
     artist: 'OpenObject',
     name: 'Bouncing OpenObject Logo',
@@ -586,6 +635,21 @@ const toHttp = (url) => {
   const s = String(url || '');
   return s.startsWith('ipfs://') ? IPFS_GATEWAY + s.slice(7).replace(/^ipfs\//, '') : s;
 };
+
+// A fully on-chain token (Conservation of Energy) carries its metadata, artwork and thumbnail INSIDE the
+// token as data: URIs, so there is nothing to fetch. They are decoded here rather than handed to fetch(),
+// because a utf8 metadata URI is raw JSON whose '#' (a title like "CoE #03") a URL parser would cut off as
+// a fragment. base64 decodes as-is; plain data is percent-decoded per RFC 2397, or kept raw when it is not
+// valid percent-encoding (raw JSON with a literal '%').
+const isDataUri = (url) => String(url || '').startsWith('data:');
+function decodeDataUri(uri) {
+  const s = String(uri);
+  const comma = s.indexOf(',');
+  if (comma < 0) throw new Error('Malformed data: URI.');
+  const header = s.slice(5, comma), body = s.slice(comma + 1);
+  if (/;base64$/i.test(header)) return Buffer.from(body, 'base64');
+  try { return Buffer.from(decodeURIComponent(body), 'utf8'); } catch { return Buffer.from(body, 'utf8'); }
+}
 
 // Every outbound fetch below pulls from public RPC nodes and IPFS/Arweave gateways, which can stall
 // (connect but never answer). Node's fetch has no timeout, so a dead source would otherwise hang the
@@ -665,9 +729,15 @@ async function readTokenMeta(c, tid) {
     return { meta, sourceUrl: meta.artifactUri, image: meta.displayUri || meta.thumbnailUri || null };
   }
   const metaUrl = await ethCallTokenURI(c, tid);                 // Ethereum → metadata location
-  const mr = await ooFetch(toHttp(metaUrl));                        // metadata may live on IPFS
-  if (!mr.ok) throw new Error(`Couldn't read the token metadata (${mr.status}).`);
-  const meta = await mr.json();
+  let meta;
+  if (isDataUri(metaUrl)) {
+    // Fully on-chain metadata: the JSON is the tokenURI itself.
+    try { meta = JSON.parse(decodeDataUri(metaUrl).toString('utf8')); } catch { throw new Error("Couldn't read the token metadata."); }
+  } else {
+    const mr = await ooFetch(toHttp(metaUrl));                      // metadata may live on IPFS
+    if (!mr.ok) throw new Error(`Couldn't read the token metadata (${mr.status}).`);
+    meta = await mr.json();
+  }
   return { meta, sourceUrl: meta.animation_url, image: meta.image || null };
 }
 
@@ -1071,6 +1141,7 @@ const INKFIELD_HOOK = `
 </script>`;
 
 async function fetchBuf(url) {
+  if (isDataUri(url)) return decodeDataUri(url);                // on-chain (the thumbnail), nothing to fetch
   const r = await ooFetch(toHttp(url));
   if (!r.ok) throw new Error(`fetch ${url} → ${r.status}`);
   return Buffer.from(await r.arrayBuffer());
@@ -1171,15 +1242,19 @@ async function primeMissingLiveState() {
 // Fetch the entry HTML + every relative asset it references (scripts, etc.). For collections that
 // expose an Animate control, inject the auto-animate hook; self-animating pieces are left verbatim.
 async function mirrorInto(c, out, sourceUrl) {
-  const u = new URL(toHttp(sourceUrl));                                      // ipfs:// → gateway for the fetch
+  // A fully on-chain artwork (a data: URI, Conservation of Energy) IS the HTML: decode it, and there is no
+  // base to resolve relative assets against (a self-contained page has none), so the relative scans below
+  // are skipped for it.
+  const inline = isDataUri(sourceUrl);
+  const u = inline ? null : new URL(toHttp(sourceUrl));                     // ipfs:// → gateway for the fetch
   // A dirBundle collection's sourceUrl is a bare directory CID (ipfs://<cid>), whose index.html pulls its
   // assets by RELATIVE ref, so the asset base is the directory itself and the entry is its index.html.
   // Otherwise the path carries the file (or trailing dir) and base/entry come from the last path segment.
   const isDir = c && c.dirBundle;
-  const dir = isDir ? u.pathname.replace(/\/?$/, '/') : u.pathname.slice(0, u.pathname.lastIndexOf('/') + 1); // .../<txid>/
-  const base = u.origin + dir;
-  const entry = isDir ? 'index.html' : (u.pathname.slice(u.pathname.lastIndexOf('/') + 1) || 'index.html');
-  let html = (await fetchBuf(base + entry)).toString('utf8');
+  const dir = inline ? '' : isDir ? u.pathname.replace(/\/?$/, '/') : u.pathname.slice(0, u.pathname.lastIndexOf('/') + 1); // .../<txid>/
+  const base = inline ? '' : u.origin + dir;
+  const entry = inline ? '' : isDir ? 'index.html' : (u.pathname.slice(u.pathname.lastIndexOf('/') + 1) || 'index.html');
+  let html = (inline ? decodeDataUri(sourceUrl) : await fetchBuf(base + entry)).toString('utf8');
   // A public gateway may inject a tracking beacon (e.g. Cloudflare's hidden cdn-cgi <a>) into the
   // served HTML; it is not part of the artist's file, so strip it for a faithful mirror.
   html = html.replace(/<a\b[^>]*cdn-cgi[^>]*><\/a>/gi, '');
@@ -1216,7 +1291,7 @@ async function mirrorInto(c, out, sourceUrl) {
   const assets = new Set();
   const re = /(?:src|href)=["']([^"']+)["']/gi;
   let m;
-  while ((m = re.exec(html))) {
+  while (!inline && (m = re.exec(html))) {
     const ref = m[1];
     if (/^(https?:)?\/\//i.test(ref) || ref.startsWith('data:') || ref.startsWith('#')) continue;
     assets.add(ref.replace(/^\.?\//, ''));
@@ -1226,8 +1301,8 @@ async function mirrorInto(c, out, sourceUrl) {
   // collection, then mirrored and served same-origin like any other file in the bundle. A {token}
   // placeholder resolves to this piece's hash seed (inkField fetch()es its per-token recording
   // lib/<token>.json by location.hash, so the scan never sees it); a static name (a font) is used as-is.
-  const hashSeed = (u.hash || '').replace(/^#/, '');
-  if (c && Array.isArray(c.extraAssets)) for (const extra of c.extraAssets) assets.add(extra.replace(/\{token\}/g, hashSeed).replace(/^\.?\//, ''));
+  const hashSeed = ((u && u.hash) || '').replace(/^#/, '');
+  if (!inline && c && Array.isArray(c.extraAssets)) for (const extra of c.extraAssets) assets.add(extra.replace(/\{token\}/g, hashSeed).replace(/^\.?\//, ''));
   for (const rel of assets) {
     const buf = await fetchBuf(base + rel);
     const dest = path.join(out, rel);
@@ -1316,6 +1391,7 @@ async function cacheThumb(slug, tokenId, imageUrl) {
 // the control panel's strict CSP (img-src 'self' data:) before the piece's thumbnail is cached.
 async function toDataUrl(url) {
   if (!url) return null;
+  if (isDataUri(url)) return url;                               // already one (an on-chain thumbnail)
   try {
     const r = await ooFetch(toHttp(url));
     if (!r.ok) return null;

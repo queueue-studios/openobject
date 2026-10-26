@@ -447,9 +447,20 @@ function libraryByArtist() {
   });
 }
 
+// A fully on-chain piece's official source_url is a data: URI holding the whole artwork (~41 KB for
+// Conservation of Energy), and every display re-fetches the feed every 5 s. The clients only ever read a
+// ?query / #fragment seed from it, which a data: URI never carries, and play from the local mirror, so
+// the feeds send just its header (data:text/html;base64). The database keeps the verbatim URI (§8, §20).
+function feedRow(row) {
+  const u = row && row.source_url;
+  if (typeof u !== 'string' || !u.startsWith('data:')) return row;
+  const comma = u.indexOf(',');
+  return { ...row, source_url: comma > 0 ? u.slice(0, comma) : 'data:' };
+}
+
 app.get('/api/library', (_req, res) => {
   const sort = db.getSetting('library_sort', db.DEFAULT_LIBRARY_SORT);
-  res.json(sort === 'artist' ? libraryByArtist() : db.listLibrary(sort));
+  res.json((sort === 'artist' ? libraryByArtist() : db.listLibrary(sort)).map(feedRow));
 });
 
 // Per-clip Fit/Fill (§6), Rotation membership (§7), and optional title/artist (§7). Any subset may be sent.
@@ -480,7 +491,7 @@ app.patch('/api/library/:id', (req, res) => {
   if (fit !== undefined) db.setLibraryFit(id, fit);
   if (inRotation !== undefined) db.setLibraryRotation(id, inRotation);
   if (title !== undefined || artist !== undefined) db.setLibraryMeta(id, { title, artist });
-  res.json(db.getLibraryItem(id));
+  res.json(feedRow(db.getLibraryItem(id)));
 });
 
 app.delete('/api/library/:id', (req, res) => {
@@ -583,7 +594,7 @@ app.post('/api/collections/:slug/add', ah(async (req, res) => {
   try { await collections.mirrorBundle(c.slug, info.sourceUrl, info.tokenId); }
   catch (e) { return res.status(502).json({ error: 'Could not download the artwork: ' + e.message }); }
   const thumb = await collections.cacheThumb(c.slug, info.tokenId, info.image);
-  res.json(db.addConnectedItem({ filename, title: info.title, source_url: info.sourceUrl, collection: c.slug, token_id: info.tokenId, thumb }));
+  res.json(feedRow(db.addConnectedItem({ filename, title: info.title, source_url: info.sourceUrl, collection: c.slug, token_id: info.tokenId, thumb })));
 }));
 
 // ── Rotation curation (HANDOFF §7) — membership rides on the library row; order is its own call ──
@@ -977,7 +988,7 @@ const withConnectedFlags = (item) => {
   const c = collections.bySlug(item.collection);
   const st = collections.getState(item.collection);
   return {
-    ...item,
+    ...feedRow(item),
     // A speedControl collection is driven by `speed` (the cosine sweep), not the on/off animate hook.
     animate: st && !(c && c.speedControl) ? st.animate : false,
     speed: c && c.speedControl ? (st ? st.speed : c.speedDefault) : null, // 0..10 motion (0 = static)

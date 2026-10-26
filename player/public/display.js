@@ -101,7 +101,7 @@ function gatedControls(item) {
 }
 
 const sig = (item) => item.kind === 'connected'
-  ? 'c|' + item.collection + '|' + item.source_url + '|' + (item.animate ? 1 : 0) + '|' + (item.speed == null ? '' : item.speed) + '|' + (item.rpcUrl || '') + '|' + item.fit + '|' + (item.controls ? JSON.stringify(gatedControls(item)) : '')
+  ? 'c|' + item.collection + '|' + item.source_url + '|' + (item.animate ? 1 : 0) + '|' + (item.speed == null ? '' : item.speed) + '|' + (item.rpcUrl || '') + '|' + item.fit + '|' + (item.choice == null ? '' : item.choice) + '|' + (item.controls ? JSON.stringify(gatedControls(item)) : '')
   : item.fit + '|' + item.filename;
 const once = (fn) => {
   let done = false;

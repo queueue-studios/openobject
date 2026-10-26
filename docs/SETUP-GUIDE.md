@@ -213,9 +213,14 @@ And Aluan Wang's *inkField* is a generative ink painting that draws itself onto 
 minute or two, then starts a fresh one and keeps going. Each piece composes differently, some tall, some square,
 and a tall one sits centered with black to either side. There's nothing to adjust, it just plays; because it paints
 slowly, you may want to **Pin** it (or give the Rotation a longer time per piece) so you can watch a whole painting form.
+And Jimena Buena Vida's *Conservation of Energy* is a series of animated pieces, each one stored entirely on the
+blockchain and moving through a ten-second loop that never shows a seam. Each piece comes in three versions
+Jimena built into it: landscape, portrait and square. An **Aspect Ratio** setting (in Settings) picks one. It starts on
+**Auto**, which matches your screen: square on a square frame, landscape on a widescreen Mac. Any other shape
+leaves black bars at the edges. Choose **Landscape**, **Portrait** or **Square** to show that version everywhere.
 The supported collections live in the **Settings** tab, under
 **Connected Collections**, where you can hide ones you don't own and, for collections that have something to
-adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect, snowfall, or a Tiled/Static display. This is new and **curated**: only collections that have been
+adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect, snowfall, a Tiled/Static display, or an aspect ratio. This is new and **curated**: only collections that have been
 specifically added will work, so it won't read just any link yet.
 
 **Folder Collections** *(in the **Settings** tab)*. Have a whole folder of art on your computer, say
