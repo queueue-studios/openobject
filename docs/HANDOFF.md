@@ -1126,7 +1126,7 @@ Measured with a renderFrame tap over 4 s at 1920², with CPU throttling standing
 - **Unthrottled:** the clock version renders the same consecutive frames as the old counter, with no repeats and no skips where the screen keeps up (CoE #02 and #03). The two heaviest tokens (#04 and #14) fall behind even here, at 19 and 25 fps, and now hold the true tempo.
 - **6× throttled:** the old counter ran CoE #03 at 0.18× speed. With the clock, all four tokens tested hold 1.00× at 3 to 15 fps.
 
-One quirk, unchanged by the clock: the page's own draw gate admits a frame every ~28 ms, so a fast screen runs the loop about 8% fast, before and after alike. The 22-token check passed again with the clock in place.
+One quirk, unchanged by the clock: the page's own draw gate admits a frame every ~28 ms, so a fast screen runs the loop about 8% fast, before and after alike. The 22-token check passed again with the clock in place. **Seen on the XXL** (Matt, 2026-10-26, after Software Update and a re-add): "choppy, but faster. It's an improvement."
 
 ### 2026-10-26: Connected Collection added, Jimena Buena Vida's *Conservation of Energy* (the first fully on-chain piece)
 
