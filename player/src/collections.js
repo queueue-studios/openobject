@@ -583,7 +583,15 @@ const REGISTRY = [
       // window), so its bare auto call is wrapped to honor the choice too (Matt, 2026-10-26). Every other
       // token calls autoFormat only behind its own format read, so this matches nothing there.
       { find: /FMT=autoFormat\(([^,()]+),([^,()]+)\)/g, replace: 'FMT=(["h","v","q"].includes(new URLSearchParams(location.search).get("oochoice"))?new URLSearchParams(location.search).get("oochoice"):autoFormat($1,$2))' },
-      { find: '</head>', replace: '<style id="oo-stage">html,body{background:#000!important}</style>\n</head>' },
+      // Each page steps its loop one frame per DRAWN frame, so a screen that cannot draw 30 fps (the XXL's
+      // N5105) played it slow as well as choppy. Every token's counter (FRAME=(FRAME+1)%N, or #14's
+      // (frameCount-1)%N) is pointed at a clock instead (Matt, 2026-10-26, every display): it advances at
+      // least one frame per draw, never repeating, and jumps ahead to wall-clock time when the screen falls
+      // behind. A screen that keeps up draws exactly the frames it did before; a slow one keeps the
+      // 10-second tempo with fewer frames. All 22 tokens run at 30 fps (FPS / frameRate(30)).
+      { find: /FRAME=\(FRAME\+1\)%(\w+)/g, replace: 'FRAME=__ooClock($1)' },
+      { find: /\(frameCount-1\)%(\w+)/g, replace: '__ooClock($1)' },
+      { find: '</head>', replace: '<style id="oo-stage">html,body{background:#000!important}</style>\n<script id="oo-clock">var __ooT0=null,__ooN=-1;function __ooClock(n){var t=performance.now();if(__ooT0===null)__ooT0=t;__ooN=Math.max(__ooN+1,Math.round((t-__ooT0)*0.03));return __ooN%n;}</script>\n</head>' },
     ],
   },
   {
