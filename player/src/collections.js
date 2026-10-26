@@ -595,6 +595,41 @@ const REGISTRY = [
     ],
   },
   {
+    slug: 'birds-marfa',
+    artist: 'nicedayjules',
+    name: 'Birds, Marfa',
+    chain: 'Ethereum',
+    contract: '0x2d5fe308eff6cee71bfebd46b2d55fb2f58011f0',
+    rpc: 'https://ethereum-rpc.publicnode.com',
+    // 100 tokens of one scene: birds on barbed wire, a 1-bit plate under a silkscreen shader (4:5). Each token's
+    // page carries its own ID (a sub-pixel print offset seeded from it), so each mirrors into its own dir.
+    perToken: true,
+    // FULLY ON CHAIN behind a web3:// tokenURI (ERC-4804): the contract serves the metadata itself from
+    // tokenJSON(uint256), whose JSON carries the player as a data:text/html animation_url and a data: SVG still.
+    web3Methods: { tokenJSON: '0x8f7bb179' },
+    // A LIVE piece, like send/receive. Which birds perch is read from the Birds collection's contract (a bird
+    // whose Home is empty and is not in the sanctuary is out, and perches here if it has Marfa sprites), polled
+    // every 15 s, and the sprites come from a separate on-chain store. Both answers are captured once at Add
+    // (liveState 'birds') and the page's node is pointed at the Host's own `rpc` route, so the flock stays as it
+    // was at Add (Matt, 2026-10-26: no All Birds option); removing and re-adding the piece refreshes it. The
+    // birds keep arriving, preening and leaving on their own (random timing in the page), so no Animate.
+    liveRpc: true,
+    liveState: 'birds',
+    animateDefault: false,
+    animatable: false,
+    // The canvas is 1600x2000; declaring 4:5 lets the stage letterbox it in black (§6).
+    aspect: '4 / 5',
+    htmlReplace: [
+      // The page's two public nodes (its STATE.rpc and a drpc fallback) feed both the flock and the sprites;
+      // both become the Host's `rpc` route, relative to the page so the iPad's copy scheme answers it too.
+      { find: /(const STATE=\{"rpc":)"[^"]*"/, replace: '$1"rpc"' },
+      { find: /STATE\.rpcs=\[[^\]]*\]/, replace: 'STATE.rpcs=[STATE.rpc]' },
+      // The page centers the canvas on a cream surround (#f3ebdc), repainted black to match the bare stage
+      // (§6). The canvas paints its own paper, so the art is untouched.
+      { find: '</head>', replace: '<style id="oo-stage">html,body{background:#000!important}</style>\n</head>' },
+    ],
+  },
+  {
     slug: 'bouncing-openobject-logo',
     artist: 'OpenObject',
     name: 'Bouncing OpenObject Logo',
@@ -685,10 +720,19 @@ async function ooFetch(url, opts) {
 async function ethCallTokenURI(c, tokenId) {
   const selector = c.erc1155 ? '0x0e89341c' : '0xc87b56dd'; // uri(uint256) | tokenURI(uint256)
   const data = selector + BigInt(tokenId).toString(16).padStart(64, '0');
+  let str = abiString(await ethCall(c, c.contract, data));
+  if (!str) throw new Error('That token has no metadata URL.');
+  // ERC-1155 may return a templated URI with an {id} placeholder (lowercase, zero-padded hex).
+  if (c.erc1155 && str.includes('{id}')) str = str.replace(/\{id\}/g, BigInt(tokenId).toString(16).padStart(64, '0'));
+  return str;
+}
+
+// One eth_call through the collection's node, returning the result hex (no 0x prefix).
+async function ethCall(c, to, data) {
   const r = await ooFetch(c.rpc, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to: c.contract, data }, 'latest'] }),
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to, data }, 'latest'] }),
   });
   if (!r.ok) throw new Error(`Ethereum node returned ${r.status}.`);
   const j = await r.json();
@@ -701,12 +745,26 @@ async function ethCallTokenURI(c, tokenId) {
   }
   const hex = (j.result || '').replace(/^0x/, '');
   if (hex.length < 128) throw new Error("No such token (check the Token ID).");
-  const len = parseInt(hex.slice(64, 128), 16);            // ABI string: [offset][length][bytes]
-  let str = Buffer.from(hex.slice(128, 128 + len * 2), 'hex').toString('utf8');
-  if (!str) throw new Error('That token has no metadata URL.');
-  // ERC-1155 may return a templated URI with an {id} placeholder (lowercase, zero-padded hex).
-  if (c.erc1155 && str.includes('{id}')) str = str.replace(/\{id\}/g, BigInt(tokenId).toString(16).padStart(64, '0'));
-  return str;
+  return hex;
+}
+// A returned ABI string (or bytes): [offset][length][bytes].
+function abiString(hex) {
+  const len = parseInt(hex.slice(64, 128), 16);
+  return Buffer.from(hex.slice(128, 128 + len * 2), 'hex').toString('utf8');
+}
+
+// A web3:// tokenURI (ERC-4804, Birds, Marfa): the contract serves its own metadata. With no resolveMode()
+// on the contract the URL is in "auto" mode, where the path names a method and its arguments
+// (web3://<contract>:1/tokenJSON/81 → tokenJSON(81)) and the call returns the JSON as ABI-encoded bytes. Node
+// has no keccak to derive a selector from a method name, so the collection lists the ones its URLs use
+// (web3Methods, each captured from the contract). Mainnet only, uint arguments only: all a token needs.
+const isWeb3Url = (url) => String(url || '').startsWith('web3://');
+async function readWeb3(c, url) {
+  const m = String(url).match(/^web3:\/\/(0x[0-9a-fA-F]{40})(?::1)?\/([A-Za-z_$][\w$]*)((?:\/\d+)*)\/?$/);
+  const selector = m && c.web3Methods && Object.hasOwn(c.web3Methods, m[2]) && c.web3Methods[m[2]];
+  if (!selector) throw new Error("Couldn't read the token metadata.");
+  const args = m[3].split('/').filter(Boolean).map((a) => BigInt(a).toString(16).padStart(64, '0')).join('');
+  return abiString(await ethCall(c, m[1], selector + args));
 }
 
 // Find the first image a bundle's HTML references: a p5 loadImage('…') first, else any absolute URL
@@ -741,6 +799,10 @@ async function readTokenMeta(c, tid) {
   if (isDataUri(metaUrl)) {
     // Fully on-chain metadata: the JSON is the tokenURI itself.
     try { meta = JSON.parse(decodeDataUri(metaUrl).toString('utf8')); } catch { throw new Error("Couldn't read the token metadata."); }
+  } else if (isWeb3Url(metaUrl)) {
+    // Also on chain, served by the contract: one more eth_call returns the JSON.
+    const text = await readWeb3(c, metaUrl);
+    try { meta = JSON.parse(text); } catch { throw new Error("Couldn't read the token metadata."); }
   } else {
     const mr = await ooFetch(toHttp(metaUrl));                      // metadata may live on IPFS
     if (!mr.ok) throw new Error(`Couldn't read the token metadata (${mr.status}).`);
@@ -1195,10 +1257,10 @@ async function mirrorBundle(slug, sourceUrl, tokenId) {
     if (!existed) fs.rmSync(out, { recursive: true, force: true });
     throw e;
   }
-  // A live piece's subject (the chain state it draws) is fetched here too, once, and kept beside the
-  // bundle: Add is the one network moment every Connected piece gets (Matt, 2026-09-17), and after it
-  // this piece never calls out either. A failure here does not fail the Add (the bundle is whole; the
-  // startup pass retries the state while the Host is online).
+  // A live piece's subject (the chain state it draws, and for Birds, Marfa its sprites too) is fetched here
+  // as well, once, and kept beside the bundle: Add is the one network moment every Connected piece gets
+  // (Matt, 2026-09-17), and after it this piece never calls out either. A failure here does not fail the
+  // Add (the bundle is whole; the startup pass retries the state while the Host is online).
   if (c.liveRpc) { try { await primeLiveState(slug, tokenId); } catch (_) {} }
 }
 
@@ -1211,38 +1273,65 @@ async function mirrorBundle(slug, sourceUrl, tokenId) {
 // selector and hook address are read from the mirrored HTML (the captured values are the fallback), the
 // token number is the Art Blocks token id modulo one million (5008372 -> 8372, as captured).
 const LIVE_HOOK_FALLBACK = { selector: '0x5ab53d9f', contract: '0x4ffc102cdc983c50bba66b4284c390b80229f4e3' };
+const mirroredHtml = (slug, tokenId) => { try { return fs.readFileSync(path.join(outDir(slug, tokenId), 'index.html'), 'utf8'); } catch (_) { return ''; } };
+const ethCallBody = (id, to, data) => JSON.stringify({ jsonrpc: '2.0', id, method: 'eth_call', params: [{ to, data }, 'latest'] });
 function liveStateRequest(slug, tokenId) {
-  const html = (() => { try { return fs.readFileSync(path.join(outDir(slug, tokenId), 'index.html'), 'utf8'); } catch (_) { return ''; } })();
+  const html = mirroredHtml(slug, tokenId);
   const sel = (html.match(/getLiveDataFunctionSelector\s*=\s*'(0x[0-9a-fA-F]{8})'/) || [])[1] || LIVE_HOOK_FALLBACK.selector;
   const to = (html.match(/hookContractAddress\s*=\s*'(0x[0-9a-fA-F]{40})'/) || [])[1] || LIVE_HOOK_FALLBACK.contract;
   const pad = (n) => BigInt(n).toString(16).padStart(64, '0');
   const tokenNumber = BigInt(String(tokenId)) % 1000000n;
   const data = sel + pad(tokenNumber) + pad(0) + pad(36);
-  return JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to, data }, 'latest'] });
+  return ethCallBody(1, to, data);
 }
-async function primeLiveState(slug, tokenId) {
+// Birds, Marfa asks its node two fixed things, each body built by the page as JSON.stringify of the same
+// shape: the flock (id 1, its STATE call: the Birds contract's home and sanctuary arrays) and the bird
+// sprites (id 2, read() on the artwork store: 470 KB the page checks against its SHA-256). Addresses and
+// selectors are read from the mirrored HTML (the values captured on 2026-10-26 are the fallback).
+const BIRDS_FALLBACK = { stateTo: '0x75de5bc35248026fabcb2382cf322bc79dfd1a8c', stateData: '0x18f56a0a',
+                         artStore: '0x2fa9ca4dad8db3c2e3f54273be9096417f1264d8', artRead: '0x57de26a4' };
+function birdsStateRequests(slug, tokenId) {
+  const html = mirroredHtml(slug, tokenId);
+  const st = html.match(/const STATE=\{[^}]*"to":"(0x[0-9a-fA-F]{40})","data":"(0x[0-9a-fA-F]+)"/) || [];
+  const store = (html.match(/"artStore":"(0x[0-9a-fA-F]{40})"/) || [])[1] || BIRDS_FALLBACK.artStore;
+  const read = (html.match(/\{to:address,data:'(0x[0-9a-fA-F]{8})'\}/) || [])[1] || BIRDS_FALLBACK.artRead;
+  return [ethCallBody(1, st[1] || BIRDS_FALLBACK.stateTo, st[2] || BIRDS_FALLBACK.stateData), ethCallBody(2, store, read)];
+}
+// Every request a live piece makes, each answered at display time from rpc-cache.json.
+function liveStateRequests(slug, tokenId) {
+  const c = bySlug(slug);
+  return c && c.liveState === 'birds' ? birdsStateRequests(slug, tokenId) : [liveStateRequest(slug, tokenId)];
+}
+const requestKey = (body) => crypto.createHash('sha256').update(body).digest('hex');
+// Capture the answers to a live piece's requests (all of them, or just the ones not yet held).
+async function primeLiveState(slug, tokenId, onlyMissing = false) {
   const c = bySlug(slug);
   if (!c || !c.liveRpc || !isMirrored(slug, tokenId)) return false;
-  const body = liveStateRequest(slug, tokenId);
-  const res = await fetch(c.rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: AbortSignal.timeout(20000) });
-  if (!res.ok) throw new Error(`node ${res.status}`);
-  const text = await res.text();
-  const parsed = JSON.parse(text);
-  if (!parsed || parsed.error) throw new Error('node error: ' + (parsed && parsed.error && parsed.error.message));
-  rpcCache(slug, tokenId).put(crypto.createHash('sha256').update(body).digest('hex'), text);
-  return true;
+  const cache = rpcCache(slug, tokenId);
+  let primed = false;
+  for (const body of liveStateRequests(slug, tokenId)) {
+    if (onlyMissing && cache.get(requestKey(body))) continue;
+    const res = await fetch(c.rpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: AbortSignal.timeout(20000) });
+    if (!res.ok) throw new Error(`node ${res.status}`);
+    const text = await res.text();
+    const parsed = JSON.parse(text);
+    if (!parsed || parsed.error) throw new Error('node error: ' + (parsed && parsed.error && parsed.error.message));
+    cache.put(requestKey(body), text);
+    primed = true;
+  }
+  return primed;
 }
-// Pieces added before the state was captured at Add (the two send/receive tokens on Matt's frame): fetch
-// it once at startup, only where it is missing, only while the Host is online. Fire-and-forget; a Host
-// with no internet simply tries again next start.
+// Pieces whose capture is missing or partial (the two send/receive tokens on Matt's frame were added before
+// the capture existed; a dropped connection at Add can leave a piece with some answers and not others): fetch
+// what is missing once at startup, only while the Host is online. Fire-and-forget; a Host with no internet
+// simply tries again next start.
 async function primeMissingLiveState() {
   let primed = 0;
   for (const row of db.listLibrary()) {
     if (row.kind !== 'connected') continue;
     const c = bySlug(row.collection);
     if (!c || !c.liveRpc || !isMirrored(row.collection, row.token_id)) continue;
-    if (fs.existsSync(path.join(outDir(row.collection, row.token_id), RPC_CACHE_FILE))) continue;
-    try { if (await primeLiveState(row.collection, row.token_id)) primed++; } catch (_) {}
+    try { if (await primeLiveState(row.collection, row.token_id, true)) primed++; } catch (_) {}
   }
   return primed;
 }
@@ -1383,11 +1472,13 @@ function removeBundle(slug, tokenId) {
   if (db.countConnected(slug) === 0) fs.rm(bundleDir(slug), { recursive: true, force: true }, () => {});
 }
 
-// Cache the preview image locally so the Library card has an offline thumbnail.
+// Cache the preview image locally so the Library card has an offline thumbnail. An on-chain SVG still
+// (Birds, Marfa) keeps an .svg name, so it is served as an SVG (one served as .png does not render).
 async function cacheThumb(slug, tokenId, imageUrl) {
   if (!imageUrl) return null;
   try {
-    const rel = path.posix.join('thumbs', `${tokenId}.png`);
+    const ext = /^data:image\/svg\+xml[;,]/i.test(imageUrl) ? 'svg' : 'png';
+    const rel = path.posix.join('thumbs', `${tokenId}.${ext}`);
     const dest = path.join(bundleDir(slug), rel);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.writeFileSync(dest, await fetchBuf(imageUrl));

@@ -218,6 +218,12 @@ blockchain and moving through a ten-second loop that never shows a seam. Each pi
 Jimena built into it: landscape, portrait and square. An **Aspect Ratio** setting (in Settings) picks one. It starts on
 **Auto**, which matches your screen: square on a square frame, landscape on a widescreen Mac. Any other shape
 leaves black bars at the edges. Choose **Landscape**, **Portrait** or **Square** to show that version everywhere.
+And nicedayjules's *Birds, Marfa* is an ink drawing of birds perched along barbed-wire fence lines, printed like
+a silkscreen on paper that shimmers ever so slightly. The birds belong to a companion collection: whichever ones
+are out of their homes when you add the piece are the ones that visit, and they keep flying in, preening and
+flying off again on their own. Like *send/receive*, it goes online once, when you add it, and from then on shows
+the flock as it was that day; remove it and add it again whenever you want to see who's visiting now. It's a tall
+picture, so on a square frame or a widescreen Mac it sits centered with black to either side.
 The supported collections live in the **Settings** tab, under
 **Connected Collections**, where you can hide ones you don't own and, for collections that have something to
 adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect, snowfall, a Tiled/Static display, or an aspect ratio. This is new and **curated**: only collections that have been
