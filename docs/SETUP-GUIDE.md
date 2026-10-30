@@ -185,7 +185,10 @@ connected piece it goes online once, when you add it, and from then on it shows 
 that day, with no internet needed (remove it and add it again whenever you want a fresh look at the
 network). One more, Juicy Julio's *Golden Lining*, is a desert photo that drifts between
 black-and-white and full color; a simple speed slider lets you set how fast that drift moves, or rest
-it on the full-color photo. Another, V4w.enko's *Perfect Everything*, is an ever-shifting pattern of
+it on the full-color photo. The same artist's *Dark Radiance* is a photo of a desert dune that changes with
+your frame's local time: a bright blue daytime sky from 7 am to 7 pm and a dark night sky the rest of the
+time, with a short fade at each change. It's a landscape picture, so on a square frame it sits with black
+above and below. Another, V4w.enko's *Perfect Everything*, is an ever-shifting pattern of
 concentric colored rings that fills the whole panel and drifts on its own. The same artist's *Perfect Circles* is a companion series, slowly shifting concentric circles that fill the panel and drift on their own. And Cinzia y Gabriel's *Pendulum* is a
 generative study of motion: a chain of colored orbs swings like a pendulum, tracing slow, ever-shifting arcs across the
 whole panel. And Jeremy Booth's *Lost in Moffat County* is a series of painterly Western scenes that shift from day to

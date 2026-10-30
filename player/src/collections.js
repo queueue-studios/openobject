@@ -88,9 +88,10 @@ const REGISTRY = [
     rpc: 'https://ethereum-rpc.publicnode.com',
     // ERC-1155, not ERC-721: the metadata location is read from uri(uint256), not tokenURI.
     erc1155: true,
-    // The collection holds three editions, but only "Golden Lining" (token 1) needs special handling
-    // (the other two are plain static images). So we support exactly token 1 and skip the Token-ID
-    // prompt — the add flow uses fixedToken (still resolved on-chain, for faithfulness).
+    // The collection holds three editions: "Golden Lining" (token 1, this entry), "Dark Radiance"
+    // (token 2, its own entry below, a different piece) and "Z-Etched" (token 3, a plain static photo).
+    // So this entry supports exactly token 1 and skips the Token-ID prompt: the add flow uses
+    // fixedToken (still resolved on-chain, for faithfulness).
     fixedToken: '1',
     // A p5.js sketch over a single landscape JPEG: each frame it draws the photo, greys the whole
     // canvas, then redraws the same photo in colour on top at a variable opacity — a global
@@ -115,6 +116,38 @@ const REGISTRY = [
     // this heavy piece. Hide it from the first paint (the same seam as Lost in Moffat County's #p5_loading
     // and The Bloom's #startOverlay): a brief blank while the photo settles replaces the stray text,
     // keeping the stage chrome-free (§6).
+    hideSelectors: ['#p5_loading'],
+  },
+  {
+    slug: 'dark-radiance',
+    artist: 'Juicy Julio',
+    name: 'Dark Radiance',
+    chain: 'Ethereum',
+    // Token 2 of Golden Lining's ERC-1155 contract (above), a different piece, so its own entry: same
+    // uri(uint256) read, and fixedToken skips the Token-ID prompt.
+    contract: '0x45dcaec1c3c51148771a7a32669ea0adab051b3e',
+    rpc: 'https://ethereum-rpc.publicnode.com',
+    erc1155: true,
+    fixedToken: '2',
+    // A time-aware still (like Kittoe): a small p5.js page holding two edits of one dune photo, Day and
+    // Dark (4032x3024 each). It shows Day from 7:00 to 18:59 by the viewer's LOCAL clock and Dark
+    // otherwise, rechecking every frame, and crossfades (~0.85s) when the hour crosses a boundary.
+    // Nothing to engage on load, so no Animate control (animatable: false).
+    animateDefault: false,
+    animatable: false,
+    // The photos are 4:3 and the sketch draws them contained, never enlarged past their own size;
+    // declaring the aspect sizes the iframe to the piece, letterboxed on the bare black stage (§6).
+    aspect: '4032 / 3024',
+    // p5 (jsDelivr) and both photos (Transient's CDN, NOT IPFS, so the mirror is the only durable copy)
+    // are absolute URLs, the photos inside inline loadImage() calls: localize them for offline play.
+    localizeAbsolute: true,
+    // The page also loads p5.sound.min.js, which the sketch never uses (no sound calls at all), and that
+    // unused library hangs the renderer in restricted contexts (The Bloom, below). Drop it from the
+    // mirror: the visual is identical.
+    dropScripts: ['https://cdn.jsdelivr.net/npm/p5@0.7.0/lib/addons/p5.sound.min.js'],
+    // The official `image` (a half-Day/half-Dark split) is the artist's own picture of a two-state piece,
+    // so it stays the thumbnail (no thumbFromAnimationImage, unlike Golden Lining).
+    // p5's built-in loading text would flash while the photos preload: hide it (Golden Lining's seam).
     hideSelectors: ['#p5_loading'],
   },
   {
