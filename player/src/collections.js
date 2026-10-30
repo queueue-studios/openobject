@@ -672,12 +672,31 @@ const bySlug = (slug) => REGISTRY.find((c) => c.slug === slug) || null;
 
 // Some collections host metadata/bundles on IPFS, which Node's fetch can't dereference (ipfs:// is
 // not http). Map ipfs:// to a public gateway for fetching only; the official ipfs:// URL is still
-// what we store verbatim. Plain http(s) (e.g. Arweave) passes through unchanged. Gateway is swappable.
-const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
+// what we store verbatim. Plain http(s) (e.g. Arweave) passes through unchanged. Public gateways come
+// and go (ipfs.io, the original single gateway here, retired on 2026-09-21, HANDOFF §20), so
+// fetchContent tries each in turn and takes the first that answers. A CID is the same bytes from any
+// gateway, so the order is only a preference (fastest and most complete in testing first). Swappable,
+// like an `rpc`: drop a dead one, add a new one.
+const IPFS_GATEWAYS = [
+  'https://gw.ipfs-lens.dev/ipfs/',
+  'https://magic.decentralized-content.com/ipfs/',
+  'https://ipfs.raribleuserdata.com/ipfs/',
+  'https://ipfs.filebase.io/ipfs/',
+];
 const toHttp = (url) => {
   const s = String(url || '');
-  return s.startsWith('ipfs://') ? IPFS_GATEWAY + s.slice(7).replace(/^ipfs\//, '') : s;
+  return s.startsWith('ipfs://') ? IPFS_GATEWAYS[0] + s.slice(7).replace(/^ipfs\//, '') : s;
 };
+// The IPFS part (<cid>/path?query) of an ipfs:// URL, or of a gateway URL on any host (an artist's sketch
+// may hard-code https://ipfs.io/ipfs/<cid>, and a mirrored bundle's relative assets resolve against the
+// gateway base), else null. Only a real CID after /ipfs/ counts, so an ordinary path is never rerouted.
+const IPFS_PATH_RE = /^https?:\/\/[^/]+\/ipfs\/((?:Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7]{50,})(?:[/?#].*)?)$/;
+function ipfsPath(url) {
+  const s = String(url || '');
+  if (s.startsWith('ipfs://')) return s.slice(7).replace(/^ipfs\//, '');
+  const m = s.match(IPFS_PATH_RE);
+  return m ? m[1] : null;
+}
 
 // A fully on-chain token (Conservation of Energy) carries its metadata, artwork and thumbnail INSIDE the
 // token as data: URIs, so there is nothing to fetch. They are decoded here rather than handed to fetch(),
@@ -712,6 +731,27 @@ async function ooFetch(url, opts) {
     }
     throw e;
   }
+}
+
+// Fetch a piece's content (metadata, artwork, assets, thumbnail). IPFS content goes to each gateway in
+// IPFS_GATEWAYS until one answers OK, then to the URL as written (when it is http) as a last resort;
+// anything else is one plain fetch. If nothing answers OK, the last response (or error) comes back, so
+// callers report the failure as they always have.
+async function fetchContent(url) {
+  const p = ipfsPath(url);
+  if (p == null) return ooFetch(url);
+  const tries = IPFS_GATEWAYS.map((g) => g + p);
+  if (/^https?:/i.test(url) && !tries.includes(url)) tries.push(url);
+  let last, err;
+  for (const t of tries) {
+    try {
+      const r = await ooFetch(t);
+      if (r.ok) return r;
+      last = r;
+    } catch (e) { err = e; }
+  }
+  if (last) return last;
+  throw err;
 }
 
 // ── On-chain resolve: Token ID → official animation_url (+ title, preview) ──
@@ -804,7 +844,7 @@ async function readTokenMeta(c, tid) {
     const text = await readWeb3(c, metaUrl);
     try { meta = JSON.parse(text); } catch { throw new Error("Couldn't read the token metadata."); }
   } else {
-    const mr = await ooFetch(toHttp(metaUrl));                      // metadata may live on IPFS
+    const mr = await fetchContent(metaUrl);                           // metadata may live on IPFS
     if (!mr.ok) throw new Error(`Couldn't read the token metadata (${mr.status}).`);
     meta = await mr.json();
   }
@@ -832,7 +872,7 @@ async function resolveToken(slug, tokenId) {
   // Prefer the artwork's own image over a stylised official preview (e.g. Golden Lining's split
   // half-grey/half-colour `image`): pull the first image the bundle loads and use that instead.
   if (c.thumbFromAnimationImage) {
-    try { const img = firstImageUrl(await (await ooFetch(toHttp(sourceUrl))).text()); if (img) image = img; } catch { /* keep meta.image */ }
+    try { const img = firstImageUrl(await (await fetchContent(sourceUrl)).text()); if (img) image = img; } catch { /* keep meta.image */ }
   }
   return { tokenId: tid, title: meta.name || `${c.name} #${tid}`, sourceUrl, image };
 }
@@ -1212,7 +1252,7 @@ const INKFIELD_HOOK = `
 
 async function fetchBuf(url) {
   if (isDataUri(url)) return decodeDataUri(url);                // on-chain (the thumbnail), nothing to fetch
-  const r = await ooFetch(toHttp(url));
+  const r = await fetchContent(url);
   if (!r.ok) throw new Error(`fetch ${url} → ${r.status}`);
   return Buffer.from(await r.arrayBuffer());
 }
@@ -1220,7 +1260,7 @@ async function fetchBuf(url) {
 // Like fetchBuf but also returns the content-type, so a localized asset with no extension in its
 // URL (e.g. an IPFS CID) can be given a sensible local filename.
 async function fetchAsset(url) {
-  const r = await ooFetch(toHttp(url));
+  const r = await fetchContent(url);
   if (!r.ok) throw new Error(`fetch ${url} → ${r.status}`);
   return { buf: Buffer.from(await r.arrayBuffer()), ct: (r.headers.get('content-type') || '').split(';')[0].trim().toLowerCase() };
 }
@@ -1492,7 +1532,7 @@ async function toDataUrl(url) {
   if (!url) return null;
   if (isDataUri(url)) return url;                               // already one (an on-chain thumbnail)
   try {
-    const r = await ooFetch(toHttp(url));
+    const r = await fetchContent(url);
     if (!r.ok) return null;
     const ct = r.headers.get('content-type') || 'image/png';
     return `data:${ct};base64,${Buffer.from(await r.arrayBuffer()).toString('base64')}`;
