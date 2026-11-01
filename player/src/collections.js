@@ -685,6 +685,10 @@ const REGISTRY = [
     // ~56% of its height on the square frame, a ~32% band on a 16:9 Mac). The pattern is all-over, so the crop
     // still reads as the piece, and the redraw is sharp at the panel's own resolution. So we keep the artist's
     // fill: no `aspect` (which would letterbox the whole 9:16 instead) and no `crop`.
+    // The official thumbnail is the whole 9:16 composition, which a square card would shrink to a strip with
+    // bars, as if the piece letterboxed. thumbFill crops it to fill the card instead, and the middle square of
+    // a 9:16 image is the same middle ~56% the square frame shows, so the card previews the frame exactly.
+    thumbFill: true,
     // The only external asset is p5.js 1.9.0 by absolute cdnjs URL; localize it for offline play (the Chromie
     // Squiggle mechanism).
     localizeAbsolute: true,
@@ -1685,6 +1689,9 @@ function list() {
         // Whether this connected collection offers a per-piece Fit/Fill toggle (off for all but the
         // squiggle); control.js shows the Fit/Fill button on its Library card only when set.
         fitFill: !!c.fitFill,
+        // A collection whose piece fills any stage by its own code (Starlight) shows its thumbnail cropped to
+        // fill the Library and Rotation cards, the way Fill does, rather than shrunk to fit with bars.
+        thumbFill: !!c.thumbFill,
         pieces: db.countConnected(c.slug),
       };
     })

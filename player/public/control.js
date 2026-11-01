@@ -199,8 +199,10 @@ function card(item) {
   const canFit = !connected || !!(collectionsBySlug[item.collection] || {}).fitFill;
   const fitBtn = canFit ? `<button class="fit" aria-pressed="${isFill}" title="How this piece fills the screen">${isFill ? 'Fill' : 'Fit'}</button>` : '';
   const cs = connected ? thumbCropScale(item.collection) : 0; // crop the thumbnail to match the cropped display
+  // A collection that fills any stage on its own (`thumbFill`, Starlight) previews as Fill, matching the display.
+  const thumbFill = connected && !!(collectionsBySlug[item.collection] || {}).thumbFill;
   el.innerHTML = `
-    <div class="thumb fit-${canFit && isFill ? 'fill' : 'fit'}${cs ? ' crop' : ''}">
+    <div class="thumb fit-${(canFit && isFill) || thumbFill ? 'fill' : 'fit'}${cs ? ' crop' : ''}">
       ${thumbTag(item)}
       ${badge}
       <button class="rot-toggle${inRot ? ' on' : ''}" aria-pressed="${inRot}"
@@ -359,7 +361,7 @@ function rotRow(item, idx, total) {
   el.innerHTML = `
     <span class="rot-grip" title="Drag to reorder">${GRIP}</span>
     <span class="rot-num">${idx + 1}</span>
-    <span class="rot-thumb fit-${item.fit === 'fill' ? 'fill' : 'fit'}${cs ? ' crop' : ''}">${thumbTag(item)}</span>
+    <span class="rot-thumb fit-${item.fit === 'fill' || (connected && (collectionsBySlug[item.collection] || {}).thumbFill) ? 'fill' : 'fit'}${cs ? ' crop' : ''}">${thumbTag(item)}</span>
     <span class="rot-meta">
       <span class="rot-name">${isPinned ? '<span class="rot-pin" title="Pinned">📌</span>' : ''}<span class="rot-title">${escapeHtml(item.original_name)}</span>${typePill}${fillPill}${silentPill}</span>
       ${artistName ? `<span class="rot-sub">${escapeHtml(artistName)}</span>` : ''}
