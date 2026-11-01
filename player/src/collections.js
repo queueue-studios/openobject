@@ -663,6 +663,33 @@ const REGISTRY = [
     ],
   },
   {
+    slug: 'starlight',
+    artist: 'Nygilia',
+    name: 'Starlight',
+    chain: 'Ethereum',
+    contract: '0x9615b40941ebccd5d4f8f03941c85a2fb03e7160',
+    rpc: 'https://ethereum-rpc.publicnode.com',
+    // A 300-token Art Blocks series (from the Art Blocks x OpenSea Marfa residency) on the artist's own Art Blocks
+    // Studio contract, so the owner enters their Token ID, and each token's generator page inlines its own hash,
+    // so each mirrors into its own dir (perToken, like Chromie Squiggle). A Studio contract can carry the artist's
+    // later projects too, so resolution is pinned to this one, project 0 (requireProject).
+    perToken: true,
+    requireProject: '0',
+    // A STATIC generative still: a hash-seeded p5.js sketch (300 "Marfa Light spirits" on a jittered grid) that
+    // draws once (noLoop) and redraws only on a resize, to the same composition. Nothing moves and there is
+    // nothing to engage, so no Animate control.
+    animateDefault: false,
+    animatable: false,
+    // The design space is 9:16 portrait (2160x3840), but by the artist's own design the sketch sizes its canvas to
+    // the window and cover-scales the composition to fill it edge to edge, cropping what spills over (the middle
+    // ~56% of its height on the square frame, a ~32% band on a 16:9 Mac). The pattern is all-over, so the crop
+    // still reads as the piece, and the redraw is sharp at the panel's own resolution. So we keep the artist's
+    // fill: no `aspect` (which would letterbox the whole 9:16 instead) and no `crop`.
+    // The only external asset is p5.js 1.9.0 by absolute cdnjs URL; localize it for offline play (the Chromie
+    // Squiggle mechanism).
+    localizeAbsolute: true,
+  },
+  {
     slug: 'bouncing-openobject-logo',
     artist: 'OpenObject',
     name: 'Bouncing OpenObject Logo',

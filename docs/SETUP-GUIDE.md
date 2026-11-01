@@ -227,6 +227,10 @@ are out of their homes when you add the piece are the ones that visit, and they 
 flying off again on their own. Like *send/receive*, it goes online once, when you add it, and from then on shows
 the flock as it was that day; remove it and add it again whenever you want to see who's visiting now. It's a tall
 picture, so on a square frame or a widescreen Mac it sits centered with black to either side.
+And Nygilia's *Starlight*, inspired by the Marfa Lights, is a series of still pictures drawn by code: three hundred
+little glowing desert spirits scattered across the screen, in a palette that's different for every piece. It doesn't
+move. The code draws it fresh to fit your screen and fills it edge to edge, so the tall original is trimmed: a square
+frame shows its middle, and a widescreen Mac a band across it.
 The supported collections live in the **Settings** tab, under
 **Connected Collections**, where you can hide ones you don't own and, for collections that have something to
 adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect, snowfall, a Tiled/Static display, or an aspect ratio. This is new and **curated**: only collections that have been
