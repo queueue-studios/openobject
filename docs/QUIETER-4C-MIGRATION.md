@@ -204,6 +204,20 @@ After the trial, update HANDOFF §2 (the hardware table, the port list, and the 
 error) and the Setup Guide's parts list for anyone else reviving an XXL with a 4C, in the same
 change (HANDOFF §16).
 
+### 6.1 Revisit the quality concessions made for the 3Q
+
+Matt's ask (2026-10-31): with faster hardware, see whether the quality the frame gave up to run
+smoothly can be given back. The record shows three places that bent to the N5105, and they are
+not alike:
+
+| Piece | What was done for the frame | On the 4C |
+|---|---|---|
+| *Conservation of Energy* (CoE), all 22 tokens | Nothing visual. The page has no quality setting and already draws at pixel density 1; the one change was the injected clock (HANDOFF §20, 2026-10-26), which keeps the 10-second tempo by drawing fewer frames when the screen falls behind. A faster screen simply draws more of them | Nothing to undo. Watch CoE #03 and the heavy tokens #04 and #14 and record the frame rate; that is the measure of the upgrade |
+| *Tiles* (Rich Caldwell) | Display defaults to **Tiled (Low)** resampling because Medium still stuttered on the frame (commits 8078ab5, 4120a29, 70af43f, 2026-07-12). High is the sharpest downscale; Low is the artist's own default | Try **Tiled (Medium)**, then **High**, on the frame, each for a full shuffle cycle. Keep the highest that holds its frame rate. The default in `collections.js` stays Low for other owners' 3Q frames unless the 4C becomes the documented hardware |
+| *inkField* (Aluan Wang) | `framePixelDensity: 1` on a frame display (HANDOFF §20, 2026-07-29): a quarter of the pixels, CSS-upscaled, because pixel density 2 stuttered and a two-piece crossfade dropped the WebGL context | This one is bound on the **GPU** (per-frame full-canvas shaders), and the 4C's GPU is only a step up, not the CPU-sized step. Try density 2 once, with a crossfade into another piece, and expect it may still need to stay at 1 |
+
+Add the outcome of each to the decision log below.
+
 ## 7. Decision log
 
 - **2026-10-31.** Diagnosis run on the live frame from Terminal.app (three read-only passes and
@@ -211,3 +225,6 @@ change (HANDOFF §16).
   the single-thread finding and the expected gain, ordered the 4C and the angled cable from
   Amazon, and asked for this runbook. Open checks going in: the frame's power lead on the new
   unit, the Wi-Fi chip, the Auto Power On setting, and the angled cable clearing the gap.
+- **2026-10-31, later.** Matt asked that the quality concessions be reviewed on the new hardware,
+  thinking of CoE. The record says CoE lost none (its clock is lossless); the concessions are
+  Tiles' Low resampling default and inkField's pixel density 1. Written up as §6.1.
