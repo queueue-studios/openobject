@@ -150,8 +150,12 @@ no-work case; the Debian installer shows whether it sees the radio when it offer
 A Realtek chip usually needs `firmware-realtek`, which the netinst carries. Record the
 `[vvvv:dddd]` id either way; it goes into HANDOFF §2 for the new unit.
 
-- [ ] Wi-Fi chip and driver recorded
-- [ ] Drive name recorded
+- [x] Recorded 2026-11-05 from the installed Debian 13 (kernel 6.12.115+deb13.1-amd64), with
+      `lspci -nnk | grep -iA3 -E "network|vga"; lsblk -d -o NAME,SIZE,MODEL; ip -br a`:
+      iGPU **Intel Alder Lake-N [8086:46d4]**, driver `i915`; Wi-Fi **Intel CNVi [8086:54f0]**,
+      subsystem [8086:0034], driver `iwlwifi`, interface `wlp0s20f3`; wired `enp1s0` (Realtek
+      RTL8111/8168, `r8169`); drive **`nvme0n1`, 476.9 GiB, BIWIN CE480Y2D100-512G**. The
+      installer's Debian screens that differed from the 3Q run are listed under §4.4
 
 ### 4.3 BIOS
 
@@ -200,7 +204,10 @@ Follow `installer/README.md` steps 1 and 2 exactly as for the 3Q, with these dif
 - The disk to wipe is the **BIWIN CE480Y2D100-512G** NVMe drive, about 477 GB; the PNY stick is
   the other entry in the list.
 
-- [ ] Debian installed on the SSD, boots to the console
+- [x] Debian 13.7 installed on the SSD 2026-11-05, boots to the `openobject login:` console.
+      Screens beyond the June notes: time zone (Eastern), mirror country (United States),
+      archive (`deb.debian.org`), proxy (blank), popularity contest (No). Username `mattlhx`,
+      the same as the frame, so every command here keeps working
 - [ ] `install.sh` run, reboots into the OpenObject idle screen on the bench monitor
 
 ### 4.5 Restore the data
