@@ -224,21 +224,36 @@ Follow `installer/README.md` steps 1 and 2 exactly as for the 3Q, with these dif
 
 ### 4.5 Restore the data
 
-With the player and kiosk stopped, replace the fresh empty state with the backup:
+With the player and kiosk stopped, replace the fresh empty state with the backup. Done
+2026-11-05 from Terminal.app; the copy took 20 seconds over Wi-Fi:
 
 ```
-scp ~/Code/OpenObject/Backup/oo-backup-YYYYMMDD.tgz mattlhx@<4c-address>:/tmp/
-ssh -t mattlhx@<4c-address> 'sudo systemctl stop openobject-kiosk openobject-player && sudo rm -rf /var/lib/openobject/data /var/lib/openobject/uploads && sudo tar -xzf /tmp/oo-backup.tgz -C /var/lib && sudo chown -R openobject:openobject /var/lib/openobject && sudo systemctl start openobject-player openobject-kiosk && rm /tmp/oo-backup.tgz'
+scp ~/Code/OpenObject/Backup/oo-backup-20261105.tgz mattlhx@192.168.1.176:/tmp/
+ssh -t mattlhx@192.168.1.176 'sudo systemctl stop openobject-kiosk openobject-player && sudo rm -rf /var/lib/openobject/data /var/lib/openobject/uploads && sudo tar -xzf /tmp/oo-backup-20261105.tgz -C /var/lib && sudo chown -R openobject:openobject /var/lib/openobject && sudo systemctl start openobject-player openobject-kiosk && rm /tmp/oo-backup-20261105.tgz && echo "restore done"'
 ```
 
-Then, from a browser on the Mac, open the 4C's control panel:
+Then compare the restored unit against the backup rather than against the old frame, which
+need not be awake for it. On the Mac, `sqlite3` reads the database straight out of the archive
+(`tar -xzf ... openobject/data/openobject.sqlite*`, then `select kind, count(*) from library
+group by kind`, `select count(*), sum(in_rotation) from library`, and the `settings` rows). On
+the unit, a read-only script asks the same questions through `node:sqlite` plus the file counts.
 
-- [ ] Library count matches the frame's
-- [ ] The pin and the rotation settings carried over
-- [ ] A Connected piece plays (the mirrors restored)
-- [ ] CoE #03 pinned on the bench monitor: watch it, and note the GPU-process CPU share with the
-      same read-only sample used on 2026-10-31 if a number is wanted
-- [ ] Software Update in the control panel reports the current version
+- [x] Library 55 rows (5 animated, 35 connected, 13 still, 2 video), 12 in rotation, 20 upload
+      files, 18 Connected mirrors, rotation `sequence`, sort `recent`, no pin, the sleep ranges:
+      identical on both sides. Ownership `openobject:openobject`, both services active, player
+      answering at 1.10.0
+- [x] The desk monitor showed the OpenObject idle screen after the reboot and the **sleep
+      screen** after the restore, because the restored sleep schedule covers that hour. That is
+      the settings carrying over, not a fault. The backup held no pin, so no particular piece
+      was expected
+- [ ] Software Update in the control panel reports the current version (check on the frame)
+
+Two things learned here for the next person. The installer's closing text says "THE UNDO IS
+STILL ARMED" and tells you to disable `oo-net-revert.timer`; on a fresh install that timer does
+not exist (the installer runs the handoff with the guard off), so the disable fails harmlessly
+and the message is wrong for this path. And the bench monitor leaves nothing behind: Linux reads
+the connected panel's description at every kiosk start and picks its native mode fresh, so a
+unit installed on a desk monitor shows the square panel correctly the moment it is plugged in.
 
 ### 4.6 Square-panel check
 
