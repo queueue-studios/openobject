@@ -87,8 +87,11 @@ The frame is only opened once the 4C plays the library on a bench monitor.
 
 - the 4C and the 12 V USB-C adapter from its box
 - a monitor with an **HDMI** input, and an HDMI cable (borrow one from another workstation)
-- a **USB-A** keyboard. The K400's receiver goes straight into one of the 4C's three side
-  ports; nothing USB-C is needed on the desk
+- a USB keyboard. The K400 is wireless to its receiver, but the receiver is a plain USB
+  keyboard to the computer and works in the BIOS and the installer with no driver. Put the
+  **new angled USB-C cable** in the 4C's left-end USB-C and the receiver on its USB-A end: that
+  is the port and cable the frame will use, so the desk proves both before the frame is opened.
+  The Debian stick goes in one of the three side USB-A ports
 - the Debian 13 netinst USB stick (the June install's stick, or a fresh one flashed with
   balenaEtcher)
 - the Mac, on the same network, for the backup archive and the control panel checks
