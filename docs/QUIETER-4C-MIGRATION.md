@@ -190,6 +190,15 @@ Follow `installer/README.md` steps 1 and 2 exactly as for the 3Q, with these dif
 - `install.sh` is unchanged. Its two hardware-specific lines are harmless here: `reboot=pci` is
   a generic Intel reset path, and the `iwlwifi power_save=0` modprobe option only applies if the
   Wi-Fi is Intel.
+- **Two screens the 3Q install did not show (2026-11-05).** Right after the language screens,
+  "Detect network hardware" says some hardware needs non-free firmware and lists
+  `iwlwifi-so-a0-jf-b0-78.ucode` through `-89.ucode`, asking whether to load them from removable
+  media. Answer **No**: those are newer versions the stick does not carry, the driver falls back
+  to one it has, and the radio works. The list itself is good news, since it names the Wi-Fi as
+  Intel on `iwlwifi`. Then "Configure the network" offers two interfaces: `enp1s0`, the Realtek
+  wired port, and **`wlp0s20f3`, Intel Corporation CNVi Wi-Fi**. Pick the wireless one.
+- The disk to wipe is the **BIWIN CE480Y2D100-512G** NVMe drive, about 477 GB; the PNY stick is
+  the other entry in the list.
 
 - [ ] Debian installed on the SSD, boots to the console
 - [ ] `install.sh` run, reboots into the OpenObject idle screen on the bench monitor
