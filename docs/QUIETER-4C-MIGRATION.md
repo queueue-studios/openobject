@@ -49,13 +49,13 @@ where the part was bought for this project; the two June parts are named by mode
 | Angled USB-C cable | **CybNemo** USB 3.0 90-degree USB-C male to USB-A female, 30 cm, 2-pack with one left and one right angle. Amazon **B0FR9KWQVW** | Brings one USB port out of the 1 cm gap; carries the keyboard receiver permanently |
 | HDMI link | One of three Alvin's Cables 8K HDMI 2.1 camera-rig cables with angled plugs: 30 cm right-to-right **B08B4PNST7** (model CBWWHDMINEW), 30 cm left-to-right **B07WMPGJQ7** (HDMIRR30), 25 cm straight-to-left **B0CBK34GFR** (LZHDMI25). **Which one fit: to be filled in when it arrives** | Joins the 4C's HDMI 2 to the controller across the 1 3/16 inch gap, since the 3Q's rigid coupler no longer reaches (§5) |
 | Keyboard | **Logitech K400 Plus**, wireless keyboard with touchpad on one USB receiver | BIOS, the Debian installer, and the console afterward; the receiver stays in the frame |
-| USB hub | **UGREEN 4-port USB 3.0 hub, model 25946**, 2 ft cord | Holds the keyboard receiver inside the frame and leaves a port for a stick |
 | USB stick | Any **USB-A** stick, 8 GB or larger. Flashed with the Debian 13 netinst image; nothing else lives on it | The installer, used once on the desk |
 | Monitor | Any monitor with an HDMI input, borrowed for the desk session | Install and bench checks only |
 
-Not needed on the 4C: the CableCreation CC0516 left-angle USB-A extension (its port became USB-C)
-and the AGVEE 8K male-to-male HDMI coupler (its geometry no longer matches). Both stay with the
-3Q.
+Not needed on the 4C: the CableCreation CC0516 left-angle USB-A extension (its port became
+USB-C), the UGREEN 25946 USB hub (the keyboard receiver sits directly on the angled cable's
+USB-A end, and the installer stick goes in a side port on the desk), and the AGVEE 8K
+male-to-male HDMI coupler (its geometry no longer matches). All three stay with the 3Q.
 
 Same shell to the millimeter: 131 x 81 x 18.3 mm, 203 g, so the bracket and the slide-in fit are
 unchanged, apart from the mounting-hole offset described in §5. MeLE sells the identical build
@@ -74,7 +74,7 @@ Port order along that edge, left to right as seen from behind the frame:
 
 | Position | Quieter 3Q (today) | Quieter 4C | What plugs in |
 |---|---|---|---|
-| 1 | USB-A 3.0 | **USB-C** (data 10 Gbps, DisplayPort, PD in) | the angled extension, cable exiting to the right and looping down to the hub. On the 4C this is the new USB-C cable; USB-C is reversible, so flip the plug to choose the exit direction |
+| 1 | USB-A 3.0 | **USB-C** (data 10 Gbps, DisplayPort, PD in) | on the 3Q, the angled extension looping down to a hub; on the 4C, the angled USB-C cable with the keyboard receiver on its end, no hub. USB-C is reversible, so flip the plug to choose the exit direction |
 | 2 | 3.5 mm audio | 3.5 mm audio | nothing |
 | 3 | microSD | microSD | nothing |
 | 4, 5 | HDMI, HDMI | HDMI, HDMI | the controller's HDMI lead. In the 2026-11-05 photo it appears to sit in the **left** HDMI of the pair, the one nearer the USB-A end; confirm by eye before unplugging and use the same one on the 4C |
@@ -83,7 +83,7 @@ Port order along that edge, left to right as seen from behind the frame:
 | 8 | Gigabit Ethernet | Gigabit Ethernet | nothing |
 
 The right-hand side carries three USB-A ports on both units; they are not reachable when the
-unit is mounted, which is why the hub hangs off position 1. The 3Q is powered over USB-C, not a
+unit is mounted, which is why the one outward port at position 1 carries the keyboard. The 3Q is powered over USB-C, not a
 barrel jack, despite what HANDOFF §2's table says; every review of the 3Q and the photo of the
 back agree, and the 4C's power port takes the same 12 V / 2 A over the same connector. The 4C's
 own adapter is the fallback if the frame's lead and the new unit disagree.
@@ -299,14 +299,13 @@ confirmed on the frame itself, in §5, and it is the one thing the bench cannot 
 1. Power the frame down by unplugging its cord. Photograph the back once more.
 2. Note which HDMI port the controller's lead occupies. Slide the 3Q up, unplug the extension,
    the HDMI lead and the power lead. Set the 3Q aside **unmodified**.
-3. Slide the 4C in. Power lead into the USB-C beside Ethernet (position 7). HDMI into the same
-   position as before. The new angled cable into the USB-C at position 1, flipped so the cable
-   exits toward the hub's path; the hub's 2 ft cord does the reaching.
-4. **Leave the keyboard's receiver inside the frame.** Plug the K400's USB receiver into the
-   UGREEN hub on the end of the angled cable and tuck the hub inside the frame's back. The
-   wireless keyboard then reaches the frame's console at any time (Ctrl+Alt+Fn+F2, HANDOFF §15)
-   without opening anything, and the hub keeps a free port for a USB stick. The receiver draws
-   nothing worth noticing and the kiosk ignores an idle keyboard.
+3. Slide the 4C in. Power lead into the USB-C beside Ethernet (position 7). HDMI into HDMI 2
+   with the angled cable (§5 note above). The angled USB-C cable into the USB-C at position 1,
+   flipped so it lies the way the gap allows.
+4. **Leave the keyboard's receiver inside the frame,** on the USB-A end of the angled cable,
+   exactly as it was on the desk. The wireless keyboard then reaches the frame's console at any
+   time (Ctrl+Alt+Fn+F2, HANDOFF §15) without opening anything. The receiver draws nothing
+   worth noticing and the kiosk ignores an idle keyboard. No hub is needed.
 5. Replug the cord. The unit must start by itself (the §4.3 check). The MeLE logo replaces the
    Infinite Objects splash; that is the firmware, not a fault.
 6. The art should appear at 1920 x 1920 within about a minute. Open `http://openobject.local`.
