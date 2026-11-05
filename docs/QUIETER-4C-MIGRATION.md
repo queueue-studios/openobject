@@ -155,18 +155,27 @@ A Realtek chip usually needs `firmware-realtek`, which the netinst carries. Reco
 
 ### 4.3 BIOS
 
-`Del` at power-on. Set, and write each down as found:
+Done 2026-11-05 on the desk. The 4C's firmware is Intel's full reference setup (AMI Aptio
+2.22.1293), so the menus run deep; these are the paths as found:
 
-- Secure Boot **off** (the 3Q had it off; Debian would also boot with it on).
-- Boot mode UEFI.
-- **Auto Power On** (also called Restore AC Power Loss or State After G3) set to **Power On**.
-  MeLE lists the feature for the 4C. The 3Q's custom firmware had no toggle and simply booted on
-  power return; the retail 4C's default is unknown, and the frame depends on this, since
-  unplugging and replugging the cord is how it is booted and recovered.
-- Leave power limits at stock. The 3Q held full clock at 8 W inside the enclosure; the 4C runs
-  the same budget.
+- **Getting in.** Connecting power does nothing on a fresh unit (Auto Power On ships off, see
+  below). Press the power button, then tap `Del` repeatedly; it lands in Setup. The first boot
+  otherwise goes to Windows' "Just a moment" setup screen, which is harmless.
+- **Secure Boot off:** Security, then Secure Boot, then set **Secure Boot** from Enabled to
+  Disabled. It changed without needing a mode switch.
+- **Auto Power On:** Advanced, then **Customer Exclusive Functions** (MeLE's own page,
+  second-to-last on the Advanced list), then **Auto Power On** from Disabled to **Enabled**.
+  Intel's own State After G3 setting was not found on the Chipset pages; MeLE's switch is the
+  one that works.
+- **Leave alone:** the clock (Debian sets it from the network and keeps the hardware clock in
+  universal time, so the BIOS will read hours off afterward), Fast Boot, and the power limits.
+- **Save:** `F4`, Yes. The unit reboots. Boot Option #1 stays the Windows drive for now; the
+  installer is reached through Boot Override, not by reordering.
+- **The test:** with Windows' setup screen up, pull the adapter from the wall, wait five
+  seconds, plug it back in. The unit started by itself. This is the behavior the frame depends on.
 
-- [ ] Auto Power On confirmed by unplugging and replugging the adapter: the unit must start by itself
+- [x] Secure Boot disabled
+- [x] Auto Power On enabled, confirmed by replug
 
 ### 4.4 Install Debian and OpenObject
 
