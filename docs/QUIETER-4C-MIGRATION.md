@@ -263,6 +263,22 @@ confirmed on the frame itself, in §5, and it is the one thing the bench cannot 
 
 ## 5. The swap
 
+> **Found during the swap, 2026-11-05: the 4C does not hang where the 3Q did.** The frame's
+> bracket, behind the panel, holds the mini PC by two screw heads left proud of the unit's back
+> (the screws go in the VESA holes but are not tightened flush; the gap under the head hooks the
+> bracket). The 4C's VESA holes sit about a quarter inch lower than the 3Q's, so hung on the same
+> bracket its port edge lands farther from the controller board. The power and USB-C leads are
+> flexible and do not care. The HDMI link does: the 3Q was connected through a rigid **AGVEE 8K
+> male-to-male HDMI coupler**, 0.75 inch of body between two plugs that face opposite ways
+> (the controller's port and the mini PC's port are upside down to each other), and with the 4C
+> hung it falls about half an inch short. Moving the bracket was ruled out: it is screwed into
+> the thin plastic sheet that protects the panel, and dust falling behind the panel is the risk.
+> Taping the unit in place was ruled out too, since the fanless case needs air around it. The
+> fix is a longer HDMI link; see the log for the choice. Until it arrives the frame rests open
+> with the 4C in place and the wall dark, by Matt's choice: putting the 3Q back was more work
+> than the wait.
+
+
 1. Power the frame down by unplugging its cord. Photograph the back once more.
 2. Note which HDMI port the controller's lead occupies. Slide the 3Q up, unplug the extension,
    the HDMI lead and the power lead. Set the 3Q aside **unmodified**.
@@ -325,4 +341,10 @@ Add the outcome of each to the decision log below.
   differences). The two differ only by the backup before and the restore after. The work runs
   slowly between other tasks, one step at a time, and each step is written back here as it
   actually went.
+- **2026-11-05, afternoon.** Desk work complete and verified; swap begun. The 4C's mounting
+  holes sit a quarter inch from the 3Q's, so the rigid 0.75 inch flipped HDMI coupler no longer
+  reaches by about half an inch (§5). Matt is choosing between lengthening the rigid link (a
+  short straight male-to-female HDMI adapter ahead of the existing coupler) and a flexible one
+  (a short flat ribbon HDMI cable with low-profile angled plugs). The frame waits open until the
+  part arrives.
 
