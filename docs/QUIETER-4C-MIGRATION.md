@@ -274,9 +274,16 @@ confirmed on the frame itself, in §5, and it is the one thing the bench cannot 
 > hung it falls about half an inch short. Moving the bracket was ruled out: it is screwed into
 > the thin plastic sheet that protects the panel, and dust falling behind the panel is the risk.
 > Taping the unit in place was ruled out too, since the fanless case needs air around it. The
-> fix is a longer HDMI link; see the log for the choice. Until it arrives the frame rests open
-> with the 4C in place and the wall dark, by Matt's choice: putting the 3Q back was more work
-> than the wait.
+> fix Matt chose: **use the 4C's other HDMI port.** Infinite Objects used the mini PC's HDMI 1
+> because it lines up exactly with the controller's port, which is what made the rigid coupler
+> possible. HDMI 2 sits to the left of the controller's port, so a short cable with an angled
+> plug at each end can lie along the edge between the two with room for both plugs. Nothing in
+> the software cares which port carries the panel. Ordered 2026-11-05, two 30 cm Alvin's Cables
+> 8K HDMI 2.1 camera-rig cables, one right-to-right angle (B08B4PNST7, model CBWWHDMINEW) and
+> one left-to-right (B07WMPGJQ7, model HDMIRR30), because the two ports face each other upside
+> down and which pair of bends lies flat is not knowable from a photo. Until one arrives the
+> frame rests open with the 4C in place and the wall dark, by Matt's choice: putting the 3Q back
+> was more work than the wait.
 
 
 1. Power the frame down by unplugging its cord. Photograph the back once more.
@@ -347,4 +354,8 @@ Add the outcome of each to the decision log below.
   short straight male-to-female HDMI adapter ahead of the existing coupler) and a flexible one
   (a short flat ribbon HDMI cable with low-profile angled plugs). The frame waits open until the
   part arrives.
+- **2026-11-05, evening.** Matt's answer to the offset: the 4C's HDMI 2, which sits beside the
+  controller's port rather than under it, with a short double-angled cable. Two Alvin's Cables
+  30 cm angled HDMI cables ordered (right-to-right and left-to-right) to cover the bend
+  directions. Waiting on delivery.
 
