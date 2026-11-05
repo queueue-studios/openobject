@@ -89,33 +89,43 @@ Mac on the same Wi-Fi.
 
 ### 4.1 Back up the frame's data (before anything else)
 
-The whole runtime state lives in `/var/lib/openobject`: `data/openobject.sqlite` (library
-rows, settings, the pin, the rotation), `data/collections/` (the Connected mirrors),
-`uploads/` (the art files), and `chromium/` (the browser profile, which is not restored). From
-the Mac, in Terminal.app (the Claude desktop app has no Local Network access on this Mac, so
-these lines are always pasted there by hand):
+The whole runtime state lives in `/var/lib/openobject`: `data/openobject.sqlite` with its `-wal`
+and `-shm` side files (library rows, settings, the pin, the rotation), `data/collections/` (the
+Connected mirrors), `uploads/` (the art files), and `chromium/` (the browser profile, which is
+not backed up or restored). Every file under it is world-readable, so the login user can copy it
+without sudo, and the whole thing streams to the Mac in one command with no staging file on the
+frame. From the Mac, in Terminal.app, from any directory (the Claude desktop app has no Local
+Network access on this Mac, so these lines are always pasted there by hand):
 
 ```
-ssh -t mattlhx@openobject.local 'sudo tar -czf /tmp/oo-backup.tgz -C /var/lib --exclude=openobject/chromium openobject && sudo chown $USER /tmp/oo-backup.tgz && ls -lh /tmp/oo-backup.tgz'
-scp mattlhx@openobject.local:/tmp/oo-backup.tgz ~/Code/OpenObject/Backup/oo-backup-$(date +%Y%m%d).tgz
-ssh mattlhx@openobject.local 'rm /tmp/oo-backup.tgz'
+ssh mattlhx@openobject.local 'tar -C /var/lib --exclude=openobject/chromium -cf - openobject | gzip -1' > ~/Code/OpenObject/Backup/oo-backup-$(date +%Y%m%d).tgz; echo "exit $?"; tar -tzf ~/Code/OpenObject/Backup/oo-backup-$(date +%Y%m%d).tgz | wc -l; ls -lh ~/Code/OpenObject/Backup/oo-backup-$(date +%Y%m%d).tgz
 ```
 
-`Backup/` is gitignored. Check the archive size against `du -sh /var/lib/openobject` on the
-frame before trusting it. Also run the existing `Backup/backup-connected.sh` for the manifest
-it writes.
+`Backup/` is gitignored. A read-only preflight first (`du -sh /var/lib/openobject`, a `find
+! -readable`, and `ls -l` of the SQLite files) tells you the size, that nothing needs sudo, and
+whether the database is quiet: a `-wal` file untouched for days means no write is in flight, so
+a live copy is consistent as long as all three SQLite files travel together. If the WAL is being
+written as you copy, stop the player for the seconds the copy takes
+(`sudo systemctl stop openobject-player`, copy, `start`); the wall shows the kiosk's error page
+meanwhile. Then confirm the archive holds what the frame holds: `gzip -t`, the three SQLite
+files, the upload count and the collection count against the preflight's numbers.
 
-- [ ] Backup archive on the Mac, size checked
-- [ ] Connected manifest written
+- [x] Preflight run 2026-11-05: 606 MB in all, 20 uploads, 18 Connected mirrors, nothing
+      unreadable, WAL last written 2026-11-01, frame on OpenObject 1.10.0, root disk `mmcblk1p2`
+      with 96 GB free
+- [x] `oo-backup-20261105.tgz`: exit 0, 179 entries, 569 MB, gzip verified, the three SQLite
+      files, 20 uploads and 18 collection directories all present
 
-### 4.2 Capture the 4C's hardware facts
+### 4.2 The 4C's hardware facts
 
-Boot the Debian stick in rescue or the live session and record, as `installer/README.md`
-step 0 asks: the Wi-Fi chip (`lspci -nnk | sed -n '/Network controller/,/^$/p'`), the iGPU
-(`lspci -nnk | grep -iA3 vga`), and the drive name (`lsblk`, expect `nvme0n1`, not `mmcblk0`).
-An Intel Wi-Fi chip (`iwlwifi`) is the no-work case. A Realtek chip usually needs
-`firmware-realtek`, which the netinst carries; note the `[vvvv:dddd]` id either way and add it
-to HANDOFF §2 for the new unit.
+The 3Q's install captured these from an Ubuntu live stick before wiping, because the original
+software was worth keeping. The 4C ships with Windows, which is not, so the facts are captured
+from the installed Debian instead (§4.4, before the OpenObject installer runs): the Wi-Fi chip
+(`lspci -nnk | sed -n '/Network controller/,/^$/p'`), the iGPU (`lspci -nnk | grep -iA3 vga`),
+and the drive (`lsblk`, expect `nvme0n1`, not `mmcblk`). An Intel Wi-Fi chip (`iwlwifi`) is the
+no-work case; the Debian installer shows whether it sees the radio when it offers Wi-Fi networks.
+A Realtek chip usually needs `firmware-realtek`, which the netinst carries. Record the
+`[vvvv:dddd]` id either way; it goes into HANDOFF §2 for the new unit.
 
 - [ ] Wi-Fi chip and driver recorded
 - [ ] Drive name recorded
@@ -228,3 +238,11 @@ Add the outcome of each to the decision log below.
 - **2026-10-31, later.** Matt asked that the quality concessions be reviewed on the new hardware,
   thinking of CoE. The record says CoE lost none (its clock is lossless); the concessions are
   Tiles' Low resampling default and inkField's pixel density 1. Written up as §6.1.
+- **2026-11-05.** The 4C and the angled cable arrived. Matt set the outcome for the project: a
+  clean runbook, or updates to the existing docs, that let someone (or Matt later) swap the mini
+  PC, with two paths: a frame already running OpenObject (this document: backup, install,
+  restore) and one that is not (the Setup Guide's install with a 4C parts list and the 4C
+  differences). The two differ only by the backup before and the restore after. The work runs
+  slowly between other tasks, one step at a time, and each step is written back here as it
+  actually went.
+
