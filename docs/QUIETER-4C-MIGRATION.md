@@ -358,4 +358,13 @@ Add the outcome of each to the decision log below.
   controller's port rather than under it, with a short double-angled cable. Two Alvin's Cables
   30 cm angled HDMI cables ordered (right-to-right and left-to-right) to cover the bend
   directions. Waiting on delivery.
+- **2026-11-05, later.** The 4C is in the bracket with the controller's USB-C power lead on its
+  power port (the lead had the half inch of slack the new position needed) and the angled
+  USB-C cable with the K400 receiver on the left-end port, both to stay permanently. The gap
+  between the 4C's port edge and the controller measures **1 3/16 inch**, room for angled HDMI
+  plugs; the power lead's position dictates which way the plug beside it must bend. A third
+  cable ordered to cover that: Alvin's Cables 25 cm straight-to-left-angle (B0CBK34GFR, model
+  LZHDMI25). A straight plug stands about 0.8 inch off its port and needs its bend inside the
+  remaining space, so it is the fallback of the three. The frame stays face down on a protected
+  surface until a cable fits.
 
