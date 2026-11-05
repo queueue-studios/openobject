@@ -208,7 +208,19 @@ Follow `installer/README.md` steps 1 and 2 exactly as for the 3Q, with these dif
       Screens beyond the June notes: time zone (Eastern), mirror country (United States),
       archive (`deb.debian.org`), proxy (blank), popularity contest (No). Username `mattlhx`,
       the same as the frame, so every command here keeps working
-- [ ] `install.sh` run, reboots into the OpenObject idle screen on the bench monitor
+- [x] `install.sh` run 2026-11-05, from the Mac over SSH rather than at the console. The SSH
+      server was installed first at the console (`sudo apt update && sudo apt install -y
+      openssh-server git`), then from Terminal.app: `ssh mattlhx@<address>`, the `git clone`
+      line from `installer/README.md`, and the installer **detached** so the Wi-Fi handoff
+      inside it could not kill it along with the session:
+      `sudo systemd-run --unit=oo-install --collect -p StandardOutput=append:/var/log/oo-install.log -p StandardError=append:/var/log/oo-install.log bash /opt/openobject/installer/install.sh && sleep 2 && sudo tail -f /var/log/oo-install.log`.
+      The installer found the Wi-Fi credentials Debian had saved and asked nothing. Step 9
+      moved the radio to NetworkManager on a **fresh install**, the path HANDOFF §20 2026-08-08
+      left as pending device verification: `wlp0s20f3` connected, gateway reachable, the
+      watchdog restarted NM-aware, the player answered `/healthz` at version 1.10.0. The DHCP
+      address changed with the handoff (192.168.1.177 to .176); use the new one. The undo
+      timer it arms is disarmed after the reboot proves the network returns:
+      `sudo systemctl disable --now oo-net-revert.timer`
 
 ### 4.5 Restore the data
 
