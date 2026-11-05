@@ -46,16 +46,19 @@ where the part was bought for this project; the two June parts are named by mode
 | Part | Exact item | Role |
 |---|---|---|
 | Mini PC | **MeLE Quieter 4C**, Intel N150 (2025 revision), 16 GB DDR4, 512 GB NVMe SSD, Wi-Fi 5. Amazon **B0DZGRLFLQ**, about $300. Ships with Windows 11 Pro (wiped), a 12 V / 2 A USB-C adapter (used on the desk only) and a VESA plate (unused) | Replaces the Quieter 3Q |
-| Angled USB-C cable | **CybNemo** USB 3.0 90-degree USB-C male to USB-A female, 30 cm, 2-pack with one left and one right angle. Amazon **B0FR9KWQVW** | Brings one USB port out of the 1 cm gap; carries the keyboard receiver permanently |
 | HDMI link | One of three Alvin's Cables 8K HDMI 2.1 camera-rig cables with angled plugs: 30 cm right-to-right **B08B4PNST7** (model CBWWHDMINEW), 30 cm left-to-right **B07WMPGJQ7** (HDMIRR30), 25 cm straight-to-left **B0CBK34GFR** (LZHDMI25). **Which one fit: to be filled in when it arrives** | Joins the 4C's HDMI 2 to the controller across the 1 3/16 inch gap, since the 3Q's rigid coupler no longer reaches (§5) |
-| Keyboard | **Logitech K400 Plus**, wireless keyboard with touchpad on one USB receiver | BIOS, the Debian installer, and the console afterward; the receiver stays in the frame |
+| Keyboard | **Logitech K400 Plus**, wireless keyboard with touchpad on one USB receiver | BIOS, the Debian installer, and the console afterward; the receiver stays in the frame, in one of the three side USB-A ports |
 | USB stick | Any **USB-A** stick, 8 GB or larger. Flashed with the Debian 13 netinst image; nothing else lives on it | The installer, used once on the desk |
 | Monitor | Any monitor with an HDMI input, borrowed for the desk session | Install and bench checks only |
 
-Not needed on the 4C: the CableCreation CC0516 left-angle USB-A extension (its port became
-USB-C), the UGREEN 25946 USB hub (the keyboard receiver sits directly on the angled cable's
-USB-A end, and the installer stick goes in a side port on the desk), and the AGVEE 8K
-male-to-male HDMI coupler (its geometry no longer matches). All three stay with the 3Q.
+Not needed on the 4C: the CableCreation CC0516 left-angle USB-A extension, the UGREEN 25946
+USB hub, the CybNemo angled USB-C to USB-A cable bought for this swap (Amazon B0FR9KWQVW), and
+the AGVEE 8K male-to-male HDMI coupler (its geometry no longer matches). The first three all
+served one belief from the June install: that only the port on the upper edge was reachable
+with the unit mounted. On 2026-11-05, with the 4C in the bracket, Matt found the **three side
+USB-A ports reachable after all**; the keyboard receiver, a stub a quarter inch long, goes
+straight into one of them, and the installer stick into another on the desk. The June note in
+HANDOFF §2 that "only one USB-A port is realistically free" is corrected in §6.
 
 Same shell to the millimeter: 131 x 81 x 18.3 mm, 203 g, so the bracket and the slide-in fit are
 unchanged, apart from the mounting-hole offset described in §5. MeLE sells the identical build
@@ -74,7 +77,7 @@ Port order along that edge, left to right as seen from behind the frame:
 
 | Position | Quieter 3Q (today) | Quieter 4C | What plugs in |
 |---|---|---|---|
-| 1 | USB-A 3.0 | **USB-C** (data 10 Gbps, DisplayPort, PD in) | on the 3Q, the angled extension looping down to a hub; on the 4C, the angled USB-C cable with the keyboard receiver on its end, no hub. USB-C is reversible, so flip the plug to choose the exit direction |
+| 1 | USB-A 3.0 | **USB-C** (data 10 Gbps, DisplayPort, PD in) | on the 3Q, the angled extension looping down to a hub; on the 4C, **nothing**: the keyboard receiver lives in a side port instead |
 | 2 | 3.5 mm audio | 3.5 mm audio | nothing |
 | 3 | microSD | microSD | nothing |
 | 4, 5 | HDMI, HDMI | HDMI, HDMI | the controller's HDMI lead. In the 2026-11-05 photo it appears to sit in the **left** HDMI of the pair, the one nearer the USB-A end; confirm by eye before unplugging and use the same one on the 4C |
@@ -82,8 +85,10 @@ Port order along that edge, left to right as seen from behind the frame:
 | 7 | USB-C, power only | USB-C, power only (12 V / 2 A) | **the controller's black USB-C power lead**, just right of the HDMI pair in the photo. On the 4C this is the port beside Ethernet, not the new USB-C at position 1. First check when the frame is open: move this lead to the 4C's power port and see the 4C start, before the 3Q comes out of the bracket |
 | 8 | Gigabit Ethernet | Gigabit Ethernet | nothing |
 
-The right-hand side carries three USB-A ports on both units; they are not reachable when the
-unit is mounted, which is why the one outward port at position 1 carries the keyboard. The 3Q is powered over USB-C, not a
+The right-hand side carries three USB-A ports on both units. The June install believed them
+unreachable with the unit mounted, which is why the 3Q's keyboard came out through position 1
+on an angled extension; with the 4C in the bracket they turned out to be reachable, and the
+keyboard receiver simply sits in one. The 3Q is powered over USB-C, not a
 barrel jack, despite what HANDOFF §2's table says; every review of the 3Q and the photo of the
 back agree, and the 4C's power port takes the same 12 V / 2 A over the same connector. The 4C's
 own adapter is the fallback if the frame's lead and the new unit disagree.
@@ -98,10 +103,10 @@ The frame is only opened once the 4C plays the library on a bench monitor.
 - the 4C and the 12 V USB-C adapter from its box
 - a monitor with an **HDMI** input, and an HDMI cable (borrow one from another workstation)
 - a USB keyboard. The K400 is wireless to its receiver, but the receiver is a plain USB
-  keyboard to the computer and works in the BIOS and the installer with no driver. Put the
-  **new angled USB-C cable** in the 4C's left-end USB-C and the receiver on its USB-A end: that
-  is the port and cable the frame will use, so the desk proves both before the frame is opened.
-  The Debian stick goes in one of the three side USB-A ports
+  keyboard to the computer and works in the BIOS and the installer with no driver. The receiver
+  goes in one of the 4C's three side USB-A ports and the Debian stick in another. (On the day,
+  the receiver rode an angled USB-C cable bought on the June belief that the side ports would be
+  blocked in the frame; they are not, so the cable is unnecessary and off the list)
 - the Debian 13 netinst USB stick. Flash a fresh one even if the June stick is at hand: its
   label cannot be read from a Mac without administrator rights, and balenaEtcher overwrites the
   whole stick anyway, so a fresh flash costs nothing and leaves a known, current installer.
@@ -300,12 +305,11 @@ confirmed on the frame itself, in §5, and it is the one thing the bench cannot 
 2. Note which HDMI port the controller's lead occupies. Slide the 3Q up, unplug the extension,
    the HDMI lead and the power lead. Set the 3Q aside **unmodified**.
 3. Slide the 4C in. Power lead into the USB-C beside Ethernet (position 7). HDMI into HDMI 2
-   with the angled cable (§5 note above). The angled USB-C cable into the USB-C at position 1,
-   flipped so it lies the way the gap allows.
-4. **Leave the keyboard's receiver inside the frame,** on the USB-A end of the angled cable,
-   exactly as it was on the desk. The wireless keyboard then reaches the frame's console at any
-   time (Ctrl+Alt+Fn+F2, HANDOFF §15) without opening anything. The receiver draws nothing
-   worth noticing and the kiosk ignores an idle keyboard. No hub is needed.
+   with the angled cable (§5 note above). Position 1 stays empty.
+4. **Leave the keyboard's receiver inside the frame,** in one of the three side USB-A ports.
+   The wireless keyboard then reaches the frame's console at any time (Ctrl+Alt+Fn+F2, HANDOFF
+   §15) without opening anything. The receiver draws nothing worth noticing and the kiosk
+   ignores an idle keyboard. No cable and no hub are needed.
 5. Replug the cord. The unit must start by itself (the §4.3 check). The MeLE logo replaces the
    Infinite Objects splash; that is the firmware, not a fault.
 6. The art should appear at 1920 x 1920 within about a minute. Open `http://openobject.local`.
@@ -368,8 +372,10 @@ Add the outcome of each to the decision log below.
   30 cm angled HDMI cables ordered (right-to-right and left-to-right) to cover the bend
   directions. Waiting on delivery.
 - **2026-11-05, later.** The 4C is in the bracket with the controller's USB-C power lead on its
-  power port (the lead had the half inch of slack the new position needed) and the angled
-  USB-C cable with the K400 receiver on the left-end port, both to stay permanently. The gap
+  power port (the lead had the half inch of slack the new position needed). The K400 receiver
+  first rode the angled USB-C cable on the left-end port; later the same day Matt found the
+  three side USB-A ports reachable with the unit mounted, moved the receiver to one, and the
+  cable came off the parts list. The gap
   between the 4C's port edge and the controller measures **1 3/16 inch**, room for angled HDMI
   plugs; the power lead's position dictates which way the plug beside it must bend. A third
   cable ordered to cover that: Alvin's Cables 25 cm straight-to-left-angle (B0CBK34GFR, model
