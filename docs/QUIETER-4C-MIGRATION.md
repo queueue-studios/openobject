@@ -83,9 +83,21 @@ own adapter is the fallback if the frame's lead and the new unit disagree.
 Everything up to §5 happens on a desk, with the frame untouched and the 3Q still playing art.
 The frame is only opened once the 4C plays the library on a bench monitor.
 
-**Needed on the desk:** the 4C and its adapter, any HDMI monitor, a USB keyboard (the K400 is
-fine), the Debian netinst stick, the UGREEN hub if the 4C's front USB-A ports run short, and a
-Mac on the same Wi-Fi.
+**Needed on the desk, gathered before you start:**
+
+- the 4C and the 12 V USB-C adapter from its box
+- a monitor with an **HDMI** input, and an HDMI cable (borrow one from another workstation)
+- a **USB-A** keyboard. The K400's receiver goes straight into one of the 4C's three side
+  ports; nothing USB-C is needed on the desk
+- the Debian 13 netinst USB stick (the June install's stick, or a fresh one flashed with
+  balenaEtcher)
+- the Mac, on the same network, for the backup archive and the control panel checks
+
+**Why a desk and not the frame.** The frame's panel would serve as the install monitor exactly
+as it did in June. The desk is chosen so the 3Q keeps playing art and the frame stays closed
+until the 4C has proven itself; a bad first attempt then costs nothing. An owner with no spare
+monitor can do §4.3 to §4.5 inside the frame instead, at the cost of the wall going dark for the
+session and of the 3Q coming out before the 4C is known good.
 
 ### 4.1 Back up the frame's data (before anything else)
 
@@ -194,9 +206,14 @@ confirmed on the frame itself, in §5, and it is the one thing the bench cannot 
 3. Slide the 4C in. Power lead into the USB-C beside Ethernet (position 7). HDMI into the same
    position as before. The new angled cable into the USB-C at position 1, flipped so the cable
    exits toward the hub's path; the hub's 2 ft cord does the reaching.
-4. Replug the cord. The unit must start by itself (the §4.3 check). The MeLE logo replaces the
+4. **Leave the keyboard's receiver inside the frame.** Plug the K400's USB receiver into the
+   UGREEN hub on the end of the angled cable and tuck the hub inside the frame's back. The
+   wireless keyboard then reaches the frame's console at any time (Ctrl+Alt+Fn+F2, HANDOFF §15)
+   without opening anything, and the hub keeps a free port for a USB stick. The receiver draws
+   nothing worth noticing and the kiosk ignores an idle keyboard.
+5. Replug the cord. The unit must start by itself (the §4.3 check). The MeLE logo replaces the
    Infinite Objects splash; that is the firmware, not a fault.
-5. The art should appear at 1920 x 1920 within about a minute. Open `http://openobject.local`.
+6. The art should appear at 1920 x 1920 within about a minute. Open `http://openobject.local`.
 
 - [ ] Starts on power return
 - [ ] Full square picture, no letterboxing from a 1920 x 1080 fallback
