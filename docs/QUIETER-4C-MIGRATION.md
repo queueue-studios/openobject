@@ -317,6 +317,9 @@ confirmed on the frame itself, in §5, and it is the one thing the bench cannot 
 - [ ] Starts on power return
 - [ ] Full square picture, no letterboxing from a 1920 x 1080 fallback
 - [ ] Control panel reachable at `openobject.local`
+- [ ] **Keyboard check from inside the frame:** with the receiver in its side port, press
+      Ctrl+Alt+Fn+F2 on the K400; the console login must replace the art. Ctrl+Alt+F1 brings the
+      art back. Matt asked for this check explicitly, since the side-port placement is new
 - [ ] CoE #03 compared against the before state
 
 ## 6. Trial and rollback
