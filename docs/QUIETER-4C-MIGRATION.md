@@ -67,9 +67,9 @@ Port order along that edge, left to right as seen from behind the frame:
 | 1 | USB-A 3.0 | **USB-C** (data 10 Gbps, DisplayPort, PD in) | the angled extension, cable exiting to the right and looping down to the hub. On the 4C this is the new USB-C cable; USB-C is reversible, so flip the plug to choose the exit direction |
 | 2 | 3.5 mm audio | 3.5 mm audio | nothing |
 | 3 | microSD | microSD | nothing |
-| 4, 5 | HDMI, HDMI | HDMI, HDMI | the controller's HDMI lead, in whichever of the two it occupies today (note which before unplugging) |
+| 4, 5 | HDMI, HDMI | HDMI, HDMI | the controller's HDMI lead. In the 2026-11-05 photo it appears to sit in the **left** HDMI of the pair, the one nearer the USB-A end; confirm by eye before unplugging and use the same one on the 4C |
 | 6 | (none) | CMOS reset pinhole | nothing |
-| 7 | USB-C, power only | USB-C, power only (12 V / 2 A) | **the controller's black USB-C power lead.** On the 4C this is the port beside Ethernet, not the new USB-C at position 1 |
+| 7 | USB-C, power only | USB-C, power only (12 V / 2 A) | **the controller's black USB-C power lead**, just right of the HDMI pair in the photo. On the 4C this is the port beside Ethernet, not the new USB-C at position 1. First check when the frame is open: move this lead to the 4C's power port and see the 4C start, before the 3Q comes out of the bracket |
 | 8 | Gigabit Ethernet | Gigabit Ethernet | nothing |
 
 The right-hand side carries three USB-A ports on both units; they are not reachable when the
