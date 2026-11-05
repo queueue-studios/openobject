@@ -38,19 +38,29 @@ same symptom: the frame cannot draw this family of pieces at 30 frames per secon
 On this bottleneck that translates almost directly: smoother, not transformed. A piece at 12
 frames per second today should land around 16 or 17. Judge the swap by that, not by 30.
 
-## 2. What was bought (2026-10-31, Amazon)
+## 2. Parts: what this swap used
 
-| Part | Detail | Replaces |
+The exact items, so the next person can order the same ones. Amazon listing numbers are given
+where the part was bought for this project; the two June parts are named by model.
+
+| Part | Exact item | Role |
 |---|---|---|
-| MeLE Quieter 4C, Intel N150 (2025 revision) | 16 GB DDR4 (single slot), 512 GB M.2 NVMe SSD, Wi-Fi 5 (802.11ac) + BT 5.1, Realtek RTL8111H Gigabit Ethernet. Ships with Windows 11 Pro (wiped on the bench), a 12 V / 2 A USB-C adapter, a VESA plate. Two-year warranty, three-month replacement window. Listing B0DZGRLFLQ, about $300 | MeLE Quieter 3Q, N5105, 8 GB, 128 GB eMMC |
-| CybNemo 90-degree USB-C male to USB-A 3.0 female cable, 30 cm, 2-pack (one left angle, one right) | 5 Gbps. Listing B0FR9KWQVW | CableCreation CC0516 left-angle USB-A extension, 1 ft |
+| Mini PC | **MeLE Quieter 4C**, Intel N150 (2025 revision), 16 GB DDR4, 512 GB NVMe SSD, Wi-Fi 5. Amazon **B0DZGRLFLQ**, about $300. Ships with Windows 11 Pro (wiped), a 12 V / 2 A USB-C adapter (used on the desk only) and a VESA plate (unused) | Replaces the Quieter 3Q |
+| Angled USB-C cable | **CybNemo** USB 3.0 90-degree USB-C male to USB-A female, 30 cm, 2-pack with one left and one right angle. Amazon **B0FR9KWQVW** | Brings one USB port out of the 1 cm gap; carries the keyboard receiver permanently |
+| HDMI link | One of three Alvin's Cables 8K HDMI 2.1 camera-rig cables with angled plugs: 30 cm right-to-right **B08B4PNST7** (model CBWWHDMINEW), 30 cm left-to-right **B07WMPGJQ7** (HDMIRR30), 25 cm straight-to-left **B0CBK34GFR** (LZHDMI25). **Which one fit: to be filled in when it arrives** | Joins the 4C's HDMI 2 to the controller across the 1 3/16 inch gap, since the 3Q's rigid coupler no longer reaches (§5) |
+| Keyboard | **Logitech K400 Plus**, wireless keyboard with touchpad on one USB receiver | BIOS, the Debian installer, and the console afterward; the receiver stays in the frame |
+| USB hub | **UGREEN 4-port USB 3.0 hub, model 25946**, 2 ft cord | Holds the keyboard receiver inside the frame and leaves a port for a stick |
+| USB stick | Any **USB-A** stick, 8 GB or larger. Flashed with the Debian 13 netinst image; nothing else lives on it | The installer, used once on the desk |
+| Monitor | Any monitor with an HDMI input, borrowed for the desk session | Install and bench checks only |
 
-Kept as is: the UGREEN 25946 4-port USB 3.0 hub (2 ft cord), the Logitech K400 Plus, the
-Debian netinst USB stick.
+Not needed on the 4C: the CableCreation CC0516 left-angle USB-A extension (its port became USB-C)
+and the AGVEE 8K male-to-male HDMI coupler (its geometry no longer matches). Both stay with the
+3Q.
 
-Same shell to the millimeter: 131 x 81 x 18.3 mm, 203 g, so the bracket and the slide-in fit
-are unchanged. MeLE sells the identical build direct in two grades (SE-Grade, Business-Grade)
-at a much higher price; Amazon's unit is the same hardware.
+Same shell to the millimeter: 131 x 81 x 18.3 mm, 203 g, so the bracket and the slide-in fit are
+unchanged, apart from the mounting-hole offset described in §5. MeLE sells the identical build
+direct in two grades (SE-Grade, Business-Grade) at a much higher price; Amazon's unit is the same
+hardware.
 
 ## 3. The back of the frame
 
