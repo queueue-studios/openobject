@@ -92,8 +92,16 @@ The frame is only opened once the 4C plays the library on a bench monitor.
   **new angled USB-C cable** in the 4C's left-end USB-C and the receiver on its USB-A end: that
   is the port and cable the frame will use, so the desk proves both before the frame is opened.
   The Debian stick goes in one of the three side USB-A ports
-- the Debian 13 netinst USB stick (the June install's stick, or a fresh one flashed with
-  balenaEtcher)
+- the Debian 13 netinst USB stick. Flash a fresh one even if the June stick is at hand: its
+  label cannot be read from a Mac without administrator rights, and balenaEtcher overwrites the
+  whole stick anyway, so a fresh flash costs nothing and leaves a known, current installer.
+  Done 2026-11-05: Etcher (the arm64 build on an Apple Silicon Mac), the
+  `debian-13.7.0-amd64-netinst.iso` image (756 MB, amd64 because the 4C is an Intel PC whatever
+  Mac downloads it), checksum matched Debian's `SHA256SUMS`, written to a 32 GB stick. Two
+  things to expect: the main image server (`cdimage.debian.org`) was down that morning and a
+  mirror such as `debian.osuosl.org` carries the same files, and macOS says a Debian stick is
+  "not readable by this computer" both before and after flashing; click **Ignore**, never
+  Initialize
 - the Mac, on the same network, for the backup archive and the control panel checks
 
 **Why a desk and not the frame.** The frame's panel would serve as the install monitor exactly
