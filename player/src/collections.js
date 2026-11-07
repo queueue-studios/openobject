@@ -754,11 +754,15 @@ const REGISTRY = [
     animatable: false,
     // While its photos decode (a second or two), the piece paints a red progress line over a plain
     // paper fill, then fades it out. Matt doesn't want the bar on the frame (2026-11-07), so the mirror
-    // no-ops the one function that draws it; the canvas's own CSS background is that same paper colour
-    // (#f1ebdc), so loading shows the blank paper field and the scene simply appears. Same move as the
-    // other hidden loaders (Golden Lining's #p5_loading et al.), just in-canvas, hence htmlReplace.
+    // no-ops the one function that draws it. Same move as the other hidden loaders (Golden Lining's
+    // #p5_loading et al.), just in-canvas, hence htmlReplace. The second pair blacks out the canvas's
+    // CSS placeholder (the artist styles the canvas element in the paper tone, which shows as a pale
+    // flash until the first paint; Matt's call, same day): with it black, the 16:9 area stays
+    // indistinguishable from the stage until the scene appears. The JS PAPER colour the scene draws
+    // with is a separate thing, untouched.
     htmlReplace: [
       { find: 'function loadingBar(p, alpha) {', replace: 'function loadingBar(p, alpha) { return;' },
+      { find: 'background:#f1ebdc', replace: 'background:#000' },
     ],
     // The canvas is a fixed 3200x1800 (16:9) composition; declaring the aspect sizes the iframe to the
     // piece, so the bare black stage letterboxes it above and below on the 1:1 panel (HANDOFF §6).
