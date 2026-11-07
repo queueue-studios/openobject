@@ -1,7 +1,7 @@
 # OpenObject: Build & Handoff Specification
 
 > **Document type:** Implementation spec for Claude Code.
-> **Status:** Running on real hardware. The web app (Phase 1) plus the Debian and Chromium-kiosk installer (Phase 2B) are built and verified on an actual XXL frame, with over-the-air self-update working. Folder Collections is built on every surface (Phase A local + Phase B frame, 2026-07-11, plus the Apple TV, which needed no folder-specific code; §17/§20). **Everything still open lives in one place, `docs/ROADMAP.md`**, organized by state: Committed, Blocked, Deferred, Candidate, Checks, and what was decided against. §17 holds the design records behind those rows; §20 is the decision log.
+> **Status:** Running on real hardware (since 2026-11-07 on a MeLE Quieter 4C, N150, replacing the Quieter 3Q; §2, §20). The web app (Phase 1) plus the Debian and Chromium-kiosk installer (Phase 2B) are built and verified on an actual XXL frame, with over-the-air self-update working. Folder Collections is built on every surface (Phase A local + Phase B frame, 2026-07-11, plus the Apple TV, which needed no folder-specific code; §17/§20). **Everything still open lives in one place, `docs/ROADMAP.md`**, organized by state: Committed, Blocked, Deferred, Candidate, Checks, and what was decided against. §17 holds the design records behind those rows; §20 is the decision log.
 > **Local project root:** `~/Code/OpenObject`
 > **GitHub repo:** `queueue-studios/openobject`, **public** since 2026-06-14 (created private 2026-06-11). Claude drives all git operations on Matt's approval.
 > **Website:** https://openobject.io
@@ -23,7 +23,19 @@ The XXL's display is driven by a small **fanless mini PC mounted on the back of 
 
 ## 2. Hardware target
 
-The mini PC is a **MeLE Quieter 3Q** (confirmed from the unit's label; the BIOS reports board name **`XXL`**, an Infinite Objects custom badge on the same N5105 platform).
+**Since 2026-11-07 the frame's mini PC is a MeLE Quieter 4C** (Intel N150, 16 GB DDR4, 512 GB
+BIWIN NVMe `nvme0n1`, Intel CNVi Wi-Fi `[8086:54f0]` on `iwlwifi` as `wlp0s20f3`, Alder Lake-N
+graphics `[8086:46d4]` on `i915`, Realtek RTL8111H Ethernet; BIOS AMI Aptio 2.22.1293, `Del`
+to enter, Secure Boot set off, **Auto Power On set under Advanced → Customer Exclusive
+Functions**, since a retail 4C does not start on power until it is). Same 131 x 81 x 18.3 mm
+shell as the 3Q; its VESA holes sit a quarter inch lower, so it hangs on the bracket with its
+HDMI 1 out of line with the controller's connector and is cabled from **HDMI 2** (Linux
+`HDMI-A-3`) instead, with a 30 cm double-angled cable. The swap, its reasons (CoE-class p5
+pieces were single-thread CPU-bound on the N5105 with the GPU idle) and every finding are in
+**`docs/QUIETER-4C-MIGRATION.md`**; the parts are listed in the Setup Guide. The 3Q below is
+the original unit, kept unmodified as the cold spare.
+
+The original mini PC is a **MeLE Quieter 3Q** (confirmed from the unit's label; the BIOS reports board name **`XXL`**, an Infinite Objects custom badge on the same N5105 platform).
 
 | Attribute | Value |
 |---|---|
@@ -34,18 +46,18 @@ The mini PC is a **MeLE Quieter 3Q** (confirmed from the unit's label; the BIOS 
 | Expansion | microSD slot (pressure valve for larger libraries) |
 | Networking | Onboard Wi-Fi, Intel Jasper Lake **CNVi** `[8086:4df0]` (`iwlwifi`) + **Gigabit Ethernet** Realtek RTL8111/8168 `[10ec:0123]` (`r8169`), _both confirmed 2026-06-14_ |
 | Display panel | 26" **square (1:1)**, **1920×1920** native, over HDMI (Intel JasperLake UHD / `i915`; the iGPU also advertises 1920×1080 fallback modes), _confirmed 2026-06-14_ |
-| Power | 12 V / 2 A barrel jack |
+| Power | 12 V / 2 A over a **power-only USB-C port** (there is no barrel jack; the table said so until 2026-11-05 and was wrong). The controller board's black USB-C lead feeds it |
 | FCC TX ID | PD99560D2 _(use to confirm Wi-Fi module / Linux driver at bench)_ |
 | Serial | 8ICH4F310P530467 |
 | MAC | 00CE39D53121 |
 
-**Ports on the outward-facing edge:** 1× USB-A 3.0, 3.5 mm audio, microSD, 2× HDMI, 1× USB-C (DP-capable), 1× Gigabit Ethernet, barrel power.
+**Ports on the outward-facing edge, left to right:** 1× USB-A 3.0, 3.5 mm audio, microSD, 2× HDMI, 1× USB-C (power only), 1× Gigabit Ethernet. Three more USB-A 3.x on the right-hand side, **reachable with the unit mounted** (established 2026-11-05; the June belief that only the edge port was reachable is why the first install used an angled extension and a hub).
 
 **Critical hardware facts for the build:**
 
 - This is a **normal x86 PC with a UEFI BIOS**, not an Android appliance. Infinite Objects installed **Ubuntu Linux** and runs the original "White Walls" player as an **Android app inside Waydroid**, a **LineageOS Android 11** container (`lineage_waydroid_x86_64`, build `RQ3A.211001.001`) on the Linux host, which is *why the original UI looks like Android*. Underneath it boots like any PC and runs Linux from a USB stick. **Confirmed at bench (2026-06-13):** UEFI firmware (AMI Aptio `ML_JPL1 V1.0.0 x64`, core 2.22.1282), **`Del`** enters Setup, **no BIOS password**, **Secure Boot off**, boot mode **UEFI**; the factory boot entry is `ubuntu (eMMC A3V012)`.
 - The mini PC connects to the 26" panel via a captive **HDMI** lead (video) plus a **USB-C** lead (power and/or control). **This cabling is not touched.** OpenObject is a software reflash; the player↔panel wiring stays exactly as the vendor built it. After Linux is installed, video outputs over the same HDMI the panel already uses.
-- When wall-mounted, only **one USB-A port is realistically free**, and the physical power button is hard to reach. Both constraints are solved in §4 and §10.
+- When wall-mounted the physical power button is hard to reach (solved in §10: the unit boots on power). The side USB-A ports are reachable, so a keyboard receiver simply lives in one; the "only one free port" constraint this line used to state was a June misreading.
 
 ---
 
@@ -94,21 +106,20 @@ This is the procedure to convert a stock XXL to OpenObject. It is performed once
 > **⚠️ Caution, do NOT remove the two screws above the MeLE.** On the back of the XXL, the two screws on the bracket/plate directly **above** the MeLE mini PC retain captive nuts on the *inside* of the chassis. Loosening or removing them drops those nuts inside the unit, and recovering them requires a **near-full disassembly and reassembly** of the XXL. They are **not** part of this procedure, leave them alone.
 
 **Access hardware** (the owner-supplied kit, exact models recorded in the Setup Guide, §16):
-- **Left-angle** USB-A extension from the single free port out to a reachable spot, then a USB hub on the end (one port can't host both the installer stick and a keyboard). The **left** angle is deliberate: it routes the cable clear of the frame controller's **power socket**, which sits immediately beside that USB port and must stay reachable to seat the power cord. (Confirmed part: CableCreation **CC0516**, see §16.)
-- USB keyboard (a keyboard+touchpad combo on one dongle is ideal).
-- USB flash drive (≥16 GB) for the Linux/OpenObject installer.
+- USB keyboard (a keyboard+touchpad combo on one dongle is ideal); its receiver goes in a **side USB-A port**, as does the installer stick. _(The June kit's left-angle extension and hub answered a belief that only the edge port was reachable; it is not so, see §2.)_
+- USB flash drive (USB-A, ≥8 GB) for the Linux/OpenObject installer.
 - External USB drive (≥128 GB; small USB SSD ideal) for the pre-wipe backup image.
 
 **Procedure:**
 
-1. **Connect** the hub to the free USB-A port; attach keyboard + installer flash drive.
+1. **Connect** the keyboard receiver and the installer flash drive to two side USB-A ports.
 2. **Enter the BIOS** at power-on by tapping **`Del`** _(confirmed 2026-06-13)_. The IO splash uses **Quiet Boot**, so no "press a key" prompt appears, tap `Del` repeatedly from the instant you power on, during the black screen (that's POST). The panel then shows the BIOS screen over HDMI. _(On a Logitech K400, `Del` is a direct key; the F-keys are Fn-shifted.)_
 3. **Set boot order / boot menu** to boot from the USB flash drive. _(With the stick inserted it appears as a new boot option; use a one-time boot menu, likely `F7`, or **Save & Exit → Boot Override**, or set Boot Option #1. Confirm the boot-menu key with the stick in hand.)_
-4. **Auto power-on, nothing to set.** _(Confirmed 2026-06-13:)_ this BIOS exposes **no** "Auto Power On / Restore AC Power Loss / State After G3" toggle (checked `Chipset → PCH-IO Configuration`), and the unit already boots on its own when power is applied, auto-on is the firmware default. So it boots whenever it receives power, no button press, nothing to enable (see §10). _(If a future unit doesn't auto-boot, the only place an ODM might hide it is `Advanced → Customer Exclusive Functions`.)_
+4. **Auto power-on.** On the 3Q, nothing to set; on a **Quieter 4C** it must be enabled (Advanced → Customer Exclusive Functions → Auto Power On, confirmed 2026-11-05 by replugging the adapter) and Secure Boot turned off first. _(3Q, confirmed 2026-06-13:)_ this BIOS exposes **no** "Auto Power On / Restore AC Power Loss / State After G3" toggle (checked `Chipset → PCH-IO Configuration`), and the unit already boots on its own when power is applied, auto-on is the firmware default. So it boots whenever it receives power, no button press, nothing to enable (see §10). _(If a future unit doesn't auto-boot, the only place an ODM might hide it is `Advanced → Customer Exclusive Functions`.)_
 5. **Boot the live USB.**
 6. **BACK UP FIRST, image the existing eMMC** to the external drive (full-disk image). This preserves the original **Ubuntu + Waydroid (White Walls)** install in case the owner ever wants it back *while the vendor's servers still exist*. This is the clean, ADB-free way to capture it. **Do this before any wipe.**
 7. **Install OpenObject** to the eMMC. Two stages (full runbook: `installer/README.md`):
-   **(a)** run the standard **Debian stable netinst**, wipe `/dev/mmcblk0`, choose a *minimal*
+   **(a)** run the standard **Debian stable netinst**, wipe the internal drive (the eMMC on a 3Q, `nvme0n1` on a 4C), choose a *minimal*
    system (untick the desktop; keep "standard system utilities"), set hostname `openobject`,
    join Wi-Fi. **(b)** clone the public repo straight onto the frame
    (`sudo git clone https://github.com/queueue-studios/openobject.git /opt/openobject`) and run
@@ -689,15 +700,13 @@ Since 2026-06-19 there is also **`docs/MAC-DISPLAY-SETUP.md`**, a standalone **n
 
 > **What you need before you start**
 > - A functioning **Infinite Objects XXL** unit (the 26" square frame) with its **MeLE Quieter 3Q** mini PC on the back.
-> - **USB hub:** UGreen USB 3.0 Hub, 4-port, 2 ft (model **25946**).
-> - **Left-angle USB-A extension:** CableCreation USB 3.0 Extension, Left Angle, 1 ft (part **CC0516**). _(The **left** angle is the one that fit, it clears the controller's power socket beside the USB port.)_
-> - **USB keyboard:** Logitech **K400 Plus** (keyboard + touchpad on one receiver).
-> - **USB flash drive:** ≥16 GB (for the installer).
+> - **USB keyboard:** Logitech **K400 Plus** (keyboard + touchpad on one receiver), receiver in a side USB-A port. _(The hub and left-angle extension once listed here are not needed; the side ports are reachable.)_
+> - **USB flash drive:** USB-A, ≥8 GB (for the installer).
 > - **External USB drive:** ≥128 GB (only if preserving the original White Walls backup).
 >
 > **Steps** (kept in sync with the real procedure)
-> 1. Plug the extension into the mini PC's free USB port; attach the hub; attach keyboard + installer drive.
-> 2. Power on and enter the BIOS by tapping **`Del`** (the splash hides the prompt, tap from the black screen); set USB boot. _(No "Auto Power On" to enable, the frame already powers on by itself when it has power.)_
+> 1. Plug the keyboard receiver and the installer drive into two side USB ports.
+> 2. Power on and enter the BIOS by tapping **`Del`** (the splash hides the prompt, tap from the black screen); set USB boot. _(On the 3Q no "Auto Power On" to enable; on a 4C, Secure Boot off and Auto Power On on, see the Setup Guide.)_
 > 3. Boot the installer. (Optional: back up the original software first.)
 > 4. Install OpenObject; wait for the panel to show the OpenObject screen.
 > 5. Join the temporary **OpenObject-Setup** Wi-Fi from your phone; pick your home Wi-Fi; enter the password.
@@ -1117,6 +1126,16 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-11-07: The frame's mini PC is now a MeLE Quieter 4C; the swap is a documented, two-path procedure
+
+**Why.** On 2026-10-31 the frame was measured while *Conservation of Energy* #03 played choppy: Chromium had the 2D canvas, rasterization and compositing on the GPU through ANGLE on Mesa, yet its GPU process pinned one core at 100 percent while the Intel GPU sat at 20 percent and its 200 MHz floor, and all four N5105 cores held 2.8 GHz with no throttling. The limit was single-thread CPU work per drawn shape; no flag changes that, and only a faster core helps. The **Quieter 4C** (N150) is the one MeLE box in the identical shell. Matt ordered it the same day and asked that the outcome be a runbook, or updates to the existing docs, that lets anyone swap the mini PC, with two paths: a frame already running OpenObject (backup, install, restore) and one that is not.
+
+**What happened** (the full log is `docs/QUIETER-4C-MIGRATION.md`; this is the summary). The data folder was backed up from the 3Q with one `tar` over SSH (606 MB, verified). The 4C was set up on a desk: BIOS (Secure Boot off; Auto Power On under Advanced → Customer Exclusive Functions, since a retail 4C does not start on power), Debian 13.7 netinst (a firmware prompt for `iwlwifi-so-a0-jf-b0-*.ucode` answered No; Wi-Fi Intel CNVi, works), then `install.sh` run **detached over SSH** under `systemd-run` so its Wi-Fi handoff could not kill it. That run exercised the **fresh-install NetworkManager handoff** this log left as pending device verification on 2026-08-08: it worked (`wlp0s20f3` connected, watchdog NM-aware, player up). The backup was restored and matched the archive on every count (55 library rows, 12 in rotation, 20 uploads, 18 mirrors, the settings). The swap then met one surprise: the 4C's VESA holes sit a quarter inch lower, so on the bracket its HDMI 1 no longer lines up with the controller's connector and the rigid AGVEE coupler falls half an inch short. Answer: the 4C's **HDMI 2** (Linux `HDMI-A-3`), beside the connector rather than under it, joined by a 30 cm ultra-thin double-angled cable (the fourth tried). Power is the controller's own USB-C lead, which had the slack. The frame came up at 1920×1920, the control panel, self-update and the in-frame keyboard all checked, and Matt judged CoE, inkField and Tiles "fine" on the wall.
+
+**Corrections to this document that came out of it.** The 3Q is powered over a power-only USB-C, not a barrel jack (§2). The three side USB-A ports are reachable with the unit mounted, so the June kit's angled extension and hub were never needed; the keyboard receiver lives in a side port (§2, §4, §16). `install.sh`'s closing text claimed an undo timer was armed on a fresh install where none is created; `nm-handoff.sh` now prints a different closing when the guard is off.
+
+**Files.** `docs/QUIETER-4C-MIGRATION.md` (the runbook), `docs/SETUP-GUIDE.md` (parts list corrected; 4C BIOS notes in the install steps; a new **Replacing the mini PC** section with both paths and the exact parts), `installer/README.md` (internal drive rather than eMMC, the firmware prompt, the 4C BIOS, the detached-over-SSH run), `installer/net/nm-handoff.sh` (conditional closing message), `docs/ROADMAP.md` (E33 progress; the fresh-install handoff cleared from pending verification), this document (§2, §4, §16, status line). **Still open:** a trial week on the wall and the review of the quality concessions made for the 3Q (Tiles' Low default, inkField's pixel density 1), runbook §6.1. (Matt, 2026-11-05 to 2026-11-07.)
 
 ### 2026-11-07: Connected Collection added, Graffiti On Grave's *She Never Let Go* (a live mint concept frozen at 48, and the second Fit/Fill opt-in)
 

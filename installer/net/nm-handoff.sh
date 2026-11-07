@@ -236,6 +236,7 @@ curl -fsS --max-time 8 -o /dev/null http://localhost/healthz \
   && ok "the player is still answering on :80" \
   || warn "player did not answer /healthz (check it separately; this is not a network fault)"
 
+if [ "$ARM_GUARD" = "1" ]; then
 cat <<EOF
 
 ────────────────────────────────────────────────────────────────────
@@ -258,3 +259,21 @@ cat <<EOF
  Snapshot of the old config: ${SNAP}
 ────────────────────────────────────────────────────────────────────
 EOF
+else
+cat <<EOF
+
+────────────────────────────────────────────────────────────────────
+ Wi-Fi is now managed by NetworkManager and connected to: ${SSID}
+ Address: ${IP}
+
+ No undo timer is armed (fresh install): had the handoff failed, the
+ old config would have been restored in place. Nothing to disarm.
+ The address may differ from the one Debian's installer had; use the
+ one above from now on.
+
+ To roll back deliberately at any time:
+     sudo ${REVERT} --force
+ Snapshot of the old config: ${SNAP}
+────────────────────────────────────────────────────────────────────
+EOF
+fi

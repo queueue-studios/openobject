@@ -38,3 +38,12 @@
 
 ## Phase 3 (after Debian boots): pending
 - [ ] Plug in the **OPENOBJECT** seed stick now; mount it; `git clone …bundle /opt/openobject`; `sudo bash …/installer/install.sh`.
+
+## Quieter 4C addendum (2026-11-05)
+
+The same install on the replacement mini PC, with its differences (the firmware prompt, the NVMe
+drive, the BIOS settings a retail unit needs, the installer run detached over SSH, the bracket
+offset and the HDMI 2 cable), is logged step by step in `docs/QUIETER-4C-MIGRATION.md`. The
+one June belief it overturned: the three side USB-A ports are reachable with the unit mounted,
+so the angled extension and hub above were never needed.
+

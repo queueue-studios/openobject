@@ -343,9 +343,11 @@ written to during this procedure, so rollback is purely physical: unplug the 4C,
 back, reconnect the same three leads, replug the cord. It boots and plays the library as it
 was on backup day. Anything added to the library on the 4C after the swap lives only on the 4C.
 
-After the trial, update HANDOFF §2 (the hardware table, the port list, and the barrel-jack
-error) and the Setup Guide's parts list for anyone else reviving an XXL with a 4C, in the same
-change (HANDOFF §16).
+The documentation fold was done on 2026-11-07, ahead of the trial week, since the facts were
+verified: HANDOFF §2 (the 4C as the current unit, the USB-C power and side-port corrections),
+§4, §16 and a §20 entry; the Setup Guide's parts list, 4C BIOS notes, and a new **Replacing the
+mini PC** section with both paths; `installer/README.md` and `INSTALL-NOTES.md`; the roadmap;
+and `nm-handoff.sh`'s closing message. This runbook stays as the detailed log.
 
 ### 6.1 Revisit the quality concessions made for the 3Q
 

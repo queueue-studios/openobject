@@ -43,15 +43,15 @@ NFT reader, though it now has **curated support for a few specific collections**
 
 ## What you need before you start
 
-- A working **Infinite Objects XXL** (the 26-inch square frame) with its **MeLE Quieter 3Q** mini
-  PC on the back.
-- **USB hub:** UGreen USB 3.0 Hub, 4-port (model **25946**).
-- **Left-angle USB-A extension:** CableCreation USB 3.0 Extension, Left Angle, 1 ft (part
-  **CC0516**). The left angle matters: it tucks the cable away from the power socket that sits
-  right next to the USB port.
+- A working **Infinite Objects XXL** (the 26-inch square frame) with its **MeLE** mini PC on the
+  back: the **Quieter 3Q** it shipped with, or a **Quieter 4C** if the mini PC has been replaced
+  (see [Replacing the mini PC](#replacing-the-mini-pc-advanced) below).
 - **USB keyboard:** Logitech **K400 Plus** (a keyboard with a built-in touchpad on one USB
-  receiver, so you don't need a separate mouse).
-- **USB flash drive,** 16 GB or larger, for the installer.
+  receiver, so you don't need a separate mouse). Its receiver plugs into one of the **three USB
+  ports on the side of the mini PC**, which are reachable with the unit in place. (An earlier
+  version of this guide called for a hub and an angled extension cable, on the belief that only
+  the port on the top edge was reachable. It is not so; neither is needed.)
+- **USB flash drive** with a **USB-A** plug, 8 GB or larger, for the installer. Any brand.
 - **External USB drive,** 128 GB or larger. Optional, only if you want a one-time backup of the
   original software first (a USB SSD is ideal; exFAT format works everywhere). See the
   [backup appendix](appendix-backup-original.md).
@@ -69,12 +69,15 @@ NFT reader, though it now has **curated support for a few specific collections**
 > removing them lets nuts drop down inside the frame, and getting them back means taking most of the
 > unit apart. They aren't part of any step below.
 
-1. Plug the left-angle extension into the mini PC's free USB port, attach the hub, then attach the
-   keyboard and the installer flash drive.
+1. Plug the keyboard's receiver and the installer flash drive into two of the USB ports on the
+   side of the mini PC.
 2. Power on and open the **BIOS** by tapping **`Del`** as it starts up. (The frame's logo hides the
    prompt, so just tap `Del` a few times while the screen is still black.) Set it to boot from the
-   USB drive. There is no "Auto Power On" to switch on; this frame already starts by itself whenever
-   it has power.
+   USB drive. On the original **Quieter 3Q** there is no "Auto Power On" to switch on; it already
+   starts by itself whenever it has power. On a **Quieter 4C** there are two settings to make
+   first: **Security, Secure Boot, set to Disabled**, and **Advanced, Customer Exclusive Functions,
+   Auto Power On, set to Enabled**; a 4C out of the box does not start until its button is pressed,
+   so press the button, then tap `Del`.
 3. Boot the installer and follow the **[installer runbook](../installer/README.md)**: install a
    minimal Debian, then run the OpenObject installer, which sets everything up and reboots into the
    art. You join your home Wi-Fi during this install, and once the frame is online it downloads
@@ -354,6 +357,70 @@ keep playing on the frame either way. The iPad and iPhone app also keeps a **loc
 on the device, so it keeps playing with the frame asleep, or away from your network entirely, Connected
 Collections included. See [the app section in the Mac guide](MAC-DISPLAY-SETUP.md#watch-on-an-apple-tv-ipad-or-iphone-optional)
 for the details, including the local copy, which are the same whichever Host you use.
+
+---
+
+## Replacing the mini PC (advanced)
+
+The computer on the back of the XXL can be swapped for a faster one of the same size, and this
+section is the record of doing exactly that. It was done because some generative pieces ran choppy
+on the original **MeLE Quieter 3Q**: that computer's one slow core, not its graphics chip, was the
+limit, so only a faster core helps. The **MeLE Quieter 4C** (Intel N150) is the one MeLE box in
+the identical case, and on the wall it made the same pieces smooth. The full step-by-step log,
+with every command and every surprise, is **[the Quieter 4C migration runbook](QUIETER-4C-MIGRATION.md)**;
+this is the shape of it.
+
+**What you need.** The exact items that did the job:
+
+- **MeLE Quieter 4C**, Intel N150, 16 GB, 512 GB SSD (Amazon listing B0DZGRLFLQ). It ships with
+  Windows, which the install wipes, and with its own 12 V power adapter, used only on the desk.
+- **One short HDMI cable with an angled plug at each end:** Alvin's Cables ultra-thin 8K HDMI 2.1,
+  left-to-left angle, 30 cm (Amazon B0DQL5S49L). Why a cable at all is explained below.
+- The **K400 Plus** keyboard and a **USB-A flash drive**, as in the list at the top.
+- Any **monitor with an HDMI input** and a cable, borrowed for an afternoon.
+
+**Two paths.** They differ only by a backup before and a restore after:
+
+- **Your frame already runs OpenObject.** First, back up its data folder to your computer over
+  SSH (the runbook has the one line; it is about 600 MB and takes under a minute). Then install
+  on a desk as below. Then restore the backup onto the new unit, and only then open the frame. Your
+  library, settings, sleep schedule and rotation all come across; the new unit even keeps the
+  frame's identity, so the Apple TV and iPad apps recognize it.
+- **Your frame does not run OpenObject yet.** Follow "Installing OpenObject" above with the new
+  unit instead of the old one, on a desk or in the frame as you prefer, with the 4C notes in step 2.
+  There is nothing to back up or restore.
+
+**Install on a desk, not in the frame.** Plug the new unit into the borrowed monitor with the
+keyboard receiver and the flash drive in its side ports, do the BIOS settings from step 2 above,
+and run the install. The old unit keeps playing on the wall meanwhile, and the frame stays closed
+until the new one is proven. One thing to expect that the original install never showed: early on,
+Debian's installer says some hardware needs firmware files and lists a dozen `iwlwifi` names.
+Answer **No** and carry on; the Wi-Fi works anyway. Pick the **BIWIN 512 GB** drive to wipe, not
+the flash drive. When the screen reads `openobject login:` the install is done.
+
+**The swap.** Unplug the frame's cord and lay it face down on something soft. The mini PC hangs
+on a bracket by two screw heads. Slide the old unit up, unplug its three leads (the keyboard
+cable if it has one, the HDMI, and the black USB-C power lead), and set it aside untouched. Then,
+before mounting anything, plug the power lead into the new unit's power port, the USB-C beside
+the Ethernet jack, and plug the cord in for a moment: the new unit should light up by itself.
+Unplug again, slide the new unit into the bracket, and reconnect.
+
+**Why the HDMI cable.** On the original unit a short rigid coupler joined the frame's HDMI
+connector straight into the mini PC's HDMI 1, which lines up with it. The 4C's mounting holes
+sit a quarter inch lower, so hung on the same bracket it no longer lines up and the coupler falls
+short. The answer is the 4C's **HDMI 2**, which sits beside the frame's connector rather than
+under it, joined by the short double-angled cable above. Four cables were tried; that one lay
+best in the 1 3/16 inch gap. Nothing in the software cares which HDMI port is used.
+
+**Finishing.** Leave the keyboard's receiver in a side port so a wireless keyboard can always
+reach the frame. Plug the cord in: the new unit starts by itself and shows the MeLE logo instead
+of the Infinite Objects one, which is normal, and the art follows. Open `http://openobject.local`
+to confirm the control panel. If you connect by SSH from a computer that knew the old unit, it will
+refuse at first because the name now belongs to a different machine; `ssh-keygen -R openobject.local`
+clears the old entry.
+
+**Keep the old unit.** It is not changed by any of this. If anything about the new one
+disappoints, it slides back in with its own leads and plays as before.
 
 ---
 
