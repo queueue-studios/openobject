@@ -46,7 +46,7 @@ where the part was bought for this project; the two June parts are named by mode
 | Part | Exact item | Role |
 |---|---|---|
 | Mini PC | **MeLE Quieter 4C**, Intel N150 (2025 revision), 16 GB DDR4, 512 GB NVMe SSD, Wi-Fi 5. Amazon **B0DZGRLFLQ**, about $300. Ships with Windows 11 Pro (wiped), a 12 V / 2 A USB-C adapter (used on the desk only) and a VESA plate (unused) | Replaces the Quieter 3Q |
-| HDMI link | One of three Alvin's Cables 8K HDMI 2.1 camera-rig cables with angled plugs: 30 cm right-to-right **B08B4PNST7** (model CBWWHDMINEW), 30 cm left-to-right **B07WMPGJQ7** (HDMIRR30), 25 cm straight-to-left **B0CBK34GFR** (LZHDMI25). **Which one fit: to be filled in when it arrives** | Joins the 4C's HDMI 2 to the controller across the 1 3/16 inch gap, since the 3Q's rigid coupler no longer reaches (§5) |
+| HDMI link | **Alvin's Cables ultra-thin (2.4 mm) 8K HDMI 2.1 cable, left-to-left angle, 30 cm.** Amazon **B0DQL5S49L** (model LLHDMI30RD). Chosen 2026-11-07 out of four tried: the 30 cm left-to-right **B07WMPGJQ7** also fit but was snug where the two plug bodies meet; the right-to-right B08B4PNST7 and the 25 cm straight-to-left B0CBK34GFR did not fit | Joins the 4C's HDMI 2 to the controller across the 1 3/16 inch gap, since the 3Q's rigid coupler no longer reaches (§5) |
 | Keyboard | **Logitech K400 Plus**, wireless keyboard with touchpad on one USB receiver | BIOS, the Debian installer, and the console afterward; the receiver stays in the frame, in one of the three side USB-A ports |
 | USB stick | Any **USB-A** stick, 8 GB or larger. Flashed with the Debian 13 netinst image; nothing else lives on it | The installer, used once on the desk |
 | Monitor | Any monitor with an HDMI input, borrowed for the desk session | Install and bench checks only |
@@ -390,4 +390,7 @@ Add the outcome of each to the decision log below.
   Alvin's Cables ultra-thin (2.4 mm) 8K HDMI 2.1, **left-to-left angle**, 30 cm, Amazon
   **B0DQL5S49L** (model LLHDMI30RD). If it lies better it wins; otherwise the left-to-right is
   the part. The right-to-right (B08B4PNST7) and straight-to-left (B0CBK34GFR) did not fit.
+- **2026-11-07.** The fourth cable, the ultra-thin left-to-left (B0DQL5S49L), is the one in the
+  frame: slightly less snug than the left-to-right where the two plugs meet. It is the HDMI
+  line in the parts list.
 
