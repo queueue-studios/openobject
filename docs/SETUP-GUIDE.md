@@ -235,6 +235,11 @@ And Jen Stark's *Vortex* is a sculptural tunnel of rippling, hand-cut layers in 
 grown from her signature paper sculptures: a hypnotic spiral that turns slowly all on its own, with some
 pieces shifting their colors as they go. Every piece is square, so it fills the whole frame edge to edge,
 always drawn fresh at your screen's full sharpness. There's nothing to adjust; it just plays.
+And Graffiti On Grave's *She Never Let Go* is a tender scene drawn like an old comic print: a girl in red
+stands alone in a wide pale field, holding a bright bundle of red balloons, one for every collector who
+took an edition home before the sale closed, forty-eight in all. The balloons stir gently on their strings.
+It's a widescreen piece, so it shows with black above and below; on its card you can choose **Fit** to
+show the whole scene or **Fill** to enlarge it to fill the screen, trimming the sides.
 The supported collections live in the **Settings** tab, under
 **Connected Collections**, where you can hide ones you don't own and, for collections that have something to
 adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect, snowfall, a Tiled/Static display, or an aspect ratio. This is new and **curated**: only collections that have been
