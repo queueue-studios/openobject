@@ -385,4 +385,9 @@ Add the outcome of each to the decision log below.
   LZHDMI25). A straight plug stands about 0.8 inch off its port and needs its bend inside the
   remaining space, so it is the fallback of the three. The frame stays face down on a protected
   surface until a cable fits.
+- **2026-11-06.** The **left-to-right** 30 cm cable (B07WMPGJQ7) fits between HDMI 2 and the
+  controller, awkwardly and a bit snug. A fourth cable arrives 2026-11-07 for comparison:
+  Alvin's Cables ultra-thin (2.4 mm) 8K HDMI 2.1, **left-to-left angle**, 30 cm, Amazon
+  **B0DQL5S49L** (model LLHDMI30RD). If it lies better it wins; otherwise the left-to-right is
+  the part. The right-to-right (B08B4PNST7) and straight-to-left (B0CBK34GFR) did not fit.
 
