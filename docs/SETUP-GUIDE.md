@@ -231,6 +231,10 @@ And Nygilia's *Starlight*, inspired by the Marfa Lights, is a series of still pi
 little glowing desert spirits scattered across the screen, in a palette that's different for every piece. It doesn't
 move. The code draws it fresh to fit your screen and fills it edge to edge, so the tall original is trimmed: a square
 frame shows its middle, and a widescreen Mac a band across it.
+And Jen Stark's *Vortex* is a sculptural tunnel of rippling, hand-cut layers in bright bands of color,
+grown from her signature paper sculptures: a hypnotic spiral that turns slowly all on its own, with some
+pieces shifting their colors as they go. Every piece is square, so it fills the whole frame edge to edge,
+always drawn fresh at your screen's full sharpness. There's nothing to adjust; it just plays.
 The supported collections live in the **Settings** tab, under
 **Connected Collections**, where you can hide ones you don't own and, for collections that have something to
 adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect, snowfall, a Tiled/Static display, or an aspect ratio. This is new and **curated**: only collections that have been

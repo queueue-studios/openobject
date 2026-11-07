@@ -694,6 +694,39 @@ const REGISTRY = [
     localizeAbsolute: true,
   },
   {
+    slug: 'vortex',
+    artist: 'Jen Stark',
+    name: 'Vortex',
+    chain: 'Ethereum',
+    contract: '0xa7d8d9ef8d8ce8992df33d8b8cf4aebabd5bd270',
+    rpc: 'https://ethereum-rpc.publicnode.com',
+    // Art Blocks Curated project 225 on the platform's shared Core contract (the Chromie Squiggle situation
+    // on the newer Core: hundreds of unrelated projects under one address), so requireProject pins resolution
+    // to Vortex; any of the series' 1,000 tokens resolves (the owner enters their Token ID; the Pendulum
+    // lesson), a non-Vortex id on this contract is rejected. Each token's generator HTML inlines its own hash
+    // (token id in the path), so each mirrors its own bundle (perToken, like the squiggle).
+    perToken: true,
+    requireProject: '225',
+    // The sketch is a three.js tunnel of up to ~240 stacked, shaped layers, colored from the token's palette.
+    // It SELF-ANIMATES unconditionally: the whole vortex rotates slowly (a per-token period of ~15-64 s), an
+    // animated-palette token also cycles its colors, and a shader token runs on time; so no Animate control.
+    // The artist's one interaction is a pointer drag that tilts the tunnel and springs back; hands-on play we
+    // leave alone (no reachable globals to drive, and the default state is the piece).
+    animateDefault: false,
+    animatable: false,
+    // The square canvas sizes itself to min(innerWidth, innerHeight), centered, over an UNSET page background
+    // (white). On the 1:1 stage it fills edge to edge; declaring the square as the aspect sizes the iframe to
+    // the piece on any other viewport, so the bare black stage letterboxes it (the Perfect Everything portrait
+    // fix) and the white page surround never shows.
+    aspect: '1 / 1',
+    // The only external asset is three.js r124 by absolute cdnjs URL; localize it into the bundle so the piece
+    // renders with no network (the Chromie Squiggle mechanism).
+    localizeAbsolute: true,
+    // Quirk, left alone: when navigator.plugins is EMPTY (headless capture browsers) the sketch builds plainer
+    // ribbon geometry instead of its full shaped layers. Every real display (the frame's Chromium kiosk, a Mac's
+    // Chrome) reports plugins, so the full path runs; worth knowing before trusting a headless screenshot.
+  },
+  {
     slug: 'bouncing-openobject-logo',
     artist: 'OpenObject',
     name: 'Bouncing OpenObject Logo',
