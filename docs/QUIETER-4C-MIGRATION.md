@@ -261,7 +261,7 @@ the unit, a read-only script asks the same questions through `node:sqlite` plus 
       screen** after the restore, because the restored sleep schedule covers that hour. That is
       the settings carrying over, not a fault. The backup held no pin, so no particular piece
       was expected
-- [ ] Software Update in the control panel reports the current version (check on the frame)
+- [x] Software Update in the control panel reports the current version and applied one (§5)
 
 Two things learned here for the next person. The installer's closing text says "THE UNDO IS
 STILL ARMED" and tells you to disable `oo-net-revert.timer`; on a fresh install that timer does
@@ -324,11 +324,17 @@ confirmed on the frame itself, in §5, and it is the one thing the bench cannot 
       first mode. That connector is the **physical HDMI 2**, the port nearer the power USB-C;
       HDMI-A-1 and A-2 read disconnected. Both services active, player answering at 1.10.0 with
       the frame's own identity from the restored database
-- [ ] Control panel reachable at `openobject.local` from Safari
-- [ ] **Keyboard check from inside the frame:** with the receiver in its side port, press
-      Ctrl+Alt+Fn+F2 on the K400; the console login must replace the art. Ctrl+Alt+F1 brings the
-      art back. Matt asked for this check explicitly, since the side-port placement is new
-- [ ] CoE #03 compared against the before state
+- [x] Control panel reachable at `openobject.local` from Safari, library and rotation as before
+- [x] **Software Update** from the control panel pulled two Connected Collections pushed since
+      the clone (Vortex, She Never Let Go) and restarted cleanly: the self-update path works on
+      the new unit
+- [x] **Keyboard check from inside the frame:** with the receiver in its side port,
+      Ctrl+Alt+Fn+F2 on the K400 brought the console login in place of the art and Ctrl+Alt+F1
+      brought the art back (2026-11-07). The side-port placement is proven
+- [x] CoE #03, inkField and Tiles watched on the wall by Matt, 2026-11-07: "they perform fine."
+      The 3Q played CoE choppy. An objective figure (the GPU-process CPU share and GPU busy
+      percentage from the diagnosis-night sample) can be taken any time with the read-only
+      per-piece script and added here
 
 ## 6. Trial and rollback
 
@@ -406,4 +412,8 @@ Add the outcome of each to the decision log below.
   needed `ssh-keygen -R openobject.local` first, since the name now carries the 4C's host key.
   Left to confirm: the control panel in Safari and the in-frame keyboard check; then the trial
   week and the §6.1 quality review.
+- **2026-11-07, evening.** Frame checklist complete: control panel, self-update, keyboard from
+  inside the frame, and the three pieces that motivated the swap judged fine by eye. The old
+  unit, the Quieter 3Q, goes on the shelf unmodified with its coupler, extension and hub as the
+  cold spare. Next: the documentation fold (§6), then the trial week and the §6.1 review.
 
