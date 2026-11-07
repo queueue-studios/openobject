@@ -313,10 +313,18 @@ confirmed on the frame itself, in §5, and it is the one thing the bench cannot 
 5. Replug the cord. The unit must start by itself (the §4.3 check). The MeLE logo replaces the
    Infinite Objects splash; that is the firmware, not a fault.
 6. The art should appear at 1920 x 1920 within about a minute. Open `http://openobject.local`.
+7. **The Mac's SSH will refuse the name at first.** `openobject.local` now points at a new
+   computer with a new host key, so `ssh` prints "REMOTE HOST IDENTIFICATION HAS CHANGED" and
+   stops. That is the swap, not an attack: the fingerprint it shows is the one accepted for the
+   new unit on the desk. Clear the old entry with `ssh-keygen -R openobject.local`, connect
+   again, and answer `yes`.
 
-- [ ] Starts on power return
-- [ ] Full square picture, no letterboxing from a 1920 x 1080 fallback
-- [ ] Control panel reachable at `openobject.local`
+- [x] Starts on power return (2026-11-07; the art was rotating when Matt reported in)
+- [x] Full square picture: Linux reports the panel on `card0-HDMI-A-3` with `1920x1920` as its
+      first mode. That connector is the **physical HDMI 2**, the port nearer the power USB-C;
+      HDMI-A-1 and A-2 read disconnected. Both services active, player answering at 1.10.0 with
+      the frame's own identity from the restored database
+- [ ] Control panel reachable at `openobject.local` from Safari
 - [ ] **Keyboard check from inside the frame:** with the receiver in its side port, press
       Ctrl+Alt+Fn+F2 on the K400; the console login must replace the art. Ctrl+Alt+F1 brings the
       art back. Matt asked for this check explicitly, since the side-port placement is new
@@ -393,4 +401,9 @@ Add the outcome of each to the decision log below.
 - **2026-11-07.** The fourth cable, the ultra-thin left-to-left (B0DQL5S49L), is the one in the
   frame: slightly less snug than the left-to-right where the two plugs meet. It is the HDMI
   line in the parts list.
+- **2026-11-07, later.** The frame is on the wall side up and the art is rotating on the 4C.
+  Checked from the Mac: panel on HDMI-A-3 at 1920x1920, player and kiosk active. The Mac's SSH
+  needed `ssh-keygen -R openobject.local` first, since the name now carries the 4C's host key.
+  Left to confirm: the control panel in Safari and the in-frame keyboard check; then the trial
+  week and the §6.1 quality review.
 
