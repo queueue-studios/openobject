@@ -743,8 +743,8 @@ const REGISTRY = [
     // balloon for every edition collected. The concept was LIVE during the sale (the file carries a full
     // MintCount module that counts mints over public RPCs), but the sale closed on 2026-11-07 at 48
     // editions and the pinned build bakes the final 48 minters in and never calls it ("Nothing is fetched
-    // at runtime", its own comment). The one runtime fetch left is an ENS lookup when a balloon is
-    // selected by hover or tap, which no kiosk input ever triggers, so the frame plays fully offline.
+    // at runtime", its own comment). Even the hover/tap collector labels read a baked-in ENS map (the
+    // live resolver is also in the file, also never called), so the frame plays fully offline.
     // Its photo textures ride as data URLs (one 3.8MB file), so the mirror is a clean one-file copy; no
     // localizeAbsolute (the RPC URLs sit in dead config, not asset refs).
     // It SELF-ANIMATES on a continuous requestAnimationFrame loop, so no Animate control. The artist's
@@ -752,6 +752,14 @@ const REGISTRY = [
     // alone, the Vortex rule: the default state is the piece.
     animateDefault: false,
     animatable: false,
+    // While its photos decode (a second or two), the piece paints a red progress line over a plain
+    // paper fill, then fades it out. Matt doesn't want the bar on the frame (2026-11-07), so the mirror
+    // no-ops the one function that draws it; the canvas's own CSS background is that same paper colour
+    // (#f1ebdc), so loading shows the blank paper field and the scene simply appears. Same move as the
+    // other hidden loaders (Golden Lining's #p5_loading et al.), just in-canvas, hence htmlReplace.
+    htmlReplace: [
+      { find: 'function loadingBar(p, alpha) {', replace: 'function loadingBar(p, alpha) { return;' },
+    ],
     // The canvas is a fixed 3200x1800 (16:9) composition; declaring the aspect sizes the iframe to the
     // piece, so the bare black stage letterboxes it above and below on the 1:1 panel (HANDOFF §6).
     aspect: '3200 / 1800',
