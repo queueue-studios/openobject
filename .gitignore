@@ -50,6 +50,10 @@ Screenshots/
 *.img
 *.iso
 
+# Rebuilt by start-kiosk.sh on every kiosk start (the blank-cursor symlink),
+# so `git status` on a running frame stays clean.
+/installer/kiosk/cursors/default
+
 # ── Secrets / local env ───────────────────────────────────────────
 .env
 .env.*
