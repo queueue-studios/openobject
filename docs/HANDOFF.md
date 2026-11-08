@@ -775,8 +775,9 @@ decision believed to be incorrect, not a case of waiting to be read.
 
 **The canonical App Review notes live on the iOS side of the record (settled 2026-09-02).** Both
 platforms had their own notes and the iOS ones, rewritten to clear the 2.1(a) rejection, are markedly
-better. Copy them to tvOS next cycle rather than maintaining two voices. What makes them work, in
-order:
+better. The tvOS field was brought over to the same voice in the 2026-09-02 in-place rewrite (below),
+and the 1.11.0 submission (2026-11-08) confirmed the live field still matches, so the two sides no
+longer diverge. What makes them work, in order:
 
 1. **Sentence one denies credentials.** "There is no account and no password required for this app."
    Apple's template assumes credentials, so this is the highest-value position in the document.
@@ -1127,6 +1128,19 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-11-08: 1.11.0 shipped on every surface; both store builds submitted for review
+
+The first full-platform cut since 1.10.0, all engine-side work (six new Connected Collections, the
+IPFS gateway fallback, the Quieter 4C documentation) plus the tvOS picker port below. `release.sh
+1.11.0` bumped all four surfaces; the `v1.11.0` tag went out for the frame's OTA lane; the notarized
+Mac build (**1.11.0 (19)**) published through the appcast; and both store shells were archived and
+uploaded the same afternoon. Matt verified the frame and the Mac app updated to 1.11.0 on the real
+devices. **tvOS 1.11.0 (5)** and **iOS 1.11.0 (8)** were then submitted for review in App Store
+Connect (tags `tvos-1.11.0-submitted`, `ios-1.11.0-submitted`). The tvOS build carries the E24/E25
+picker fixes; the iOS build changes no behavior and exists to keep the store pair on the one version
+line. The submission also confirmed the tvOS App Review notes already carry the canonical voice
+(§17), closing that remainder.
+
 ### 2026-11-08: E24 and E25 ported to tvOS; E23's roadmap row was stale (all three close)
 
 Scoping the 1.11.0 cut found the Apple TV app was the one surface still carrying the picker defects
@@ -1143,9 +1157,10 @@ code, same lines.
 **E23 turned out to be already shipped, both apps, since 1.9.0** (commit `4ace15e`: the waiting copy,
 the probe-gated OpenObject Demo Gallery row, Connect disabled on an empty field). Its roadmap row still
 read "ships in the next app build" and was simply stale; the 1.9.0 and 1.10.0 store builds both carry
-it. All three rows leave the roadmap with this entry as the record. One non-code remainder rides with
-the next tvOS submission: copy the canonical iOS App Review notes onto the tvOS side (settled
-2026-09-02, §17), which is App Store Connect metadata, not a build.
+it. All three rows leave the roadmap with this entry as the record. The one non-code remainder this
+entry flagged, copying the canonical iOS App Review notes onto the tvOS side, turned out to be already
+done: the tvOS field was rewritten in place on 2026-09-02 (§17) and was confirmed canonical, demo-row
+label and all, at the 1.11.0 submission.
 
 **Files.** `tv-app/Sources/AppModel.swift`, `tv-app/Sources/HostPickerView.swift`, `docs/ROADMAP.md`,
 this document (§17). Setup Guide unchanged: no guide copy describes the Connect mechanics, and the fix
