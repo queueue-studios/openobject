@@ -23,6 +23,9 @@ final class AppModel {
     var manualAddress = ""
     var manualError: String?
     private(set) var scanning = false
+    /// True while a typed address is being probed (E24): the picker disables Connect and shows progress on
+    /// it, so the button can never look dead. The probe itself is capped at `probeTimeout` seconds.
+    private(set) var connecting = false
 
     /// Whether the public OpenObject Gallery answered its last probe: nil while checking, then true/false.
     /// The picker offers the Gallery in its empty state ONLY when this is true, so a no-internet / CDN-down
@@ -41,6 +44,16 @@ final class AppModel {
     @ObservationIgnored private var scanFloor: Task<Void, Never>?
     @ObservationIgnored private var galleryProbe: Task<Void, Never>?
     @ObservationIgnored private var connectWatchdog: Task<Void, Never>?
+    @ObservationIgnored private var rebrowse: Task<Void, Never>?
+
+    /// How long a typed address gets to answer before "No Host answered" (E24). `URLSession.shared` would
+    /// allow sixty seconds, which read as a Connect button that did nothing (HANDOFF §17); this is the
+    /// Siri Remote's version of the same dead minute.
+    private static let probeTimeout: TimeInterval = 8
+    /// How often discovery is restarted while the picker shows an empty list (E25). A Bonjour browse can
+    /// die silently (a Local Network permission toggle kills the one in flight), and the only restart used
+    /// to be leaving and re-entering the app; this makes the picker recover on its own, with no UI.
+    private static let rebrowseInterval: Duration = .seconds(15)
 
     init(store: HostStore = UserDefaultsHostStore()) {
         self.store = store
@@ -71,6 +84,30 @@ final class AppModel {
             try? await Task.sleep(for: .seconds(4))
             self?.scanning = false
         }
+        startRebrowse()
+    }
+
+    /// While the picker is up with nothing found, restart the browse every `rebrowseInterval` (E25). Silent:
+    /// it never touches `scanning`, so the waiting copy does not flicker, and the Gallery is only re-probed
+    /// when its last probe failed, so an offered row never blinks out while it is re-checked. Stops itself
+    /// the moment a Host appears or the picker is left; idempotent while running.
+    private func startRebrowse() {
+        guard rebrowse == nil else { return }
+        rebrowse = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: Self.rebrowseInterval)
+                guard let self, !Task.isCancelled, self.route == .picker else { return }
+                guard self.hosts.isEmpty else { continue }
+                self.discovery.stop()
+                self.discovery.start()
+                if self.galleryReachable == false { self.probeGallery() }
+            }
+        }
+    }
+
+    private func stopRebrowse() {
+        rebrowse?.cancel()
+        rebrowse = nil
     }
 
     /// Coming back into the app from the Apple TV's Home screen. A remembered Host reopens straight to its
@@ -109,6 +146,7 @@ final class AppModel {
             try? await Task.sleep(for: .seconds(4))
             self?.scanning = false
         }
+        startRebrowse()
     }
 
     /// Leave the art stage for the picker (the Menu/Back action, §14). Stops playback so nothing polls in
@@ -131,6 +169,7 @@ final class AppModel {
     func select(_ host: Host) {
         store.saveDefaultHost(host)
         discovery.stop()
+        stopRebrowse()
         scanFloor?.cancel()
         connectWatchdog?.cancel()
         clearManualEntry()
@@ -145,14 +184,21 @@ final class AppModel {
         galleryProbe?.cancel()
         galleryReachable = nil
         galleryProbe = Task { [weak self] in
-            let config = URLSessionConfiguration.ephemeral
-            config.timeoutIntervalForRequest = 3
-            config.waitsForConnectivity = false
-            let client = DisplayClient(session: URLSession(configuration: config))
+            let client = Self.probeClient(timeout: 3)
             let ok = (try? await client.fetchDisplay(from: .gallery)) != nil
             guard !Task.isCancelled else { return }
             self?.galleryReachable = ok
         }
+    }
+
+    /// A DisplayClient for a one-off probe: an ephemeral session with a short request timeout and no
+    /// waiting for connectivity, so an address that does not answer fails in seconds rather than the
+    /// shared session's sixty (E24). The Gallery probe and the manual-entry probe both use it.
+    private static func probeClient(timeout: TimeInterval) -> DisplayClient {
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = timeout
+        config.waitsForConnectivity = false
+        return DisplayClient(session: URLSession(configuration: config))
     }
 
     /// Connect to the public OpenObject Gallery WITHOUT remembering it (§12): unlike select(host) it saves
@@ -160,6 +206,7 @@ final class AppModel {
     /// rather than reopening the Gallery. Offered only from the probe-gated empty-state row.
     func connectToGallery() {
         discovery.stop()
+        stopRebrowse()
         scanFloor?.cancel()
         galleryProbe?.cancel()
         connectWatchdog?.cancel()
@@ -190,16 +237,20 @@ final class AppModel {
     }
 
     /// Connect to a typed address (§5). A malformed entry, or one no Host answers, is a plain error (§13)
-    /// rather than a silent dead end.
+    /// rather than a silent dead end. While the probe is in flight `connecting` is true (E24) and a second
+    /// submit is ignored.
     func submitManualEntry() async {
+        guard !connecting else { return }
         manualError = nil
         let raw = manualAddress.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let host = Host.manualEntry(raw) else {
             manualError = "Enter an address like 192.168.1.10 or openobject.local."
             return
         }
+        connecting = true
+        defer { connecting = false }
         do {
-            _ = try await DisplayClient().fetchDisplay(from: host)
+            _ = try await Self.probeClient(timeout: Self.probeTimeout).fetchDisplay(from: host)
             select(host)
         } catch {
             manualError = "No Host answered at that address."

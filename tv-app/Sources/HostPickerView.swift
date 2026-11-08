@@ -178,6 +178,10 @@ struct HostPickerView: View {
     // house rule is to fix behavior to match expectation, not to explain it). Tapping it empty used to put
     // a red error under the field, which the App Review reviewer read as a required login that had failed
     // (§17, E23). model.manualError stays as a defensive guard; the UI can no longer reach its empty case.
+    //
+    // It is also disabled, and shows a spinner in place of its label, while a probe is in flight (E24): the
+    // shipped build kept it enabled and silent for up to a minute, which read as a button that did nothing.
+    // The label is kept at its own width underneath so the button does not change size.
     private var addressIsEmpty: Bool {
         model.manualAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -190,8 +194,14 @@ struct HostPickerView: View {
                 TextField("192.168.1.10 or openobject.local", text: $model.manualAddress)
                     .textContentType(.URL)
                     .frame(width: 760)
-                Button("Connect") { Task { await model.submitManualEntry() } }
-                    .disabled(addressIsEmpty)
+                Button {
+                    Task { await model.submitManualEntry() }
+                } label: {
+                    Text("Connect")
+                        .opacity(model.connecting ? 0 : 1)
+                        .overlay { if model.connecting { ProgressView() } }
+                }
+                .disabled(addressIsEmpty || model.connecting)
             }
             if let error = model.manualError {
                 Text(error).font(.callout).foregroundStyle(.red)

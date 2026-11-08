@@ -864,8 +864,8 @@ theorising about the client.**
 
 **Fixed in the iOS app 2026-09-16 (§20).** Connect disables and shows a spinner while the probe is in
 flight, the probe runs through an ephemeral session with an 8 s timeout, and the picker re-browses itself
-every 15 s while its list is empty, with no new UI. The tvOS halves of E24 and E25 stay open on the
-roadmap: the same lines in `tv-app`, with the next tvOS release.
+every 15 s while its list is empty, with no new UI. **The tvOS halves were ported 2026-11-08 (§20),
+with the 1.11.0 cut: the same lines in `tv-app`. E24 and E25 are closed.**
 
 ### Connected Collections on the viewer apps: the WebKit path reopened by measurement (noted 2026-08-05)
 
@@ -1126,6 +1126,30 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 ## 20. Build decision log
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
+
+### 2026-11-08: E24 and E25 ported to tvOS; E23's roadmap row was stale (all three close)
+
+Scoping the 1.11.0 cut found the Apple TV app was the one surface still carrying the picker defects
+from the 2026-09-02 phone session (§17 "Connect has no pending state"). The port is the shipped iOS
+lines moved into `tv-app`, nothing new: **E24**, Connect disables and shows a spinner in place of its
+label while a typed address is probed, and the probe runs through the shared `probeClient` helper
+(ephemeral session, 8 s timeout, no waiting for connectivity) instead of `URLSession.shared`'s silent
+sixty; **E25**, while the picker's list is empty it re-browses itself every 15 s, silently (`scanning`
+is untouched so the waiting copy never flickers, and the Gallery is re-probed only when its last probe
+failed, so an offered row never blinks out). The Gallery probe now goes through the same helper.
+Verified: the tvOS app builds clean for the simulator; the behavior itself is the device-verified iOS
+code, same lines.
+
+**E23 turned out to be already shipped, both apps, since 1.9.0** (commit `4ace15e`: the waiting copy,
+the probe-gated OpenObject Demo Gallery row, Connect disabled on an empty field). Its roadmap row still
+read "ships in the next app build" and was simply stale; the 1.9.0 and 1.10.0 store builds both carry
+it. All three rows leave the roadmap with this entry as the record. One non-code remainder rides with
+the next tvOS submission: copy the canonical iOS App Review notes onto the tvOS side (settled
+2026-09-02, §17), which is App Store Connect metadata, not a build.
+
+**Files.** `tv-app/Sources/AppModel.swift`, `tv-app/Sources/HostPickerView.swift`, `docs/ROADMAP.md`,
+this document (§17). Setup Guide unchanged: no guide copy describes the Connect mechanics, and the fix
+brings behavior to what the guide already assumes. (2026-11-08.)
 
 ### 2026-11-07: The frame's mini PC is now a MeLE Quieter 4C; the swap is a documented, two-path procedure
 
