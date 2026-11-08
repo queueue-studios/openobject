@@ -418,4 +418,33 @@ Add the outcome of each to the decision log below.
   inside the frame, and the three pieces that motivated the swap judged fine by eye. The old
   unit, the Quieter 3Q, goes on the shelf unmodified with its coupler, extension and hub as the
   cold spare. Next: the documentation fold (§6), then the trial week and the §6.1 review.
+- **2026-11-07, night: the §6.1 review ran, and every concession stays.** Measured on the live
+  frame with the diagnosis-night method, each piece pinned in turn: the GPU-process CPU share
+  from `top` and the GPU busy percentage from the kernel's per-process `drm-engine-render`
+  counter, 12 one-second samples per run; for CoE also a true frames-per-second count over the
+  localhost DevTools port (the 2026-10-31 drop-in, added and removed the same evening; two
+  kiosk restarts, a few seconds of black each). The frame was returned to stock after each
+  step, and the only lasting change on Matt's frame is Tiles' Display set explicitly to its
+  own default. The outcomes:
+  - ***Tiles*: keep Tiled (Low), everywhere.** Low ran smooth at 76 percent of one core with
+    the GPU 64 percent busy. Medium pinned the GPU process (101 percent of a core, the GPU
+    *dropping* to 42 percent while it waited on the CPU-side resample) and the shuffle froze
+    mid-pass on the wall; setting Low back recovered it instantly. The mipmapped re-sample of
+    36 slices of a 3628-square photo every frame is single-thread Skia work far beyond a 35
+    percent faster core, so High was not tried. The N150 fails where the N5105 failed, and the
+    universal default was right all along.
+  - ***inkField*: keep pixel density 1.** At density 1 the GPU render engine already measured
+    99.8 percent busy (the renderer near 90 percent of a core replaying the stroke recording),
+    smooth on the wall. At density 2 (a temporary display.js edit on the frame, reverted with
+    one `git checkout`) the engine saturated at its 800 to 850 MHz clock, the CPU side went
+    idle waiting, and the piece visibly crawled. The crossfade retest was moot: it would stack
+    a second WebGL piece on an engine measured at saturation.
+  - ***Conservation of Energy*: nothing to change, and the ceiling is now measured.** #03, the
+    heaviest token, reads numerically identical to the 3Q diagnosis (103 percent of one core,
+    GPU 26 percent, 83 to 85 C) and drew **8.8 frames per second against the piece's 30**; #09
+    sampled at 94 percent of a core. The N150's extra single-thread speed is spent drawing
+    more frames at the same saturation, so the piece is smoother than the 3Q played it, but
+    the heaviest tokens still skip most frames while the injected clock holds their tempo.
+  Net: no code change, no Setup Guide change; the frame-safe defaults protect the 4C exactly
+  as they protected the 3Q. What remains of this project is the trial week alone.
 
