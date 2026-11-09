@@ -1146,22 +1146,32 @@ Two ways in, mirroring the iPad. The stage follows the connected Host's `retroAr
 tvOS app already decoded it and ignored it), so the Control Panel's hidden code flips the frame,
 the Mac, the iPad, and the Apple TV together, and Return to Art restores all of them within a poll.
 And the Host picker carries the local trigger: the classic sequence on the Siri Remote, EIGHT
-DIRECTIONS THEN PLAY/PAUSE TWICE. Two tvOS realities shaped it: every directional input drives the
-focus engine and there is no "empty background", so the watcher (`ArcadeCodeWatcher`) observes the
-remote passively through GameController (clickpad-ring presses and touch swipes both read as an
-excursion past half deflection, latched until the finger rests) and lets focus visibly, harmlessly
-hop between rows while the code is entered; and SELECT would press the focused row, so Play/Pause
-stands in for the final two taps. Completion opens the local hostless demo (`Route.arcade`,
-runtime-only, never persisted); the Siri Remote's Back button is the way back, exactly like the art
-stage. The screensaver defeat re-assert on the flag swap (the iPad's onDisappear race) is mirrored.
+CLICKPAD-RING PRESSES THEN PLAY/PAUSE TWICE. Two tvOS realities shaped it: every directional input
+drives the focus engine and there is no "empty background", so the watcher (`ArcadeCodeWatcher`)
+observes the remote passively through GameController and lets focus visibly, harmlessly hop between
+rows while the code is entered; and SELECT would press the focused row, so Play/Pause stands in for
+the final two taps. Completion opens the local hostless demo (`Route.arcade`, runtime-only, never
+persisted); the Siri Remote's Back button is the way back, exactly like the art stage. The
+screensaver defeat re-assert on the flag swap (the iPad's onDisappear race) is mirrored.
+
+READING THE CLICKPAD took three rounds on the real remote, each diagnosed from a live press log
+(`devicectl device process launch --console`, wrapped in `script` for a TTY, prints to stderr since
+stdout is block-buffered). What shipped: absolute dpad values, and a direction is classified AT THE
+CLICK (buttonA) from where the finger sits, which is how tvOS itself tells an edge press from a
+select; a click reading under 0.4 gets one deferred re-read 80 ms later (the samples can land after
+the click); and a click reading an EXACT (0,0), which means no touch registered at all rather than
+a centered one, falls back to the last edge the finger was seen on within 2 s, because a quick
+re-press at the same spot can click without its touch ever being reported. The two readings that do
+NOT work, confirmed live, do not get retried: relative dpad values (a stationary ring press is zero
+excursion, hears nothing) and classifying an absolute touch when it first crosses a threshold (that
+reads where the thumb LANDED, anywhere, not the edge it settled on to press).
 
 Verified in the tvOS simulator against a local player: the stage shows the demo correctly (square
 field centered, starfield wings filling the 16:9, formation, rotated divers, dust blasts, live
 score, marquee) and the Host-flag flip takes and releases the stage within a poll, both directions.
-NOT yet verified live: the picker remote code and the Back exits, because this Xcode ships no
-Simulator remote UI to drive (the matcher's semantics are the iPad's, device-verified there; the
-GameController excursion threshold of 0.5 is the one new guess, tunable). The real pass happens on
-the real Apple TV with the physical remote, plus a perf eye on the full-screen Canvas.
+Verified on the real Apple TV (the living-room device, network dev install): the remote code opens
+the demo in the hand, after the clickpad rounds above; this Xcode ships no Simulator remote UI, so
+only the real remote could test it.
 
 **Files.** `tv-app` (`Sources/ArcadeGame.swift` new, `Sources/ArcadeView.swift` new,
 `ArtStageView.swift`, `HostPickerView.swift`, `AppModel.swift`, `RootView.swift`, regenerated
