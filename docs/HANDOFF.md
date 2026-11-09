@@ -1170,8 +1170,8 @@ Verified in the tvOS simulator against a local player: the stage shows the demo 
 field centered, starfield wings filling the 16:9, formation, rotated divers, dust blasts, live
 score, marquee) and the Host-flag flip takes and releases the stage within a poll, both directions.
 Verified on the real Apple TV (the living-room device, network dev install): the remote code opens
-the demo in the hand, after the clickpad rounds above; this Xcode ships no Simulator remote UI, so
-only the real remote could test it.
+the demo in the hand, after the clickpad rounds above, and Back returns to the picker; this Xcode
+ships no Simulator remote UI, so only the real remote could test either.
 
 **Files.** `tv-app` (`Sources/ArcadeGame.swift` new, `Sources/ArcadeView.swift` new,
 `ArtStageView.swift`, `HostPickerView.swift`, `AppModel.swift`, `RootView.swift`, regenerated
