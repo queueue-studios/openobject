@@ -1168,9 +1168,10 @@ the natural trigger there). Verified in the iPad simulator against a local playe
 opens the demo (and its matcher's wrong-input reset was confirmed in the log), the game renders
 correctly (square field, starfield wings, live score), the Host-flag flip takes the stage within a
 poll and Return to Art restores it, and the picker exit works. Verified on the real iPad the same
-day (a cable dev build on Matt's iPad Pro): the touch code opens the demo in the hand. Still to
-look at: portrait (the spare space lands above and below the field, a shape never tuned) and the
-iPhone.
+day (a cable dev build on Matt's iPad Pro): the touch code opens the demo in the hand, and portrait
+re-flows correctly (the spare space lands above and below the square field, untuned and fine as
+plain starfield). Still to look at: the iPhone, which waits for the next TestFlight build rather
+than a cable install.
 
 **Files.** `display-core` (`DisplayResponse.swift`, `RotationPlayer.swift`), `ipad-app`
 (`Resources/arcade.html` new, `Sources/ArcadeView.swift` new, `ArtStageView.swift`,
