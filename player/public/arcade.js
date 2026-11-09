@@ -20,6 +20,10 @@
 // display.js owns the lifecycle: RetroArcade.start(canvas) when the demo takes the stage, .stop() on
 // Return to Art. The loop only runs in between. Always silent (no audio), like all OpenObject art.
 //
+// KEEP IN STEP: tv-app/Sources/ArcadeGame.swift is a native Swift port of this file (tvOS has no
+// WebKit for the web-view reuse the iPhone and iPad use), mirrored section by section with the same
+// names and constants. Any change here must be mirrored there, and vice versa.
+//
 // Built so far: pixel-art sprites, curved fly-in entrances, formation sway, dive-bomb runs, endless
 // waves. Next: the capture beam + dual fighter, and bonus stages.
 

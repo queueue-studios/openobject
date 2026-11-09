@@ -64,7 +64,6 @@ Worth doing, deliberately not now.
 | ID | Area | Item | Resumes when | Design record |
 |----|------|------|--------------|---------------|
 | E14 | Mac app | Move the Settings window to tabs | Settings reaches **five or six rows**. It has two (Dock icon, Auto Display), and tabs would cost a click and look emptier than the single pane (Matt, 2026-08-02) | HANDOFF §20 2026-08-06 Auto Display record. Small |
-| E6 | Apps (tvOS) | Retro Arcade easter egg on tvOS. The iOS half shipped 2026-11-09 by running `arcade.js` verbatim in a web view, a route tvOS lacks (no WebKit), so this half is the native port the plan always described (SpriteKit or SwiftUI Canvas); a Siri Remote D-pad code is the natural trigger | Whenever wanted. Post-v1 by choice, no external condition | HANDOFF §20 2026-11-09 (the iOS record); `TVOS-APP-PLAN.md` §5. Medium |
 
 ## Candidate
 

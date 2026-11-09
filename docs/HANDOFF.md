@@ -1128,6 +1128,47 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-11-09: Retro Arcade on Apple TV (E6 complete), a native Swift port
+
+The demo now runs on every surface. tvOS has no WebKit, so the web-view reuse the iOS half shipped
+with (same day, below) was never available here; this is the native port the plan always described
+(`TVOS-APP-PLAN.md` §5), done as a SwiftUI **Canvas in a TimelineView** rather than SpriteKit. The
+game is pure rectangle drawing (pixel-grid sprites, a 5×7 bitmap font, rect bullets and dust), and
+GraphicsContext is a near 1:1 stand-in for canvas 2D, so `tv-app/Sources/ArcadeGame.swift` mirrors
+`arcade.js` SECTION BY SECTION with the same names, constants, sprite grids, and update logic; a
+SpriteKit scene graph would have restructured everything and made drift between the two
+implementations easy. The one liberty is batching same-color rects into one fill per group (a sprite
+is a handful of fills instead of ~90), geometry unchanged. This is the cost the iOS half avoided:
+a SECOND IMPLEMENTATION, kept in step by hand. Both files carry a keep-in-step header pointing at
+each other.
+
+Two ways in, mirroring the iPad. The stage follows the connected Host's `retroArcade` flag (the
+tvOS app already decoded it and ignored it), so the Control Panel's hidden code flips the frame,
+the Mac, the iPad, and the Apple TV together, and Return to Art restores all of them within a poll.
+And the Host picker carries the local trigger: the classic sequence on the Siri Remote, EIGHT
+DIRECTIONS THEN PLAY/PAUSE TWICE. Two tvOS realities shaped it: every directional input drives the
+focus engine and there is no "empty background", so the watcher (`ArcadeCodeWatcher`) observes the
+remote passively through GameController (clickpad-ring presses and touch swipes both read as an
+excursion past half deflection, latched until the finger rests) and lets focus visibly, harmlessly
+hop between rows while the code is entered; and SELECT would press the focused row, so Play/Pause
+stands in for the final two taps. Completion opens the local hostless demo (`Route.arcade`,
+runtime-only, never persisted); the Siri Remote's Back button is the way back, exactly like the art
+stage. The screensaver defeat re-assert on the flag swap (the iPad's onDisappear race) is mirrored.
+
+Verified in the tvOS simulator against a local player: the stage shows the demo correctly (square
+field centered, starfield wings filling the 16:9, formation, rotated divers, dust blasts, live
+score, marquee) and the Host-flag flip takes and releases the stage within a poll, both directions.
+NOT yet verified live: the picker remote code and the Back exits, because this Xcode ships no
+Simulator remote UI to drive (the matcher's semantics are the iPad's, device-verified there; the
+GameController excursion threshold of 0.5 is the one new guess, tunable). The real pass happens on
+the real Apple TV with the physical remote, plus a perf eye on the full-screen Canvas.
+
+**Files.** `tv-app` (`Sources/ArcadeGame.swift` new, `Sources/ArcadeView.swift` new,
+`ArtStageView.swift`, `HostPickerView.swift`, `AppModel.swift`, `RootView.swift`, regenerated
+project), `player/public/arcade.js` (keep-in-step header only), `docs/ROADMAP.md` (E6 row deleted,
+E6 is done). **Setup Guide unchanged**, per the original decision: the easter egg appears in no
+user doc. (Matt, 2026-11-09.)
+
 ### 2026-11-09: Retro Arcade on iPhone and iPad (the E6 iOS half), by reuse rather than port
 
 The hidden attract-mode demo (2026-06-22, below) now runs on the iOS app. The plan of record was a

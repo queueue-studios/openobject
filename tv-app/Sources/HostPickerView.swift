@@ -15,6 +15,13 @@ struct HostPickerView: View {
     // Flips true once the owner moves focus themselves; after that we stop steering.
     @State private var ownerTookFocus = false
 
+    // The Retro Arcade's hidden remote code (HANDOFF §20), the Control Panel's key sequence translated
+    // to the Siri Remote: eight directions, then Play/Pause twice. The watcher observes the remote
+    // through GameController and never touches the focus engine, so the directions visibly (and
+    // harmlessly) move focus while the code is entered; Play/Pause stands in for the final taps because
+    // select would press the focused row. Silent until the last press.
+    @State private var arcadeWatcher = ArcadeCodeWatcher()
+
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 56) {
@@ -51,7 +58,9 @@ struct HostPickerView: View {
         .onAppear {
             model.startDiscoveryIfPicking()
             pinInitialFocus()
+            arcadeWatcher.begin { model.showArcade() }
         }
+        .onDisappear { arcadeWatcher.end() }
         // Returning to the app reopens the remembered Host's art, and otherwise restarts browsing so the
         // picker is never a stale empty list (an Apple TV that slept, or a browse that began before the
         // Local Network grant, used to leave it empty with no way to retry).

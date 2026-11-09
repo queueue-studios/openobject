@@ -11,6 +11,9 @@ final class AppModel {
     enum Route: Equatable {
         case picker
         case display(Host)
+        /// The Retro Arcade easter egg, hostless (HANDOFF §20). Runtime-only, never persisted: a
+        /// relaunch always wakes to the picker or the remembered Host's art, never into the demo.
+        case arcade
     }
 
     private(set) var route: Route = .picker
@@ -156,6 +159,18 @@ final class AppModel {
         player.stop()
         clearManualEntry()
         route = .picker
+    }
+
+    /// Open the Retro Arcade (HANDOFF §20), reached only by the picker's hidden remote code. Quiets the
+    /// picker's machinery the way select(_:) does, but remembers nothing: Back returns to the picker.
+    func showArcade() {
+        discovery.stop()
+        stopRebrowse()
+        scanFloor?.cancel()
+        galleryProbe?.cancel()
+        connectWatchdog?.cancel()
+        clearManualEntry()
+        route = .arcade
     }
 
     /// Drop any half-typed address + its error. Called when a connection happens, when returning to the

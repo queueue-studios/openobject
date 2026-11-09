@@ -8,20 +8,24 @@
 
 /* Begin PBXBuildFile section */
 		1BB527B8B7A6B32C16AA75F5 /* HostPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965CA6A5C9E0069F762371BE /* HostPickerView.swift */; };
+		28E3618CFF95797D8D38ADEE /* ArcadeGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E139338500FA45704EEDC02 /* ArcadeGame.swift */; };
 		4A209808B99F4B04FAEFB520 /* DisplayUI in Frameworks */ = {isa = PBXBuildFile; productRef = 41405613C079784B07CEF684 /* DisplayUI */; };
 		5C61A5B9D560127AF913A85E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9F495F9E260E654A7FF423B1 /* Assets.xcassets */; };
 		68A9C983076D5DB2384C9D68 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A844CD351E9A95F19B6E3888 /* AppModel.swift */; };
 		8C056E9F9A79407FC0CC50F3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED4ED6C991174D53E98ADCB /* RootView.swift */; };
 		8C0D4A429C13FA0A38EDAD5B /* OpenObjectTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FEFC2F065B88CE379F032E3 /* OpenObjectTVApp.swift */; };
+		A329550407BE8FAB6A75FADB /* ArcadeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2608033054D19C328A2F361F /* ArcadeView.swift */; };
 		AF983191DF9D02478396CCA0 /* ArtStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */; };
 		EB113A78BA588E4CBF278F98 /* DisplayCore in Frameworks */ = {isa = PBXBuildFile; productRef = DD3C4AC8A4B75CA2E48D9B92 /* DisplayCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2608033054D19C328A2F361F /* ArcadeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArcadeView.swift; sourceTree = "<group>"; };
 		3EE44B2E5E10D7A31DF31DE1 /* display-ui */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "display-ui"; path = "../display-ui"; sourceTree = SOURCE_ROOT; };
 		5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtStageView.swift; sourceTree = "<group>"; };
 		5ED4ED6C991174D53E98ADCB /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		5FEFC2F065B88CE379F032E3 /* OpenObjectTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenObjectTVApp.swift; sourceTree = "<group>"; };
+		7E139338500FA45704EEDC02 /* ArcadeGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArcadeGame.swift; sourceTree = "<group>"; };
 		965CA6A5C9E0069F762371BE /* HostPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostPickerView.swift; sourceTree = "<group>"; };
 		9F495F9E260E654A7FF423B1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A844CD351E9A95F19B6E3888 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
@@ -56,6 +60,8 @@
 			isa = PBXGroup;
 			children = (
 				A844CD351E9A95F19B6E3888 /* AppModel.swift */,
+				7E139338500FA45704EEDC02 /* ArcadeGame.swift */,
+				2608033054D19C328A2F361F /* ArcadeView.swift */,
 				5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */,
 				965CA6A5C9E0069F762371BE /* HostPickerView.swift */,
 				5FEFC2F065B88CE379F032E3 /* OpenObjectTVApp.swift */,
@@ -160,6 +166,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				68A9C983076D5DB2384C9D68 /* AppModel.swift in Sources */,
+				28E3618CFF95797D8D38ADEE /* ArcadeGame.swift in Sources */,
+				A329550407BE8FAB6A75FADB /* ArcadeView.swift in Sources */,
 				AF983191DF9D02478396CCA0 /* ArtStageView.swift in Sources */,
 				1BB527B8B7A6B32C16AA75F5 /* HostPickerView.swift in Sources */,
 				8C0D4A429C13FA0A38EDAD5B /* OpenObjectTVApp.swift in Sources */,

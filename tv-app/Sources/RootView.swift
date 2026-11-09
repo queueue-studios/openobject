@@ -15,6 +15,10 @@ struct RootView: View {
             case .display(let host):
                 ArtStageView(player: model.player, host: host, pipeline: model.pipeline,
                              muted: !model.soundOn, onExit: { model.showPicker() })
+            case .arcade:
+                // The Retro Arcade easter egg, hostless (HANDOFF §20): reached only by the picker's
+                // hidden remote code; the Siri Remote's Back button is the way back.
+                ArcadeScreen(onExit: { model.showPicker() })
             }
         }
         .ignoresSafeArea()
