@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<!-- The iOS app's shell for the Retro Arcade easter egg (HANDOFF §20): the same player/public/arcade.js
+     the frame and the Mac run, verbatim, bundled into the app beside this file (project.yml references it
+     straight from player/public/, so there is no second copy to drift). The shell is the few lines
+     display.html and display.css give the demo there: a full-viewport black stage, one canvas, start().
+     arcade.js measures window.innerWidth/innerHeight itself, draws its square playfield to the shorter
+     side, and re-flows live on resize, so rotation and every iPhone/iPad shape need nothing from us.
+     viewport-fit=cover lets the web view run to the physical edges under the app's ignoresSafeArea. -->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Retro Arcade</title>
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+    /* width/height 100% matter: a canvas is a replaced element, so inset alone does not stretch it and
+       it would display at its intrinsic (devicePixelRatio-scaled) size, a 2x-zoomed crop. */
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #000; }
+  </style>
+</head>
+<body>
+  <canvas id="arcade"></canvas>
+  <script src="arcade.js"></script>
+  <script>RetroArcade.start(document.getElementById('arcade'));</script>
+</body>
+</html>

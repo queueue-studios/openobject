@@ -24,6 +24,10 @@ struct RootView: View {
                                                       setDuration: { model.setOfflineDuration($0) },
                                                       setMode: { model.setOfflineMode($0) }),
                              onExit: { model.showPicker() })
+            case .arcade:
+                // The Retro Arcade easter egg, hostless (HANDOFF §20): reached only by the picker's hidden
+                // touch code; its tap-revealed Hosts capsule is the way back.
+                ArcadeScreen(onExit: { model.showPicker() })
             }
         }
         .ignoresSafeArea()

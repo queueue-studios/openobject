@@ -25,6 +25,11 @@ public final class RotationPlayer {
     /// after any failure. The iPad overlay reads it to say "Playing local copy" (HANDOFF §17); `hasConnected`
     /// stays the stage's Connecting gate, since a seeded copy is something to show before any poll.
     public private(set) var hostReachable = false
+    /// Whether the Host's Retro Arcade easter egg is up (the `retroArcade` poll flag): the iOS stage shows
+    /// the arcade layer in place of the art while it is; tvOS never reads it. Holds its last value across
+    /// failed polls, like everything else about the screen, and a new `start` resets it, so a device can
+    /// never open into the demo (a seed is decoded with the flag off, see DisplayResponse).
+    public private(set) var hostArcade = false
     /// iPad local copy (§17): when true, a Host that stops answering while asleep is woken to its last
     /// rotation, because the device cannot know the Host's hours once the Host is gone (offline ignores the
     /// schedule). Off by default: tvOS holds whatever the Host last said, exactly as the web display does.
@@ -88,6 +93,7 @@ public final class RotationPlayer {
         stop()
         hasConnected = false
         hostReachable = false
+        hostArcade = false
         lastResponse = nil
         if let seed {
             let awake = seed.awake
@@ -103,6 +109,7 @@ public final class RotationPlayer {
                 if let response = try? await self.fetch(host) {
                     self.hasConnected = true
                     self.hostReachable = true
+                    self.hostArcade = response.retroArcade
                     self.lastResponse = response
                     self.offlineOverride = nil                   // the Host is back: its values rule (E26)
                     self.engine.apply(response)

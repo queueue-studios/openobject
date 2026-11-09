@@ -9,22 +9,28 @@
 /* Begin PBXBuildFile section */
 		2B30729B2BCF7A85E1483196 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A844CD351E9A95F19B6E3888 /* AppModel.swift */; };
 		4B2EEE7514833F1A8648FF9F /* DisplayCore in Frameworks */ = {isa = PBXBuildFile; productRef = C17D79CD6B396B168F94A6BA /* DisplayCore */; };
+		57F800494DF4223F11F8EC72 /* arcade.js in Resources */ = {isa = PBXBuildFile; fileRef = 24BEAB7152EC6B144E8DE19C /* arcade.js */; };
 		623B98D4623AEC62A052810C /* ConnectedWebLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0F58CFF93DC087CD18FF6D3 /* ConnectedWebLayer.swift */; };
 		62BBB65E0C954985340A7241 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED4ED6C991174D53E98ADCB /* RootView.swift */; };
+		749B993B8443254CC7E2B1AF /* ArcadeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2608033054D19C328A2F361F /* ArcadeView.swift */; };
 		7998C806D8D4795FD548426D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9F495F9E260E654A7FF423B1 /* Assets.xcassets */; };
 		975256C9B88CC5551DFDE9D3 /* OpenObjectApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E5EAFDEBAABEBDFDC5CCFA /* OpenObjectApp.swift */; };
 		B5E4EB577713DC3034B9912C /* CopySchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD3503CB74FA9AA771DDBD37 /* CopySchemeHandler.swift */; };
 		C0CC78C31BF06ED8D3BE499E /* ArtStageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */; };
+		C2AF68206B63685106D0B219 /* arcade.html in Resources */ = {isa = PBXBuildFile; fileRef = 898EC9303AC734C959AF3C1E /* arcade.html */; };
 		D33D8F7F46D1077C0A358A08 /* DisplayUI in Frameworks */ = {isa = PBXBuildFile; productRef = FB83F50A36A75B3A154319B6 /* DisplayUI */; };
 		D8A06044E1A19EDC97777A1B /* HostPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965CA6A5C9E0069F762371BE /* HostPickerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		24BEAB7152EC6B144E8DE19C /* arcade.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = arcade.js; sourceTree = "<group>"; };
+		2608033054D19C328A2F361F /* ArcadeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArcadeView.swift; sourceTree = "<group>"; };
 		2937600A23EF8C04C94510F3 /* OpenObject.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OpenObject.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3EE44B2E5E10D7A31DF31DE1 /* display-ui */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "display-ui"; path = "../display-ui"; sourceTree = SOURCE_ROOT; };
 		58E5EAFDEBAABEBDFDC5CCFA /* OpenObjectApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenObjectApp.swift; sourceTree = "<group>"; };
 		5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtStageView.swift; sourceTree = "<group>"; };
 		5ED4ED6C991174D53E98ADCB /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		898EC9303AC734C959AF3C1E /* arcade.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = arcade.html; sourceTree = "<group>"; };
 		965CA6A5C9E0069F762371BE /* HostPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostPickerView.swift; sourceTree = "<group>"; };
 		9F495F9E260E654A7FF423B1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A844CD351E9A95F19B6E3888 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
@@ -46,11 +52,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2679E02898246D67AE718A16 /* player */ = {
+			isa = PBXGroup;
+			children = (
+				9FE1B39E14A4CED291D8D36A /* public */,
+			);
+			path = player;
+			sourceTree = "<group>";
+		};
 		45FB89F809E72C32975B65D4 = {
 			isa = PBXGroup;
 			children = (
 				9F495F9E260E654A7FF423B1 /* Assets.xcassets */,
+				AE060C98970D51DA9AD53537 /* OpenObject */,
 				BFC0C1525F0CC41315C18F25 /* Packages */,
+				861BC71AC9931857D2356C70 /* Resources */,
 				4B9965AD3BE888154B253124 /* Sources */,
 				91A625EA3E8B3B284AA7FC97 /* Products */,
 			);
@@ -60,6 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				A844CD351E9A95F19B6E3888 /* AppModel.swift */,
+				2608033054D19C328A2F361F /* ArcadeView.swift */,
 				5C3B0357AAA4B57BA1EF77BE /* ArtStageView.swift */,
 				D0F58CFF93DC087CD18FF6D3 /* ConnectedWebLayer.swift */,
 				FD3503CB74FA9AA771DDBD37 /* CopySchemeHandler.swift */,
@@ -70,12 +87,37 @@
 			path = Sources;
 			sourceTree = "<group>";
 		};
+		861BC71AC9931857D2356C70 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				898EC9303AC734C959AF3C1E /* arcade.html */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		91A625EA3E8B3B284AA7FC97 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				2937600A23EF8C04C94510F3 /* OpenObject.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		9FE1B39E14A4CED291D8D36A /* public */ = {
+			isa = PBXGroup;
+			children = (
+				24BEAB7152EC6B144E8DE19C /* arcade.js */,
+			);
+			path = public;
+			sourceTree = "<group>";
+		};
+		AE060C98970D51DA9AD53537 /* OpenObject */ = {
+			isa = PBXGroup;
+			children = (
+				2679E02898246D67AE718A16 /* player */,
+			);
+			name = OpenObject;
+			path = ..;
 			sourceTree = "<group>";
 		};
 		BFC0C1525F0CC41315C18F25 /* Packages */ = {
@@ -155,6 +197,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				7998C806D8D4795FD548426D /* Assets.xcassets in Resources */,
+				C2AF68206B63685106D0B219 /* arcade.html in Resources */,
+				57F800494DF4223F11F8EC72 /* arcade.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -166,6 +210,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2B30729B2BCF7A85E1483196 /* AppModel.swift in Sources */,
+				749B993B8443254CC7E2B1AF /* ArcadeView.swift in Sources */,
 				C0CC78C31BF06ED8D3BE499E /* ArtStageView.swift in Sources */,
 				623B98D4623AEC62A052810C /* ConnectedWebLayer.swift in Sources */,
 				B5E4EB577713DC3034B9912C /* CopySchemeHandler.swift in Sources */,

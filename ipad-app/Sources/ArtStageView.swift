@@ -34,9 +34,17 @@ struct ArtStageView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            ArtStageCore(player: player, host: host, pipeline: pipeline, muted: muted,
-                         connectedLayer: connectedLayer)
-                .ignoresSafeArea()
+            // The Retro Arcade easter egg (HANDOFF §20): while the Host's flag is up the arcade takes the
+            // stage IN PLACE of the art, mirroring display.js's enterArcade (the art layer leaves, so no
+            // video plays or sounds underneath). The player keeps polling, so Return to Art on the Control
+            // Panel folds the rotation straight back in, and the overlay chrome above is untouched.
+            if player.hostArcade {
+                ArcadeStage()
+            } else {
+                ArtStageCore(player: player, host: host, pipeline: pipeline, muted: muted,
+                             connectedLayer: connectedLayer)
+                    .ignoresSafeArea()
+            }
 
             // Full-stage tap catcher (near-transparent fill, contentShape-reliable): a tap on the art
             // toggles the control, over stills and video alike. This reveal is the speedbump — a stray tap
@@ -111,6 +119,12 @@ struct ArtStageView: View {
         // Hiding the overlay, or the frame coming back, closes the panel with it.
         .onChange(of: showControls) { _, shown in if !shown { showRotation = false } }
         .onChange(of: player.hostReachable) { _, reachable in if reachable { showRotation = false } }
+        // The arcade swap re-asserts the idle-timer defeat one tick later: ArtStageCore clears it in its
+        // onDisappear, whose order against the incoming view's onAppear is undefined, so without this the
+        // screen could auto-lock mid-demo (and the same race runs on the way back to the art).
+        .onChange(of: player.hostArcade) { _, _ in
+            DispatchQueue.main.async { UIApplication.shared.isIdleTimerDisabled = true }
+        }
     }
 
     // A Connected piece's renderer (HANDOFF §17): the web view at the URL display.js would build for this

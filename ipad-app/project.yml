@@ -60,6 +60,13 @@ targets:
     sources:
       - path: Sources
       - path: Assets.xcassets
+      # The Retro Arcade easter egg (HANDOFF §20): the shell page, plus the SAME arcade.js the frame and
+      # the Mac display run, referenced straight from player/public/ so the game never forks. Both are
+      # plain copied resources (the .js must never hit a compile phase).
+      - path: Resources
+        buildPhase: resources
+      - path: ../player/public/arcade.js
+        buildPhase: resources
     dependencies:
       - package: DisplayCore
         product: DisplayCore

@@ -12,9 +12,22 @@ struct HostPickerView: View {
     @FocusState private var addressFocused: Bool
     @Environment(\.scenePhase) private var scenePhase
 
+    // The Retro Arcade's hidden touch code (HANDOFF §20), the Control Panel's key sequence translated to
+    // the hand: eight swipes, then two taps, on the picker's empty background. Silent until the last tap.
+    @State private var arcadeCodePos = 0
+    @State private var arcadeCodeAt: Date = .distantPast
+
     var body: some View {
         ZStack {
+            // The bare stage is also the code's input surface: the rows, fields and toggle sit above with
+            // their own hit-testing, so only touches on empty black ever reach it.
             Color.black.ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { arcadeInput(.tap) }
+                .gesture(DragGesture(minimumDistance: 30).onEnded { value in
+                    let w = value.translation.width, h = value.translation.height
+                    arcadeInput(abs(w) > abs(h) ? (w > 0 ? .right : .left) : (h > 0 ? .down : .up))
+                })
 
             VStack(spacing: 40) {
                 Image("OpenObjectLogo")
@@ -47,6 +60,30 @@ struct HostPickerView: View {
         // without a manual relaunch.
         .onChange(of: scenePhase) { _, phase in
             if phase == .active && model.hosts.isEmpty { model.rescan() }
+        }
+    }
+
+    // MARK: - The hidden touch code
+
+    private enum ArcadeInput: Equatable { case up, down, left, right, tap }
+
+    // The classic sequence, swipes then taps. Deliberately unnamed anywhere the owner can see (§20).
+    private static let arcadeCode: [ArcadeInput] = [.up, .up, .down, .down, .left, .right, .left, .right, .tap, .tap]
+
+    // The Control Panel matcher's rules (control.js), plus the two the hand needs: a long pause starts
+    // over (stray touches over a long session can never add up; the window is generous, since every input
+    // must still match), and nothing counts while the address field has the keyboard up. A wrong input
+    // that matches the first step restarts at 1.
+    private func arcadeInput(_ input: ArcadeInput) {
+        guard !addressFocused else { return }
+        let now = Date()
+        if now.timeIntervalSince(arcadeCodeAt) > 10 { arcadeCodePos = 0 }
+        arcadeCodeAt = now
+        arcadeCodePos = input == Self.arcadeCode[arcadeCodePos] ? arcadeCodePos + 1
+                                                                : (input == Self.arcadeCode[0] ? 1 : 0)
+        if arcadeCodePos == Self.arcadeCode.count {
+            arcadeCodePos = 0
+            model.showArcade()
         }
     }
 

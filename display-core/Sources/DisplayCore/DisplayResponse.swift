@@ -1,9 +1,10 @@
 // The whole /api/display payload for one poll (verified against captured fixtures). Only the fields
-// this native Display acts on are decoded: items, durationMs, mode, pinnedId, asleep, source.
+// this native Display acts on are decoded: items, durationMs, mode, pinnedId, asleep, source, and
+// `retroArcade` (the Retro Arcade easter egg; the iOS app follows it, tvOS ignores it, §5).
 //
 // Deliberately NOT decoded: `muted` (that is the WEB display's mute; a tvOS/iPad app owns its OWN audio
-// setting, §10) and `retroArcade` (the easter egg is out of tvOS v1, §5). Unknown fields are ignored,
-// so a Host older than this app (no `muted`) or newer (extra fields) decodes fine (§11).
+// setting, §10). Unknown fields are ignored, so a Host older than this app (no `muted`) or newer
+// (extra fields) decodes fine (§11).
 
 public enum RotationMode: String, Sendable, Codable {
     case sequence
@@ -37,19 +38,26 @@ public struct DisplayResponse: Sendable, Codable, Equatable {
     public let pinnedId: String?
     public let asleep: Bool
     public let source: Source
+    /// The Retro Arcade easter egg (HANDOFF §20, 2026-06-22): true while the Host's in-memory demo flag is
+    /// up. The iOS stage follows it (the arcade layer in place of the art); tvOS ignores it. Deliberately
+    /// never encoded, so the local-copy manifest cannot hold it: like the frame, a device always wakes to
+    /// art, never into the demo.
+    public let retroArcade: Bool
 
     public init(items: [DisplayItem], durationMs: Int = 8000, mode: RotationMode = .sequence,
-                pinnedId: String? = nil, asleep: Bool = false, source: Source = .library) {
+                pinnedId: String? = nil, asleep: Bool = false, source: Source = .library,
+                retroArcade: Bool = false) {
         self.items = items
         self.durationMs = durationMs
         self.mode = mode
         self.pinnedId = pinnedId
         self.asleep = asleep
         self.source = source
+        self.retroArcade = retroArcade
     }
 
     private enum CodingKeys: String, CodingKey {
-        case items, durationMs, mode, pinnedId, asleep, source
+        case items, durationMs, mode, pinnedId, asleep, source, retroArcade
     }
 
     public init(from decoder: any Decoder) throws {
@@ -67,10 +75,12 @@ public struct DisplayResponse: Sendable, Codable, Equatable {
         asleep = (try? c.decode(Bool.self, forKey: .asleep)) ?? false
         let sourceRaw = (try? c.decodeIfPresent(String.self, forKey: .source)) ?? nil
         source = sourceRaw.flatMap(Source.init(rawValue:)) ?? .library
+        retroArcade = (try? c.decode(Bool.self, forKey: .retroArcade)) ?? false
     }
 
     // Encoding exists for the iPad's local-copy manifest (HANDOFF §17): the last successful response is
-    // written to disk and read back through the lenient decoder above on an offline launch.
+    // written to disk and read back through the lenient decoder above on an offline launch. `retroArcade`
+    // is deliberately NOT encoded (see its note above): a manifest saved mid-demo decodes back to false.
     public func encode(to encoder: any Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(items, forKey: .items)
@@ -85,7 +95,8 @@ public struct DisplayResponse: Sendable, Codable, Equatable {
     public func overridden(by override: RotationOverride?) -> DisplayResponse {
         guard let override else { return self }
         return DisplayResponse(items: items, durationMs: override.durationMs ?? durationMs,
-                               mode: override.mode ?? mode, pinnedId: pinnedId, asleep: asleep, source: source)
+                               mode: override.mode ?? mode, pinnedId: pinnedId, asleep: asleep, source: source,
+                               retroArcade: retroArcade)
     }
 
     /// The same response without its Connected pieces. A web view can only load a Connected piece from a
@@ -100,7 +111,7 @@ public struct DisplayResponse: Sendable, Codable, Equatable {
         let kept = items.filter { $0.kind != .connected || keep($0) }
         let pin = kept.contains { $0.id == pinnedId } ? pinnedId : nil
         return DisplayResponse(items: kept, durationMs: durationMs, mode: mode, pinnedId: pin,
-                               asleep: asleep, source: source)
+                               asleep: asleep, source: source, retroArcade: retroArcade)
     }
 
     /// Whether any piece is a Connected one.
@@ -111,6 +122,6 @@ public struct DisplayResponse: Sendable, Codable, Equatable {
     /// response is applied awake.
     public var awake: DisplayResponse {
         DisplayResponse(items: items, durationMs: durationMs, mode: mode, pinnedId: pinnedId,
-                        asleep: false, source: source)
+                        asleep: false, source: source, retroArcade: retroArcade)
     }
 }

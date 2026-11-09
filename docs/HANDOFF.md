@@ -1128,6 +1128,54 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-11-09: Retro Arcade on iPhone and iPad (the E6 iOS half), by reuse rather than port
+
+The hidden attract-mode demo (2026-06-22, below) now runs on the iOS app. The plan of record was a
+native SpriteKit/SwiftUI-Canvas port (`TVOS-APP-PLAN.md` §5, written before the app had any web view);
+what shipped instead reuses `player/public/arcade.js` **verbatim** in a locked-down WKWebView, the
+machinery the Connected layer already proved. `ipad-app/project.yml` references the file straight from
+`player/public/`, so the game never forks: every future `arcade.js` change reaches the frame, the Mac,
+and this app from the one source. A ~20-line bundled shell (`ipad-app/Resources/arcade.html`) is the
+equivalent of what `display.html`/`display.css` give the demo there. Aspect handling comes along for
+free: the game draws its square playfield to the shorter side, carries spare space with the starfield,
+and re-flows live on resize, so iPad portrait/landscape and the iPhone need nothing new. (The Mac
+display needed nothing at all: it is Chrome at the Host's `/display`, so the panel's sequence has
+always flipped it.)
+
+**Two ways in, one renderer.** (1) Watching a Host: `DisplayResponse` now decodes the `retroArcade`
+poll flag (previously skipped on purpose), `RotationPlayer` publishes it as `hostArcade`, and the stage
+shows `ArcadeStage` in place of `ArtStageCore` while it is up, so the Control Panel's key sequence
+flips the frame, the Mac, and the iPad together, and Return to Art ends it everywhere. The flag is
+deliberately **never encoded**, so a local-copy manifest saved mid-demo decodes back to false: like the
+frame, a device always wakes to art. (2) Anywhere, offline included: the Host picker's empty black
+background carries a hidden touch matcher, the panel's key sequence translated to the hand (eight
+swipes, then two taps), silent until the last tap, resetting on a wrong input or a ten-second pause
+(the panel's keyboard matcher has no timeout at all; this one only keeps stray touches from adding up
+over a long session, and every input must still match), ignored while the address field has the
+keyboard up. It opens a hostless full-screen
+`ArcadeScreen`; a tap reveals the stage's own Hosts capsule, the way back. The picker was chosen as
+the trigger surface because it is the app's control surface (the display never carries a control), and
+because its fixed layout on bare black takes background gestures without fighting any scroll view. A
+completion that instead flips a connected Host's flag was considered and dropped: it overlaps the
+panel's job, from a screen where no Host is even selected.
+
+Two details worth keeping: `ArtStageCore` clears the idle-timer defeat in its `onDisappear`, whose
+order against the incoming view's `onAppear` is undefined, so the stage re-asserts it one tick after
+the arcade swap in either direction; and the arcade web view's one failure mode (its web content
+process dying) is handled by reloading, because the demo is stateless, so a reload is recovery. tvOS
+remains out: it has no WebKit, so the native port stays E6's remaining half (the Siri Remote D-pad is
+the natural trigger there). Verified in the iPad simulator against a local player: the picker code
+opens the demo (and its matcher's wrong-input reset was confirmed in the log), the game renders
+correctly (square field, starfield wings, live score), the Host-flag flip takes the stage within a
+poll and Return to Art restores it, and the picker exit works. Still to look at on a real device:
+portrait (the spare space lands above and below the field, a shape never tuned) and the iPhone.
+
+**Files.** `display-core` (`DisplayResponse.swift`, `RotationPlayer.swift`), `ipad-app`
+(`Resources/arcade.html` new, `Sources/ArcadeView.swift` new, `ArtStageView.swift`,
+`HostPickerView.swift`, `AppModel.swift`, `RootView.swift`, `project.yml` + regenerated project),
+`docs/ROADMAP.md` (E6 rewritten to its tvOS half). **Setup Guide unchanged**, per the original
+decision: the easter egg appears in no user doc. (Matt, 2026-11-09.)
+
 ### 2026-11-08: 1.11.0 shipped on every surface; both store builds submitted for review
 
 The first full-platform cut since 1.10.0, all engine-side work (six new Connected Collections, the
