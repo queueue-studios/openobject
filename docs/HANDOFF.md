@@ -1167,8 +1167,10 @@ remains out: it has no WebKit, so the native port stays E6's remaining half (the
 the natural trigger there). Verified in the iPad simulator against a local player: the picker code
 opens the demo (and its matcher's wrong-input reset was confirmed in the log), the game renders
 correctly (square field, starfield wings, live score), the Host-flag flip takes the stage within a
-poll and Return to Art restores it, and the picker exit works. Still to look at on a real device:
-portrait (the spare space lands above and below the field, a shape never tuned) and the iPhone.
+poll and Return to Art restores it, and the picker exit works. Verified on the real iPad the same
+day (a cable dev build on Matt's iPad Pro): the touch code opens the demo in the hand. Still to
+look at: portrait (the spare space lands above and below the field, a shape never tuned) and the
+iPhone.
 
 **Files.** `display-core` (`DisplayResponse.swift`, `RotationPlayer.swift`), `ipad-app`
 (`Resources/arcade.html` new, `Sources/ArcadeView.swift` new, `ArtStageView.swift`,
