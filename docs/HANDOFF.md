@@ -1128,6 +1128,19 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-11-10: The Connected-piece device checks clear (Matt)
+
+All eleven rows left under Pending device verification were Connected pieces landed 2026-10-26 to
+2026-11-07: *Conservation of Energy* on the iPad and iPhone, and *Birds, Marfa*, *Dark Radiance*,
+*Starlight*, *Vortex* and *She Never Let Go* on the frame and on the iPad and iPhone. Matt cleared
+them by the section's own rule, the 1.11.0 that carries every one having shipped on all four
+surfaces, which reverses the previous day's sweep keeping them. None was seen on the real frame or a
+device, so each stays verified only in Chromium on a Mac (the iPad and iPhone halves were not run at
+all); each piece's own entry below says what was and was not checked. The one known risk is *Vortex*
+on the frame, the heaviest WebGL piece yet: if it chugs or loses its WebGL context in rotation, the
+lever is shrinking its two 4096² shadow maps through `htmlReplace`, a visible softening for Matt to
+sign off. A symptom on the wall comes back as a new bug, not a reopened row.
+
 ### 2026-11-09: Roadmap swept; E3 and E26 had shipped, three device checks clear
 
 The first full sweep since 2026-09-01. **E3** (the iPad local copy) and **E26** (its offline Order

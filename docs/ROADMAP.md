@@ -87,22 +87,12 @@ Built and verified as far as it can be here, but not seen on the real hardware i
 **A row is added in the same commit as the change**, so it cannot be forgotten, and cleared
 when the check is done or when the build carrying it ships.
 
-**Every row below can be checked now** (2026-11-09): the frame, the Mac and both store apps are
-on 1.11.0, which carries all of them.
+**Nothing is pending right now** (2026-11-10). The last rows, the Connected pieces landed
+2026-10-26 to 2026-11-07, cleared when 1.11.0 shipped on every surface (HANDOFF §20 2026-11-10).
+Keep the section, with its table header, for the next change that needs a real-device look:
 
 | Device | What to check | Landed |
 |--------|---------------|--------|
-| iPad + iPhone | *Conservation of Energy*: plays from the Host and from the local copy (CoE #02 carries a second file, its localized p5.js), picks landscape or portrait by orientation, and turning the device switches it. No app code changed; nothing was run on a device or simulator. Deferred to the next iOS build (Matt, 2026-10-26), which is now the live 1.11.0 | `9589ed3`, 2026-10-26 |
-| Frame | *Birds, Marfa* (§8): after a Software Update, add a token. The flock perches and comes and goes, the 4:5 picture sits centered with black at the sides, and it stays smooth with no memory trouble: each redraw sends the whole 1600×2000 canvas through a shader several times a second, and the bird sprites decode to about 111 MB. Verified only in Chromium on a Mac | `da6ff1b`, 2026-10-26 |
-| iPad + iPhone | *Birds, Marfa*: plays from the Host and from the local copy (its `rpc-cache.json` answers both of the page's node requests), and WebKit draws the shimmer and the flock (WebGL fed from a canvas each redraw). No app code changed; nothing was run on a device or simulator | `da6ff1b`, 2026-10-26 |
-| Frame | *Dark Radiance* (§8): after a Software Update, add it (no Token ID is asked). It shows the day picture from 7 am to 7 pm by the frame's clock and the night one otherwise, 4:3 and centered with black above and below, and stays smooth: it redraws the whole 12-megapixel photo every frame, which cost about 3 ms on the Mac. Look once by day and once after 7 pm. Verified only in Chromium on a Mac | `bd8a361`, 2026-10-30 |
-| iPad + iPhone | *Dark Radiance*: plays from the Host and from the local copy (p5 and both photos ride in the bundle), letterboxed 4:3. No app code changed; nothing was run on a device or simulator | `bd8a361`, 2026-10-30 |
-| Frame | *Starlight* (§8): after a Software Update, add a token. It fills the square panel edge to edge (the middle of the tall design), sharp at the panel's 1920×1920, and comes up promptly in the rotation: it draws once each time it is shown, about 12 ms on the Mac. Verified only in Chromium on a Mac | `b748f07`, 2026-11-01 |
-| iPad + iPhone | *Starlight*: plays from the Host and from the local copy (p5 rides in the bundle), filling the screen in either orientation, and redraws to the new shape when the device turns. No app code changed; nothing was run on a device or simulator | `b748f07`, 2026-11-01 |
-| Frame | *Vortex* (§8): after a Software Update, add a token. It fills the square panel edge to edge and the tunnel turns slowly and smoothly. It is the heaviest WebGL connected piece yet (two 4096² shadow maps, antialiasing, up to ~240 layered meshes at 1920×1920), so watch for a collapsed frame rate or a lost WebGL context in rotation with other pieces; the lever if it chugs is shrinking the shadow maps (`htmlReplace`), a visible softening for Matt to sign off. Verified only in Chromium on a Mac | `522c42c`, 2026-11-07 |
-| iPad + iPhone | *Vortex*: plays from the Host and from the local copy (three.js rides in each token's bundle), square, letterboxed in either orientation. No app code changed; nothing was run on a device or simulator | `522c42c`, 2026-11-07 |
-| Frame | *She Never Let Go* (§8): after a Software Update, add it. The 16:9 sits letterboxed on black above and below and the balloons stir smoothly (a flat 3200×1800 2D canvas, no WebGL); loading stays black until the scene appears, with no red progress line and no pale flash (the mirror strips the artist's loading bar and blacks the canvas's paper placeholder); flipping its card to Fill covers the panel and crops the sides, and back to Fit restores the letterbox live. Verified only in Chromium on a Mac | `5ca9fa8`, 2026-11-07 |
-| iPad + iPhone | *She Never Let Go*: plays from the Host and from the local copy (one self-contained file, photos as data URLs), letterboxed 16:9 in either orientation. No app code changed; nothing was run on a device or simulator | `5ca9fa8`, 2026-11-07 |
 
 ## Closed: decided against, or not worth tracking
 
