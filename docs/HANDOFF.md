@@ -1128,6 +1128,21 @@ The original software is a standard Android app running in **Waydroid** (a Linea
 
 Living record of decisions taken during the build (newest first). When any of these affect user-facing behavior, the Setup Guide is updated in the same change (§16).
 
+### 2026-11-09: Roadmap swept; E3 and E26 had shipped, three device checks clear
+
+The first full sweep since 2026-09-01. **E3** (the iPad local copy) and **E26** (its offline Order
+and Every controls) were still listed as Committed, though both have ridden in the iOS store builds
+since 1.10.0 (submitted 2026-09-17), and iOS 1.11.0 (8) went live 2026-11-09 alongside tvOS 1.11.0
+(5). Their records are the 2026-09-15 and 2026-09-16 entries; both rows leave with this one.
+
+Under Pending device verification, three rows clear by that section's own rule, the store builds
+carrying them having shipped since 1.9.0: the Apple TV picker's per-Host icon size (`8adbbbe`), and
+E23's empty state on the Apple TV and on the iPad and iPhone (`4ace15e`). One part of the last was
+never seen rendered (the `Your iPad` / `Your iPhone` line, which draws only with no Host and no
+internet) and is simply unverified. The Connected-piece rows stay open although 1.11.0 carries them
+too, since each checks something only the real frame or device can show, *Vortex*'s frame rate being
+the live risk. Their "this change" entries now name the commit that added each piece.
+
 ### 2026-11-09: Retro Arcade on Apple TV (E6 complete), a native Swift port
 
 The demo now runs on every surface. tvOS has no WebKit, so the web-view reuse the iOS half shipped
