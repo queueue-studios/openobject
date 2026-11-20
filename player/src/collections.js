@@ -13,6 +13,7 @@
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const zlib = require('zlib');
 const db = require('./db');
 
 const COLLECTIONS_DIR = path.join(db.DATA_DIR, 'collections');
@@ -773,6 +774,74 @@ const REGISTRY = [
     fitFill: true,
   },
   {
+    slug: 'glyphoras',
+    artist: 'Gruff',
+    name: 'Glyphoras',
+    chain: 'Ethereum',
+    contract: '0x3cc3e703da2c4b529c17efd1f1afd61dec0216af',
+    rpc: 'https://ethereum-rpc.publicnode.com',
+    // 1,111 "glyph flowers you can play" on their own contract, so the owner enters their Token ID (the
+    // Pendulum lesson). Each token's page inlines its own id, hash, mint time and card, so each mirrors into
+    // its own dir (perToken).
+    perToken: true,
+    // FULLY ON CHAIN, the Conservation of Energy shape: tokenURI is a data: JSON whose animation_url is one
+    // self-contained data:text/html page (114 KB, no external assets) and whose image is an inline SVG still.
+    // The page is a WebGL2 flower drawn as a grid of glyphs (always 140 rows tall, whatever the window), with
+    // a generated score played by Web Audio. It has no native size or shape: the canvas fills its window and
+    // the camera fits the whole plant in view, so it fills the stage on the 1:1 frame and a 16:9 Mac alike.
+    // No `aspect` on purpose: its ground is a near-black with a faint centre glow, not #000, so a letterbox
+    // edge could show as a seam; no `crop`.
+    //
+    // The artwork's script ships gzip-compressed inside the page (a base64 string its loader inflates with
+    // DecompressionStream). inflateInline unpacks it at mirror time into a plain inline script, so the two
+    // htmlReplace edits below can reach it (and the piece no longer needs DecompressionStream to run). The
+    // script is byte-identical across tokens (checked 1, 229 and 1000 on 2026-11-20), so the finds are
+    // exact strings; if a find ever misses, the piece still plays, just with that button back.
+    inflateInline: true,
+    // The stage shows zero chrome (HANDOFF §6; Matt, 2026-11-20), so the artist's two on-screen buttons go:
+    //  - the sound graphic (bottom left; it opens a level mixer), via the artist's OWN switch for it, an
+    //    options object the page never passes (soundIcon: false removes the drawing and its tap target);
+    //  - the menu icon (top right; HD, Grow on open, Replay growth), by not installing the menu at all.
+    // What those buttons set is offered as this collection's controls instead (below). Everything else the
+    // piece draws on its overlay canvas (the glyph labels along a growing stem, the first-day "BLOOMS IN"
+    // countdown) is the artist's render and is left alone.
+    htmlReplace: [
+      { find: '=gi(window,document);', replace: '=gi(window,document,{soundIcon:!1});' },
+      { find: 'pi(L0),L0.start()', replace: 'L0.start()' },
+    ],
+    // It moves on its own (the plant sways and breathes, the camera drifts), so no Animate control.
+    animateDefault: false,
+    animatable: false,
+    // Three controls, each the artist's own setting moved off the stage (applied by GLYPHORA_HOOK):
+    //  - Music: the piece's generated score. `music` is the key the display's Sound master gate forces to
+    //    'off' (display.js AUDIO_CONTROLS, DisplayCore ConnectedURL), so Sound Off silences this too.
+    //  - Grow On Open: the artist's "Grow on open" (default Off). Off opens the flower as grown as its age
+    //    allows (fully, once a day has passed since mint); On replays the ~15 s growth from seed each time
+    //    the piece loads, which here is each time it comes up in the rotation.
+    //  - Quality: the artist's "HD" (default On). High renders at full resolution with the glow pass;
+    //    Standard caps the internal render at 70%, drops the glow, and lets the piece's own governor step
+    //    down further when the frame rate falls. High is the artist's default; whether the frame holds it is
+    //    a device check (ROADMAP).
+    controls: [
+      { key: 'music', type: 'select', label: 'Music', default: 'on', options: [
+          { value: 'on',  label: 'On' },
+          { value: 'off', label: 'Off' },
+      ] },
+      { key: 'grow', type: 'select', label: 'Grow On Open', default: 'off', options: [
+          { value: 'off', label: 'Off' },
+          { value: 'on',  label: 'On' },
+      ] },
+      { key: 'quality', type: 'select', label: 'Quality', default: 'high', options: [
+          { value: 'high',     label: 'High' },
+          { value: 'standard', label: 'Standard' },
+      ] },
+    ],
+    controlHook: 'glyphora',
+    // The hook must run BEFORE the artwork's script (it sets what that script reads as it starts), and the
+    // unpacked script now runs inline in <body>, so the hook goes in <head> rather than before </body>.
+    hookInHead: true,
+  },
+  {
     slug: 'bouncing-openobject-logo',
     artist: 'OpenObject',
     name: 'Bouncing OpenObject Logo',
@@ -1393,6 +1462,54 @@ const INKFIELD_HOOK = `
 })();
 </script>`;
 
+// Injected into Gruff's Glyphoras, in <head> so it runs before the artwork's script (hookInHead). It applies
+// the collection's three controls from ?oo_music / ?oo_grow / ?oo_quality, using only what the artwork
+// already reads, so no further edit to the artist's code is needed:
+//  - Quality and Grow On Open are the two settings the artist's own menu keeps in localStorage under
+//    "glyphoras.view" ({hd, grow}), read once at start. The page is handed a tiny stand-in storage that
+//    answers that one key from the URL, so each display follows the collection's setting, nothing is
+//    written to the Host's real storage, and it works where storage is unavailable. With no params the
+//    artist's defaults apply (HD on, grow off).
+//  - Music: the piece only builds its Web Audio graph on a "wake", which it takes from any click (browsers
+//    require a gesture). A passive display has no one to click, so a synthetic click is sent once the page
+//    has loaded (repeated twice; a wake on a running piece is a no-op). A kiosk, which allows autoplay,
+//    then plays; a plain browser tab keeps the context suspended until a real click on the stage, which the
+//    artwork's own listener turns into sound. Music Off removes AudioContext before the artwork can ask for
+//    it, which the artwork treats as "no audio here" and stays silent through any later click.
+const GLYPHORA_HOOK = `
+<script id="oo-glyphora">
+(function(){
+  var q = new URLSearchParams(location.search);
+  var view = JSON.stringify({ hd: q.get('oo_quality') !== 'standard', grow: q.get('oo_grow') === 'on' });
+  var store = {
+    getItem: function(k){ return k === 'glyphoras.view' ? view : null; },
+    setItem: function(){}, removeItem: function(){}
+  };
+  try { Object.defineProperty(window, 'localStorage', { configurable: true, get: function(){ return store; } }); }
+  catch (e) { try { localStorage.setItem('glyphoras.view', view); } catch (e2) {} }
+  if (q.get('oo_music') === 'off') {
+    try { window.AudioContext = undefined; window.webkitAudioContext = undefined; } catch (e) {}
+    return;
+  }
+  var wake = function(){ try { document.dispatchEvent(new Event('click')); } catch (e) {} };
+  window.addEventListener('load', function(){ wake(); setTimeout(wake, 1000); setTimeout(wake, 3000); });
+})();
+</script>`;
+
+// Unpack an artwork script that ships gzip-compressed inside its own page (Glyphoras): a
+// <script>const X="<base64>";...DecompressionStream("gzip")...</script> loader becomes a plain inline
+// <script> holding the inflated source, so htmlReplace can reach the artist's code and the page no longer
+// depends on DecompressionStream. Anything that does not match, fails to inflate, or would break out of
+// its own script tag is left exactly as it was.
+function inflateInlineScripts(html) {
+  return html.replace(/<script>const \w+="\s*([A-Za-z0-9+/=\s]+)";const \w+=atob\(\w+\)[\s\S]*?DecompressionStream\("gzip"\)[\s\S]*?<\/script>/g, (whole, b64) => {
+    try {
+      const js = zlib.gunzipSync(Buffer.from(b64.replace(/\s+/g, ''), 'base64')).toString('utf8');
+      return /<\/script/i.test(js) ? whole : `<script>${js}</script>`;
+    } catch (_) { return whole; }
+  });
+}
+
 async function fetchBuf(url) {
   if (isDataUri(url)) return decodeDataUri(url);                // on-chain (the thumbnail), nothing to fetch
   const r = await fetchContent(url);
@@ -1546,6 +1663,10 @@ async function mirrorInto(c, out, sourceUrl) {
     html = html.replace(new RegExp(`<script\\b[^>]*src=["']${esc}["'][^>]*>\\s*</script>`, 'gi'), '');
   }
 
+  // A page whose script ships gzip-compressed inside it (Glyphoras) is unpacked first, so the rewrites below
+  // can reach the artist's code.
+  if (c && c.inflateInline) html = inflateInlineScripts(html);
+
   // Small, tolerant source rewrites the fixed dropScripts/hideSelectors seams can't express (e.g. Tiles
   // varies its inset margin / background colour per token, so they are matched by regex). Each {find, replace}
   // is applied in order; `find` may be a string (all occurrences, via split/join) or a RegExp. Runs before the
@@ -1632,13 +1753,18 @@ async function mirrorInto(c, out, sourceUrl) {
   // background + HUD off), not a control. Self-animating / still pieces (Kittoe, send/receive) get none.
   const hook = c && c.stageHook === 'inkfield' ? INKFIELD_HOOK
     : c && c.controlHook === 'bounce' ? BOUNCE_HOOK
+    : c && c.controlHook === 'glyphora' ? GLYPHORA_HOOK
     : c && c.choiceHook === 'tiles' ? TILES_HOOK
     : c && c.choiceHook === 'snow' ? SNOW_HOOK
     : c && c.animateHook === 'bloom' ? BLOOM_HOOK
     : c && c.animateHook === 'easterEgg' ? EASTER_HOOK
     : c && c.speedControl ? (c.speedHook === 'squiggle' ? SQUIGGLE_HOOK : SPEED_HOOK)
     : (c && c.animatable !== false ? ANIMATE_HOOK : '');
-  if (hook) html = html.includes('</body>') ? html.replace('</body>', hook + '\n</body>') : html + hook;
+  // A hook goes before </body>, after the artwork's own markup; a hookInHead collection (Glyphoras) needs it
+  // to run before the artwork's script instead, so it goes at the end of <head>. (Function replacers, so a
+  // "$" in a hook or in the page is never read as a replacement pattern.)
+  if (hook && c.hookInHead && html.includes('</head>')) html = html.replace('</head>', () => hook + '\n</head>');
+  else if (hook) html = html.includes('</body>') ? html.replace('</body>', () => hook + '\n</body>') : html + hook;
   fs.mkdirSync(out, { recursive: true });
   fs.writeFileSync(path.join(out, 'index.html'), html, 'utf8');
 }

@@ -79,7 +79,7 @@ let shiftTimer = null; // slow pixel-shift while asleep (anti-burn-in)
 let arcadeOn = false; // Retro Arcade demo is taking the stage (easter egg)
 
 // Master gate (Direction D, §12): the display's Sound setting sits ABOVE a connected piece's own
-// audio. While the display is muted, a collection's audio control (today only The Bloom's `music`) is
+// audio. While the display is muted, a collection's audio control (The Bloom's and Glyphoras' `music`) is
 // forced to its silent value, so Sound Off silences the whole screen — uploaded video AND connected
 // audio — not just video. It reuses the existing ?oo_<control> plumbing (the bundle already honors
 // oo_music=off, so a piece falls back to its own ambient/silent render), which means no bundle change

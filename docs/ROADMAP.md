@@ -87,12 +87,11 @@ Built and verified as far as it can be here, but not seen on the real hardware i
 **A row is added in the same commit as the change**, so it cannot be forgotten, and cleared
 when the check is done or when the build carrying it ships.
 
-**Nothing is pending right now** (2026-11-10). The last rows, the Connected pieces landed
-2026-10-26 to 2026-11-07, cleared when 1.11.0 shipped on every surface (HANDOFF §20 2026-11-10).
-Keep the section, with its table header, for the next change that needs a real-device look:
-
 | Device | What to check | Landed |
 |--------|---------------|--------|
+| XXL frame | *Glyphoras* (a multi-pass WebGL2 render at 1920×1920): it draws at all, and whether **Quality** High holds a good frame rate. If it chugs, try Standard; if only Standard is smooth, Standard becomes the default (the *Tiles* precedent). Also that neither on-screen button shows. HANDOFF §20 2026-11-20 | 2026-11-20, this change |
+| iPad and iPhone | *Glyphoras* plays from the Host and from the local copy (WebKit, WebGL2), with **Music** audible when Sound is On and silent when Off | 2026-11-20, this change |
+| Mac (built-in display) | *Glyphoras*: **Music** is heard unattended, with no click | 2026-11-20, this change |
 
 ## Closed: decided against, or not worth tracking
 

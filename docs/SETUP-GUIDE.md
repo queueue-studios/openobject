@@ -164,7 +164,7 @@ any noise, and it starts **On**. With it on, a video that came with sound plays 
 is the display, and a connected piece that came with music plays its music. Switch it to **Off** and the
 whole screen goes quiet: your videos are muted, and a musical piece like Chaz Wesley's *The Bloom* shows
 its calm, silent version (handy when you'd rather not re-level the TV's volume). Photos have no sound
-either way. *The Bloom* also has its own **Music** setting (in Settings) that fine-tunes just that piece
+either way. *The Bloom* and *Glyphoras* each also have their own **Music** setting (in Settings) that fine-tunes just that piece
 when Sound is On; with Sound Off, the display's master switch wins and the piece stays silent regardless.
 One quirk of ordinary web browsers: they don't let a page make sound until you've interacted with it, so
 if you're watching in a plain browser tab rather than the built-in display, a video may stay muted and a
@@ -198,7 +198,7 @@ whole panel. And Jeremy Booth's *Lost in Moffat County* is a series of painterly
 night on their own with your local time; switch on Animate for that piece (in Settings) to reveal a hand-drawn animated
 easter egg. If you added this piece before, remove it and add it again: the newer copy loads faster, so it comes up
 sooner when the rotation reaches it. And Chaz Wesley's *The Bloom* is a hand-drawn flower garden that blooms at sunset, with a little
-spaceship drifting through the sky above it. It's the one piece that comes with its own music, and the
+spaceship drifting through the sky above it. It comes with its own music, and the
 garden moves to it: the flowers and the sunset shift along with the song. A **Music** setting (in
 Settings) starts **on**; turn it off and the garden keeps drifting on its own, silently. If you added
 this piece before, remove it and add it again to get the music, since that's what downloads the song. And NFTman76's *Binary Mountains* is a glowing wireframe
@@ -243,6 +243,12 @@ stands alone in a wide pale field, holding a bright bundle of red balloons, one 
 took an edition home before the sale closed, forty-eight in all. The balloons stir gently on their strings.
 It's a widescreen piece, so it shows with black above and below; on its card you can choose **Fit** to
 show the whole scene or **Fill** to enlarge it to fill the screen, trimming the sides.
+And Gruff's *Glyphoras* are flowers drawn entirely out of tiny glowing symbols, each one swaying gently
+against the dark and playing its own soft, ever-changing music. It fills any screen, square or widescreen.
+It has three settings (in Settings): **Music** starts **On**; **Grow On Open** starts **Off**, and when
+you turn it on the flower grows from a seed each time it comes up in the rotation, taking about fifteen
+seconds to bloom; and **Quality** starts on **High**, with a lighter **Standard** to try if the motion
+looks choppy on your display.
 The supported collections live in the **Settings** tab, under
 **Connected Collections**, where you can hide ones you don't own and, for collections that have something to
 adjust, turn their motion on or off, set sliders like speed or size, or choose a setting like the corner effect, snowfall, a Tiled/Static display, or an aspect ratio. This is new and **curated**: only collections that have been
