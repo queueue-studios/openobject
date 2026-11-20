@@ -243,6 +243,11 @@ stands alone in a wide pale field, holding a bright bundle of red balloons, one 
 took an edition home before the sale closed, forty-eight in all. The balloons stir gently on their strings.
 It's a widescreen piece, so it shows with black above and below; on its card you can choose **Fit** to
 show the whole scene or **Fill** to enlarge it to fill the screen, trimming the sides.
+Its sister piece, *The Wait*, finds the same girl standing still in the middle of a rushing train station,
+holding a picture of her balloon while the crowd hurries past in silhouette. Each of the twenty-five
+editions collected before the sale closed put a small crown on one passer-by and added one paper doll to
+the chain holding her hand. The crowd never stops walking. It's widescreen too, with the same **Fit** and
+**Fill** choice on its card.
 And Gruff's *Glyphoras* are flowers drawn entirely out of tiny glowing symbols, each one swaying gently
 against the dark and playing its own soft, ever-changing music. It fills any screen, square or widescreen.
 It has three settings (in Settings): **Music** starts **On**; **Grow On Open** starts **On**, so the

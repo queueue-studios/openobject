@@ -92,6 +92,8 @@ when the check is done or when the build carrying it ships.
 | XXL frame | *Glyphoras* (a multi-pass WebGL2 render at 1920×1920): it draws at all, and whether **Quality** High holds a good frame rate. If it chugs, try Standard; if only Standard is smooth, Standard becomes the default (the *Tiles* precedent). Also that neither on-screen button shows. HANDOFF §20 2026-11-20 | 2026-11-20, this change |
 | iPad and iPhone | *Glyphoras* plays from the Host and from the local copy (WebKit, WebGL2), with **Music** audible when Sound is On and silent when Off | 2026-11-20, this change |
 | Mac (built-in display) | *Glyphoras*: **Music** is heard unattended, with no click | 2026-11-20, this change |
+| XXL frame | *The Wait* (seven stacked 1920×1080 canvases, about 300 walker frames decoded at load, a 24 fps crowd): it comes up out of black with no white loading screen, how long the black lasts before the scene, and whether the crowd walks smoothly. Also **Fit** and **Fill** on the square panel. HANDOFF §20 2026-11-20 | 2026-11-20, this change |
+| iPad and iPhone | *The Wait* plays from the Host and from the local copy (WebKit; one 9.7MB page) | 2026-11-20, this change |
 
 ## Closed: decided against, or not worth tracking
 

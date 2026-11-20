@@ -847,6 +847,51 @@ const REGISTRY = [
     hookInHead: true,
   },
   {
+    slug: 'the-wait',
+    artist: 'Graffiti On Grave',
+    name: 'The Wait',
+    chain: 'Ethereum',
+    contract: '0xa2ab418f974fb0042f80f9223615cad48a89ef30',
+    rpc: 'https://ethereum-rpc.publicnode.com',
+    // The sister piece to She Never Let Go, on the same Transient Labs ERC1155TL "GOG EDITION" contract,
+    // and built to that entry's decisions wherever they carry over (Matt, 2026-11-20). One edition
+    // (token 20), so uri(uint256) + fixedToken, read on-chain for faithfulness.
+    erc1155: true,
+    fixedToken: '20',
+    // A 1920x1080 stack of 2D canvases: the girl stands still in the middle of a rushing station crowd,
+    // holding the picture of the balloon; each edition collected crowns one passer-by and adds one paper
+    // doll to the chain holding her hand. The concept was LIVE during the sale, but minting closed on
+    // 2026-11-18 at 25 editions and the pinned build bakes the 25 minters and their names in
+    // (window.FINAL; "Nothing is read from the chain any more", its own comment). Every asset (the
+    // background, the girl, ~300 walker frames, the fonts) rides inside the one 9.7MB file as base64,
+    // served to the page's own fetch() calls by an inline shim, so the mirror is a clean one-file copy
+    // that makes no request at all; no localizeAbsolute.
+    // It SELF-ANIMATES (a 24 fps crowd on requestAnimationFrame), so no Animate control. The artist's
+    // interactions (hover or tap a coloured doll to name its collector, wheel or pinch to zoom, drag to
+    // pan) we leave alone, the Vortex rule: the default state is the piece.
+    animateDefault: false,
+    animatable: false,
+    // While its ~300 frames decode (a few seconds), the piece shows a white loading screen (the girl's
+    // face over the word LOADING), then fades it away over 3 seconds with the scene already running
+    // underneath. The She Never Let Go call carries over: no loader on the stage, and the 16:9 area
+    // stays indistinguishable from the black stage until the scene appears. So the mirror turns that
+    // overlay black and hides the face and word; the artist's own 3 second fade is kept (Matt's call,
+    // 2026-11-20, over a hard cut like its sister's), and now brings the scene up out of black. CSS
+    // only, two lines; the artwork's script is untouched.
+    htmlReplace: [
+      { find: '#loading { position: absolute; inset: 0; z-index: 5; background: #fff;', replace: '#loading { position: absolute; inset: 0; z-index: 5; background: #000;' },
+      { find: '#loading .face { position: relative;', replace: '#loading .face { visibility: hidden; position: relative;' },
+    ],
+    // The page sizes its 16:9 viewport to fit the window and centers it on its own black page; declaring
+    // the aspect sizes the iframe to the piece, so the bare black stage letterboxes it above and below
+    // on the 1:1 panel (HANDOFF §6).
+    aspect: '1920 / 1080',
+    // Opts into the per-piece Fit/Fill toggle like its sister: Fill covers the square panel and
+    // center-crops the sides off (the middle 56% of the width survives), keeping the centered girl and
+    // losing the ends of the doll chain and the crowd's entrances.
+    fitFill: true,
+  },
+  {
     slug: 'bouncing-openobject-logo',
     artist: 'OpenObject',
     name: 'Bouncing OpenObject Logo',
