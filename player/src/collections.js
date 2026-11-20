@@ -802,12 +802,16 @@ const REGISTRY = [
     //  - the sound graphic (bottom left; it opens a level mixer), via the artist's OWN switch for it, an
     //    options object the page never passes (soundIcon: false removes the drawing and its tap target);
     //  - the menu icon (top right; HD, Grow on open, Replay growth), by not installing the menu at all.
-    // What those buttons set is offered as this collection's controls instead (below). Everything else the
-    // piece draws on its overlay canvas (the glyph labels along a growing stem, the first-day "BLOOMS IN"
-    // countdown) is the artist's render and is left alone.
+    // What those buttons set is offered as this collection's controls instead (below).
+    // The third edit drops the two-line specimen caption the piece prints at the bottom left once grown
+    // (species and a short code, then the palette name, e.g. "PAEONIA · 119F / PURPLE"): Matt found it
+    // distracting on the stage (2026-11-20). It is the two text draws at that corner, replaced by a no-op.
+    // Everything else the piece draws on its overlay canvas (the measurement labels on the plant, the glyph
+    // labels along a growing stem, the first-day "BLOOMS IN" countdown) is the artist's render, left alone.
     htmlReplace: [
       { find: '=gi(window,document);', replace: '=gi(window,document,{soundIcon:!1});' },
       { find: 'pi(L0),L0.start()', replace: 'L0.start()' },
+      { find: 'c(O,14*a,t-30*a,C),z.palette&&c((ar[z.palette]||String(z.palette)).toUpperCase(),14*a,t-30*a+10*C,C)', replace: '0' },
     ],
     // It moves on its own (the plant sways and breathes, the camera drifts), so no Animate control.
     animateDefault: false,
@@ -815,9 +819,10 @@ const REGISTRY = [
     // Three controls, each the artist's own setting moved off the stage (applied by GLYPHORA_HOOK):
     //  - Music: the piece's generated score. `music` is the key the display's Sound master gate forces to
     //    'off' (display.js AUDIO_CONTROLS, DisplayCore ConnectedURL), so Sound Off silences this too.
-    //  - Grow On Open: the artist's "Grow on open" (default Off). Off opens the flower as grown as its age
-    //    allows (fully, once a day has passed since mint); On replays the ~15 s growth from seed each time
-    //    the piece loads, which here is each time it comes up in the rotation.
+    //  - Grow On Open: the artist's "Grow on open". Off opens the flower as grown as its age allows (fully,
+    //    once a day has passed since mint); On replays the ~15 s growth from seed each time the piece loads,
+    //    which here is each time it comes up in the rotation. The artist's default is off; ours is On
+    //    (Matt, 2026-11-20), so each turn in the rotation opens with the bloom.
     //  - Quality: the artist's "HD" (default On). High renders at full resolution with the glow pass;
     //    Standard caps the internal render at 70%, drops the glow, and lets the piece's own governor step
     //    down further when the frame rate falls. High is the artist's default; whether the frame holds it is
@@ -827,9 +832,9 @@ const REGISTRY = [
           { value: 'on',  label: 'On' },
           { value: 'off', label: 'Off' },
       ] },
-      { key: 'grow', type: 'select', label: 'Grow On Open', default: 'off', options: [
-          { value: 'off', label: 'Off' },
+      { key: 'grow', type: 'select', label: 'Grow On Open', default: 'on', options: [
           { value: 'on',  label: 'On' },
+          { value: 'off', label: 'Off' },
       ] },
       { key: 'quality', type: 'select', label: 'Quality', default: 'high', options: [
           { value: 'high',     label: 'High' },
@@ -1469,7 +1474,7 @@ const INKFIELD_HOOK = `
 //    "glyphoras.view" ({hd, grow}), read once at start. The page is handed a tiny stand-in storage that
 //    answers that one key from the URL, so each display follows the collection's setting, nothing is
 //    written to the Host's real storage, and it works where storage is unavailable. With no params the
-//    artist's defaults apply (HD on, grow off).
+//    collection's defaults apply (HD on, grow on), so a bundle opened on its own matches the display.
 //  - Music: the piece only builds its Web Audio graph on a "wake", which it takes from any click (browsers
 //    require a gesture). A passive display has no one to click, so a synthetic click is sent once the page
 //    has loaded (repeated twice; a wake on a running piece is a no-op). A kiosk, which allows autoplay,
@@ -1480,7 +1485,7 @@ const GLYPHORA_HOOK = `
 <script id="oo-glyphora">
 (function(){
   var q = new URLSearchParams(location.search);
-  var view = JSON.stringify({ hd: q.get('oo_quality') !== 'standard', grow: q.get('oo_grow') === 'on' });
+  var view = JSON.stringify({ hd: q.get('oo_quality') !== 'standard', grow: q.get('oo_grow') !== 'off' });
   var store = {
     getItem: function(k){ return k === 'glyphoras.view' ? view : null; },
     setItem: function(){}, removeItem: function(){}

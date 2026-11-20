@@ -245,9 +245,9 @@ It's a widescreen piece, so it shows with black above and below; on its card you
 show the whole scene or **Fill** to enlarge it to fill the screen, trimming the sides.
 And Gruff's *Glyphoras* are flowers drawn entirely out of tiny glowing symbols, each one swaying gently
 against the dark and playing its own soft, ever-changing music. It fills any screen, square or widescreen.
-It has three settings (in Settings): **Music** starts **On**; **Grow On Open** starts **Off**, and when
-you turn it on the flower grows from a seed each time it comes up in the rotation, taking about fifteen
-seconds to bloom; and **Quality** starts on **High**, with a lighter **Standard** to try if the motion
+It has three settings (in Settings): **Music** starts **On**; **Grow On Open** starts **On**, so the
+flower grows from a seed each time it comes up in the rotation, taking about fifteen seconds to bloom
+(turn it off to have it appear already in bloom); and **Quality** starts on **High**, with a lighter **Standard** to try if the motion
 looks choppy on your display.
 The supported collections live in the **Settings** tab, under
 **Connected Collections**, where you can hide ones you don't own and, for collections that have something to
