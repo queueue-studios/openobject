@@ -890,6 +890,12 @@ const REGISTRY = [
     // center-crops the sides off (the middle 56% of the width survives), keeping the centered girl and
     // losing the ends of the doll chain and the crowd's entrances.
     fitFill: true,
+    // The token's official `image` is not the scene: it is the loading graphic, the girl's face alone on
+    // white. Matt does not want that image standing for the piece anywhere (2026-11-20), so the Library
+    // card and the add preview use a still of the scene instead, captured from this frame render at
+    // 1920x1080 and shipped at 1280x720 (player/seed/the-wait/thumb.jpg). The one image of an artist's
+    // work committed to the repo, Matt's call; the official thumbnail is never fetched.
+    thumbFile: 'the-wait/thumb.jpg',
   },
   {
     slug: 'bouncing-openobject-logo',
@@ -1135,6 +1141,12 @@ async function resolveToken(slug, tokenId) {
   // half-grey/half-colour `image`): pull the first image the bundle loads and use that instead.
   if (c.thumbFromAnimationImage) {
     try { const img = firstImageUrl(await (await fetchContent(sourceUrl)).text()); if (img) image = img; } catch { /* keep meta.image */ }
+  }
+  // A collection whose official `image` is not a picture of the piece at all (The Wait's is its loading
+  // graphic) ships its own still under player/seed/ instead. Handed on as a data: URL, which the add
+  // preview and cacheThumb both already take (the on-chain thumbnail path), so nothing is fetched.
+  if (c.thumbFile) {
+    try { image = 'data:image/jpeg;base64,' + fs.readFileSync(path.join(__dirname, '..', 'seed', c.thumbFile)).toString('base64'); } catch { /* keep meta.image */ }
   }
   return { tokenId: tid, title: meta.name || `${c.name} #${tid}`, sourceUrl, image };
 }
